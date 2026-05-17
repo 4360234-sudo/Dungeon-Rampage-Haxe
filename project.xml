@@ -15,6 +15,7 @@
 	<haxelib name="format" if="cpp" />
 
 	<haxedef name="HXCPP_GC_BIG_BLOCKS" />
+	<haxedef name="analyzer-optimize" />
 
 	<setenv name="STEAM_APP_ID" value="3053950" if="cpp" />
 	<dependency name="com.amanitadesign.steam.FRESteamWorks" path="extensions/FRESteamWorks.ane" if="air" />

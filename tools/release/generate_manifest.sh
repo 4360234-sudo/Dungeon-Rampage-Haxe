@@ -25,9 +25,12 @@ Expected archives in DIST_DIR:
   Dungeon.Rampage.Haxe.VERSION.macOS.zip
 
 The script keeps tools/release/launch_options.tsv synchronized with
-src/brain/utils/FeatureFlags.hx. Existing recommended values are preserved.
-New flags are added and, in an interactive terminal, the script asks for the
-recommended value.
+src/brain/utils/FeatureFlags.hx:
+  - removed options are removed from launch_options.tsv
+  - flag names, config keys and default values are refreshed from source
+  - recommended values are preserved unless they matched the previous default
+  - new flags are added and, in an interactive terminal, the script asks for
+    the recommended value
 EOF
 }
 
@@ -117,12 +120,21 @@ parse_feature_flags() {
   ' "$FEATURE_FLAGS_FILE"
 }
 
-recommended_for() {
+previous_option_for() {
   local name="$1"
   awk -F '\t' -v name="$name" '
-    $0 !~ /^#/ && NF >= 5 && $1 == name { print $5; found = 1; exit }
+    $0 !~ /^#/ && NF >= 5 && $1 == name { print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5; found = 1; exit }
     END { if (!found) exit 1 }
   ' "$OPTIONS_FILE" 2>/dev/null || true
+}
+
+parsed_option_exists() {
+  local parsed_options_file="$1"
+  local name="$2"
+  awk -F '\t' -v name="$name" '
+    $1 == name { found = 1; exit }
+    END { exit found ? 0 : 1 }
+  ' "$parsed_options_file"
 }
 
 ask_recommended() {
@@ -142,17 +154,27 @@ ask_recommended() {
 }
 
 sync_launch_options() {
-  local tmp
+  local parsed tmp
+  parsed="$(mktemp)"
   tmp="$(mktemp)"
+  parse_feature_flags > "$parsed"
   printf '# name\tflag\tdefault\tconfig_key\trecommended\n' > "$tmp"
 
   local had_new=0
   while IFS=$'\t' read -r name flag default config_key; do
     [[ -n "$name" ]] || continue
 
-    local recommended
-    recommended="$(recommended_for "$name")"
-    if [[ -z "$recommended" ]]; then
+    local previous old_name old_flag old_default old_config_key recommended
+    previous="$(previous_option_for "$name")"
+    if [[ -n "$previous" ]]; then
+      IFS=$'\t' read -r old_name old_flag old_default old_config_key recommended <<< "$previous"
+      if [[ "$old_default" != "$default" && "$recommended" == "$old_default" ]]; then
+        recommended="$default"
+        printf 'Updated %s default %s -> %s and moved recommended with it.\n' "$name" "$old_default" "$default" >&2
+      elif [[ "$old_default" != "$default" ]]; then
+        printf 'Updated %s default %s -> %s and preserved recommended=%s.\n' "$name" "$old_default" "$default" "$recommended" >&2
+      fi
+    else
       had_new=1
       if [[ -t 0 ]]; then
         recommended="$(ask_recommended "$name" "$flag" "$default")"
@@ -163,7 +185,16 @@ sync_launch_options() {
     fi
 
     printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$flag" "$default" "$config_key" "$recommended" >> "$tmp"
-  done < <(parse_feature_flags)
+  done < "$parsed"
+
+  if [[ -f "$OPTIONS_FILE" ]]; then
+    while IFS=$'\t' read -r name _; do
+      [[ -n "$name" && "$name" != \#* ]] || continue
+      if ! parsed_option_exists "$parsed" "$name"; then
+        printf 'Removed %s from %s because it is no longer declared in FeatureFlags.hx.\n' "$name" "$OPTIONS_FILE" >&2
+      fi
+    done < "$OPTIONS_FILE"
+  fi
 
   if ! cmp -s "$tmp" "$OPTIONS_FILE"; then
     mv "$tmp" "$OPTIONS_FILE"
@@ -171,6 +202,7 @@ sync_launch_options() {
   else
     rm "$tmp"
   fi
+  rm "$parsed"
 
   if [[ "$had_new" == 1 && ! -t 0 ]]; then
     printf 'New launch options were added non-interactively. Review recommendations and rerun.\n' >&2

@@ -1,0 +1,15 @@
+# name	flag	default	config_key	recommended
+use-hd-assets	--experimental-use-hd-assets	false	experimental_use_hd_assets	true
+want-zoom	--want-zoom	false	want-zoom	false
+want-dynamic-rarity-backgrounds	--want-dynamic-rarity-backgrounds	false	want-dynamic-rarity-backgrounds	false
+want-damage-floaters	--want-damage-floaters	false	want-damage-floaters	false
+want-town-animations	--want-town-animations	false	want-town-animations	false
+want-buster-background-fade	--want-buster-background-fade	false	want-buster-background-fade	false
+want-pickup-ui-pop	--want-pickup-ui-pop	false	want-pickup-ui-pop	false
+want-mana-bars	--want-mana-bars	false	want-mana-bars	false
+quality-control-button	--quality-control-button	true	quality-control-button	true
+want-numbered-hud	--want-numbered-hud	false	want-numbered-hud	true
+want-hud-refresh-on-floor-transition	--want-hud-refresh-on-floor-transition	false	want-hud-refresh-on-floor-transition	true
+experimental-use-steam-input	--experimental-use-steam-input	false	experimental-use-steam-input	false
+want-steam-achievements	--want-steam-achievements	false	want-steam-achievements	false
+use-fallback-socket-port	--use-fallback-socket-port	false	use-fallback-socket-port	true

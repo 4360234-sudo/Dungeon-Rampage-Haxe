@@ -1,0 +1,261 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
+
+FEATURE_FLAGS_FILE="$PROJECT_ROOT/src/brain/utils/FeatureFlags.hx"
+OPTIONS_FILE="$SCRIPT_DIR/launch_options.tsv"
+DEFAULT_DIST_DIR="$PROJECT_ROOT/dist"
+
+usage() {
+  cat <<'EOF'
+Usage:
+  tools/release/generate_manifest.sh [VERSION] [DIST_DIR]
+  tools/release/generate_manifest.sh [DIST_DIR]
+
+Example:
+  tools/release/generate_manifest.sh
+  tools/release/generate_manifest.sh V3 release-dist
+  tools/release/generate_manifest.sh release-dist
+
+Expected archives in DIST_DIR:
+  Dungeon.Rampage.Haxe.VERSION.Linux.tar.gz
+  Dungeon.Rampage.Haxe.VERSION.Windows.zip
+  Dungeon.Rampage.Haxe.VERSION.macOS.zip
+
+The script keeps tools/release/launch_options.tsv synchronized with
+src/brain/utils/FeatureFlags.hx. Existing recommended values are preserved.
+New flags are added and, in an interactive terminal, the script asks for the
+recommended value.
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+VERSION=""
+DIST_DIR="$DEFAULT_DIST_DIR"
+
+if [[ $# -gt 2 ]]; then
+  usage >&2
+  exit 2
+fi
+
+if [[ $# -eq 1 ]]; then
+  if [[ -d "$1" ]]; then
+    DIST_DIR="$1"
+  else
+    VERSION="$1"
+  fi
+elif [[ $# -eq 2 ]]; then
+  VERSION="$1"
+  DIST_DIR="$2"
+fi
+
+DIST_DIR="$(cd -- "$DIST_DIR" && pwd)"
+
+infer_version() {
+  local versions=()
+  local path archive version
+
+  shopt -s nullglob
+  for path in "$DIST_DIR"/Dungeon.Rampage.Haxe.*.Linux.tar.gz; do
+    archive="$(basename -- "$path")"
+    version="${archive#Dungeon.Rampage.Haxe.}"
+    version="${version%.Linux.tar.gz}"
+    if [[ -f "$DIST_DIR/Dungeon.Rampage.Haxe.$version.Windows.zip" \
+      && -f "$DIST_DIR/Dungeon.Rampage.Haxe.$version.macOS.zip" ]]; then
+      versions+=("$version")
+    fi
+  done
+  shopt -u nullglob
+
+  case "${#versions[@]}" in
+    0)
+      printf 'Could not infer release version from %s. Expected the Linux, Windows and macOS archives for one version.\n' "$DIST_DIR" >&2
+      exit 1
+      ;;
+    1)
+      printf '%s\n' "${versions[0]}"
+      ;;
+    *)
+      printf 'Multiple complete releases found in %s: %s\n' "$DIST_DIR" "${versions[*]}" >&2
+      printf 'Pass the version explicitly, for example: tools/release/generate_manifest.sh %s %s\n' "${versions[0]}" "$DIST_DIR" >&2
+      exit 1
+      ;;
+  esac
+}
+
+if [[ -z "$VERSION" ]]; then
+  VERSION="$(infer_version)"
+  printf 'Inferred release version: %s\n' "$VERSION" >&2
+fi
+
+OUTPUT="$DIST_DIR/Dungeon.Rampage.Haxe.$VERSION.manifest.json"
+
+platform_archive() {
+  local platform="$1"
+  case "$platform" in
+    linux-x64) printf 'Dungeon.Rampage.Haxe.%s.Linux.tar.gz\n' "$VERSION" ;;
+    windows-x64) printf 'Dungeon.Rampage.Haxe.%s.Windows.zip\n' "$VERSION" ;;
+    macos-universal) printf 'Dungeon.Rampage.Haxe.%s.macOS.zip\n' "$VERSION" ;;
+    *) printf 'unknown platform: %s\n' "$platform" >&2; return 1 ;;
+  esac
+}
+
+parse_feature_flags() {
+  perl -0ne '
+    while (/addFeatureFlag\(\s*"([^"]+)"\s*,\s*(true|false)(?:\s*,\s*(null|"[^"]+"))?(?:\s*,\s*(null|"[^"]+"))?\s*\)/ig) {
+      my ($name, $default, $cli, $config) = ($1, lc($2), $3, $4);
+      $cli = (!defined($cli) || $cli eq "null") ? "--$name" : substr($cli, 1, -1);
+      $config = (!defined($config) || $config eq "null") ? "$name" : substr($config, 1, -1);
+      print "$name\t$cli\t$default\t$config\n";
+    }
+  ' "$FEATURE_FLAGS_FILE"
+}
+
+recommended_for() {
+  local name="$1"
+  awk -F '\t' -v name="$name" '
+    $0 !~ /^#/ && NF >= 5 && $1 == name { print $5; found = 1; exit }
+    END { if (!found) exit 1 }
+  ' "$OPTIONS_FILE" 2>/dev/null || true
+}
+
+ask_recommended() {
+  local name="$1"
+  local flag="$2"
+  local default="$3"
+  local answer=""
+
+  while true; do
+    read -r -p "Recommended value for $flag ($name), default $default [true/false, Enter=$default]: " answer
+    answer="${answer:-$default}"
+    case "$answer" in
+      true|false) printf '%s\n' "$answer"; return 0 ;;
+      *) printf 'Please answer true or false.\n' >&2 ;;
+    esac
+  done
+}
+
+sync_launch_options() {
+  local tmp
+  tmp="$(mktemp)"
+  printf '# name\tflag\tdefault\tconfig_key\trecommended\n' > "$tmp"
+
+  local had_new=0
+  while IFS=$'\t' read -r name flag default config_key; do
+    [[ -n "$name" ]] || continue
+
+    local recommended
+    recommended="$(recommended_for "$name")"
+    if [[ -z "$recommended" ]]; then
+      had_new=1
+      if [[ -t 0 ]]; then
+        recommended="$(ask_recommended "$name" "$flag" "$default")"
+      else
+        recommended="$default"
+        printf 'Added %s with recommended=%s. Review %s before release.\n' "$name" "$recommended" "$OPTIONS_FILE" >&2
+      fi
+    fi
+
+    printf '%s\t%s\t%s\t%s\t%s\n' "$name" "$flag" "$default" "$config_key" "$recommended" >> "$tmp"
+  done < <(parse_feature_flags)
+
+  if ! cmp -s "$tmp" "$OPTIONS_FILE"; then
+    mv "$tmp" "$OPTIONS_FILE"
+    printf 'Updated %s\n' "$OPTIONS_FILE" >&2
+  else
+    rm "$tmp"
+  fi
+
+  if [[ "$had_new" == 1 && ! -t 0 ]]; then
+    printf 'New launch options were added non-interactively. Review recommendations and rerun.\n' >&2
+    exit 1
+  fi
+}
+
+require_archive() {
+  local archive="$1"
+  local path="$DIST_DIR/$archive"
+  if [[ ! -f "$path" ]]; then
+    printf 'Missing release archive: %s\n' "$path" >&2
+    exit 1
+  fi
+}
+
+sync_launch_options
+
+for platform in linux-x64 windows-x64 macos-universal; do
+  require_archive "$(platform_archive "$platform")"
+done
+
+python3 - "$VERSION" "$DIST_DIR" "$OPTIONS_FILE" "$OUTPUT" <<'PY'
+import csv
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+version = sys.argv[1]
+dist_dir = Path(sys.argv[2])
+options_file = Path(sys.argv[3])
+output = Path(sys.argv[4])
+
+archive_names = {
+    "linux-x64": f"Dungeon.Rampage.Haxe.{version}.Linux.tar.gz",
+    "windows-x64": f"Dungeon.Rampage.Haxe.{version}.Windows.zip",
+    "macos-universal": f"Dungeon.Rampage.Haxe.{version}.macOS.zip",
+}
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+platforms = {}
+for platform, archive in archive_names.items():
+    path = dist_dir / archive
+    platforms[platform] = {
+        "archive": archive,
+        "sha256": sha256_file(path),
+        "size": path.stat().st_size,
+    }
+
+game_arguments = []
+with options_file.open(newline="", encoding="utf-8") as file:
+    for row in csv.reader((line for line in file if not line.startswith("#")), delimiter="\t"):
+        if len(row) != 5:
+            continue
+        name, flag, default, config_key, recommended_value = row
+        default_bool = default == "true"
+        recommended_bool = recommended_value == "true"
+        argument = {
+            "name": name,
+            "flag": flag,
+            "default": default_bool,
+        }
+        if config_key != name:
+            argument["config_key"] = config_key
+        if recommended_bool != default_bool:
+            argument["recommended"] = recommended_bool
+        game_arguments.append(argument)
+
+manifest = {
+    "version": version,
+    "platforms": platforms,
+    "launch_options": {
+        "game_arguments": game_arguments,
+    },
+}
+
+output.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+print(output)
+PY

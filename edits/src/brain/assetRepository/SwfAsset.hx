@@ -486,6 +486,102 @@ class SwfAsset extends Asset
         #end
     }
 
+    public static function applyExportedFontById(param1:DisplayObject, param2:String, param3:Int, param4:String = "") : Void
+    {
+        var _loc1_:String = null;
+        #if cpp
+        if(param1 == null || param2 == null)
+        {
+            return;
+        }
+        _loc1_ = getExportedFontPathById(param2,param3);
+        if(_loc1_ == null)
+        {
+            return;
+        }
+        applyExportedFontPathRecursive(param1,_loc1_,param4);
+        #end
+    }
+
+    static function applyExportedFontPathRecursive(param1:DisplayObject, param2:String, param3:String) : Void
+    {
+        var _loc1_:TextField = null;
+        var _loc2_:DisplayObjectContainer = null;
+        var _loc3_:Int = 0;
+        #if cpp
+        _loc1_ = ASCompat.dynamicAs(param1 , TextField);
+        if(_loc1_ != null)
+        {
+            applyExportedFontPathToTextField(_loc1_,param2,param3);
+        }
+        _loc2_ = ASCompat.dynamicAs(param1 , DisplayObjectContainer);
+        if(_loc2_ != null)
+        {
+            _loc3_ = 0;
+            while(_loc3_ < _loc2_.numChildren)
+            {
+                applyExportedFontPathRecursive(_loc2_.getChildAt(_loc3_),param2,param3);
+                _loc3_++;
+            }
+        }
+        #end
+    }
+
+    static function applyExportedFontPathToTextField(param1:TextField, param2:String, param3:String) : Void
+    {
+        var _loc1_:TextFormat = null;
+        #if cpp
+        try
+        {
+            _loc1_ = param1.defaultTextFormat;
+            if(_loc1_ == null || _loc1_.font == null || isDeviceFontName(_loc1_.font))
+            {
+                return;
+            }
+            _loc1_.font = param2;
+            param1.embedFonts = true;
+            param1.defaultTextFormat = _loc1_;
+            if(param1.length > 0)
+            {
+                _loc1_ = param1.getTextFormat();
+                _loc1_.font = param2;
+                param1.setTextFormat(_loc1_);
+            }
+        }
+        catch(e:Dynamic)
+        {
+            Logger.warn("SwfAsset.applyExportedFontPathToTextField: failed for " + param3 + ": " + Std.string(e));
+        }
+        #end
+    }
+
+    static function getExportedFontPathById(param1:String, param2:Int) : String
+    {
+        var _loc1_:String = null;
+        var _loc2_:String = null;
+        var _loc3_:String = null;
+        #if cpp
+        _loc1_ = getExportedFontDirectory(param1);
+        if(_loc1_ == null || !FileSystem.exists(_loc1_) || !FileSystem.isDirectory(_loc1_))
+        {
+            return null;
+        }
+        _loc2_ = Std.string(param2) + "_";
+        for(_loc3_ in FileSystem.readDirectory(_loc1_))
+        {
+            if(StringTools.startsWith(_loc3_,_loc2_))
+            {
+                _loc2_ = _loc3_.toLowerCase();
+                if(StringTools.endsWith(_loc2_,".ttf") || StringTools.endsWith(_loc2_,".otf"))
+                {
+                    return Path.normalize(Path.join([_loc1_,_loc3_]));
+                }
+            }
+        }
+        #end
+        return null;
+    }
+
     static function getExportedFontMap(param1:String) : StringMap<String>
     {
         var _loc1_:StringMap<String> = null;

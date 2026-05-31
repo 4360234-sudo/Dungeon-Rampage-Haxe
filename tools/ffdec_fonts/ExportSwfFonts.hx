@@ -26,6 +26,7 @@ class ExportSwfFonts
         var outRoot = Path.join([projectRoot,"Resources","ffdec_fonts"]);
         var count = 0;
         var failed = 0;
+        var exported = new Map<String,Bool>();
 
         ensureDirectory(outRoot);
 
@@ -41,28 +42,32 @@ class ExportSwfFonts
                     continue;
                 }
 
-                var source = Path.normalize(Path.join([projectRoot,swfPath]));
-                if(!FileSystem.exists(source))
+                var result = exportSwf(ffdec,projectRoot,outRoot,swfPath,id,exported);
+                if(result == true) count++;
+                else if(result == false) failed++;
+            }
+        }
+
+        var projectXmlPath = Path.join([projectRoot,"project.xml"]);
+        var projectXml = Xml.parse(File.getContent(projectXmlPath));
+        for(node in projectXml.elementsNamed("project"))
+        {
+            for(library in node.elementsNamed("library"))
+            {
+                var swfPath = library.get("path");
+                if(swfPath == null || !StringTools.endsWith(swfPath.toLowerCase(),".swf"))
                 {
                     continue;
                 }
+                var id = library.get("id");
+                if(id == null || id.length == 0)
+                {
+                    id = getProjectLibraryId(swfPath);
+                }
 
-                var outDir = Path.normalize(Path.join([outRoot,id]));
-                deleteDirectory(outDir);
-                ensureDirectory(outDir);
-                Sys.println("Export fonts: " + swfPath);
-                var code = run(ffdec,["-onerror","ignore","-format","font:ttf","-export","font",outDir,source]);
-                if(code == 0)
-                {
-                    removeDeviceFonts(outDir);
-                    deleteDirectoryIfEmpty(outDir);
-                    count++;
-                }
-                else
-                {
-                    failed++;
-                    Sys.println("  ffdec failed with code " + code);
-                }
+                var result = exportSwf(ffdec,projectRoot,outRoot,swfPath,id,exported);
+                if(result == true) count++;
+                else if(result == false) failed++;
             }
         }
 
@@ -86,6 +91,42 @@ class ExportSwfFonts
             cwd = parent;
         }
         return Sys.getCwd();
+    }
+
+    static function exportSwf(ffdec:String,projectRoot:String,outRoot:String,swfPath:String,id:String,exported:Map<String,Bool>) : Null<Bool>
+    {
+        var source = Path.normalize(Path.join([projectRoot,swfPath]));
+        if(!FileSystem.exists(source))
+        {
+            return null;
+        }
+
+        var key = Path.normalize(swfPath) + "|" + id;
+        if(exported.exists(key))
+        {
+            return null;
+        }
+        exported.set(key,true);
+
+        var outDir = Path.normalize(Path.join([outRoot,id]));
+        deleteDirectory(outDir);
+        ensureDirectory(outDir);
+        Sys.println("Export fonts: " + swfPath);
+        var code = run(ffdec,["-onerror","ignore","-format","font:ttf","-export","font",outDir,source]);
+        if(code == 0)
+        {
+            removeDeviceFonts(outDir);
+            deleteDirectoryIfEmpty(outDir);
+            return true;
+        }
+
+        Sys.println("  ffdec failed with code " + code);
+        return false;
+    }
+
+    static function getProjectLibraryId(swfPath:String) : String
+    {
+        return Path.withoutExtension(Path.withoutDirectory(swfPath));
     }
 
     static function ensureDirectory(path:String) : Void

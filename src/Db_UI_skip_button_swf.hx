@@ -1,5 +1,6 @@
 
 
+   import brain.assetRepository.SwfAsset;
    import flash.display.MovieClip;
    
    @:bind
@@ -14,6 +15,9 @@
       public function new()
       {
          super();
+         #if cpp
+         SwfAsset.applyExportedFontById(this,"assets",39,"Db_UI_skip_button_swf");
+         #end
       }
    }
 

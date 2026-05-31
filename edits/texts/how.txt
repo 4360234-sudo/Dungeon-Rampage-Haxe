@@ -2,3 +2,5 @@ assets.swf :
 DefineSrite principal frame 1 : dupliquer dernier PlaceObject2 et modifier characterId et depth en chid du texte ajouté (dupliqué)
 Horizontal : 1000
 Vertical : 550
+
+DefineFont3: incorporate needed characters

@@ -31,6 +31,15 @@ Export the fonts using FFDec:
 haxe tools/ffdec_fonts/export_swf_fonts.hxml
 ```
 
+In `Db_UI_skip_button_swf.hx` and `Loading_screen_swf.hx`:
+- Add `import brain.assetRepository.SwfAsset;` at the top
+- Add this at the end of the constructor (adapt the font ID and file name):
+    ```Haxe
+    #if cpp
+    SwfAsset.applyExportedFontById(this,"assets",27,"Loading_screen_swf");
+    #end
+    ```
+
 These changes that can be done in either the AS3 or Haxe code:
 
 Needed for AIR target:

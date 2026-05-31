@@ -25,6 +25,12 @@ Convert it to Haxe using [ax4](https://github.com/Tutez64/ax4):
 Add/replace the Haxe files with the one in ./src \
 SteamEvent.hx is needed for AIR target, the others are for native targets.
 
+Export the fonts using FFDec:
+
+```bash
+haxe tools/ffdec_fonts/export_swf_fonts.hxml
+```
+
 These changes that can be done in either the AS3 or Haxe code:
 
 Needed for AIR target:

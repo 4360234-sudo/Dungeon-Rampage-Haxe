@@ -6,6 +6,8 @@ import flash.display.DisplayObject;
 import flash.display.DisplayObjectContainer;
 import flash.display.MovieClip;
 import flash.media.Sound;
+import flash.text.TextField;
+import flash.text.TextFormat;
 import haxe.ds.StringMap;
 #if cpp
 import haxe.io.Path;
@@ -23,6 +25,7 @@ class SwfAsset extends Asset
     #if cpp
     static var sLoadedPreprocessedLibraries:StringMap<AssetLibrary> = new StringMap<AssetLibrary>();
     static var sFailedPreprocessedLibraries:StringMap<Bool> = new StringMap<Bool>();
+    static var sFontMaps:StringMap<StringMap<String>> = new StringMap<StringMap<String>>();
     #end
 
     var mRootObject:Dynamic;
@@ -172,6 +175,7 @@ class SwfAsset extends Asset
             if(mPreprocessedRootObject != null)
             {
                 applyRootInstanceProperties(mPreprocessedRootObject,mPreprocessedLibrary,mSwfPath);
+                applyExportedFonts(mPreprocessedRootObject,mPreprocessedLibraryName,mSwfPath);
             }
         }
         return mPreprocessedRootObject;
@@ -287,6 +291,7 @@ class SwfAsset extends Asset
             if(_loc4_ != null)
             {
                 bindTimelineFields(_loc4_);
+                applyExportedFonts(_loc4_,param2,mSwfPath);
                 return _loc4_;
             }
         }
@@ -402,6 +407,171 @@ class SwfAsset extends Asset
             Logger.warn("SwfAsset.instantiatePreprocessedRootObject: failed for " + param2 + ": " + Std.string(e));
         }
         return null;
+    }
+
+    function applyExportedFonts(param1:DisplayObject, param2:String, param3:String) : Void
+    {
+        var _loc1_:StringMap<String> = null;
+        #if cpp
+        if(param1 == null || param2 == null)
+        {
+            return;
+        }
+        _loc1_ = getExportedFontMap(param2);
+        if(_loc1_ == null)
+        {
+            return;
+        }
+        applyExportedFontsRecursive(param1,_loc1_,param3);
+        #end
+    }
+
+    function applyExportedFontsRecursive(param1:DisplayObject, param2:StringMap<String>, param3:String) : Void
+    {
+        var _loc1_:TextField = null;
+        var _loc2_:DisplayObjectContainer = null;
+        var _loc3_:Int = 0;
+        #if cpp
+        _loc1_ = ASCompat.dynamicAs(param1 , TextField);
+        if(_loc1_ != null)
+        {
+            applyExportedFontToTextField(_loc1_,param2,param3);
+        }
+        _loc2_ = ASCompat.dynamicAs(param1 , DisplayObjectContainer);
+        if(_loc2_ != null)
+        {
+            _loc3_ = 0;
+            while(_loc3_ < _loc2_.numChildren)
+            {
+                applyExportedFontsRecursive(_loc2_.getChildAt(_loc3_),param2,param3);
+                _loc3_++;
+            }
+        }
+        #end
+    }
+
+    function applyExportedFontToTextField(param1:TextField, param2:StringMap<String>, param3:String) : Void
+    {
+        var _loc1_:TextFormat = null;
+        var _loc2_:String = null;
+        var _loc3_:String = null;
+        #if cpp
+        try
+        {
+            _loc1_ = param1.defaultTextFormat;
+            if(_loc1_ == null || _loc1_.font == null)
+            {
+                return;
+            }
+            _loc2_ = normalizeFontLookupName(_loc1_.font);
+            _loc3_ = param2.get(_loc2_);
+            if(_loc3_ == null)
+            {
+                return;
+            }
+            _loc1_.font = _loc3_;
+            param1.embedFonts = true;
+            param1.defaultTextFormat = _loc1_;
+            if(param1.length > 0)
+            {
+                _loc1_ = param1.getTextFormat();
+                _loc1_.font = _loc3_;
+                param1.setTextFormat(_loc1_);
+            }
+        }
+        catch(e:Dynamic)
+        {
+            Logger.warn("SwfAsset.applyExportedFontToTextField: failed for " + param3 + ": " + Std.string(e));
+        }
+        #end
+    }
+
+    static function getExportedFontMap(param1:String) : StringMap<String>
+    {
+        var _loc1_:StringMap<String> = null;
+        var _loc2_:String = null;
+        var _loc3_:String = null;
+        var _loc4_:String = null;
+        var _loc5_:Int = 0;
+        #if cpp
+        if(sFontMaps.exists(param1))
+        {
+            return sFontMaps.get(param1);
+        }
+        _loc1_ = new StringMap<String>();
+        _loc2_ = getExportedFontDirectory(param1);
+        if(_loc2_ != null && FileSystem.exists(_loc2_) && FileSystem.isDirectory(_loc2_))
+        {
+            for(_loc3_ in FileSystem.readDirectory(_loc2_))
+            {
+                _loc4_ = _loc3_.toLowerCase();
+                if(!StringTools.endsWith(_loc4_,".ttf") && !StringTools.endsWith(_loc4_,".otf"))
+                {
+                    continue;
+                }
+                _loc5_ = _loc3_.indexOf("_");
+                if(_loc5_ <= 0)
+                {
+                    continue;
+                }
+                _loc4_ = _loc3_.substr(_loc5_ + 1);
+                _loc4_ = Path.withoutExtension(_loc4_);
+                if(isDeviceFontName(_loc4_))
+                {
+                    continue;
+                }
+                _loc1_.set(normalizeFontLookupName(_loc4_),Path.normalize(Path.join([_loc2_,_loc3_])));
+            }
+        }
+        sFontMaps.set(param1,_loc1_);
+        return _loc1_;
+        #else
+        return null;
+        #end
+    }
+
+    static function getExportedFontDirectory(param1:String) : String
+    {
+        var _loc1_:String = null;
+        var _loc2_:Array<String> = null;
+        var _loc3_:String = null;
+        #if cpp
+        _loc1_ = Path.directory(Sys.programPath());
+        if(_loc1_ == null || _loc1_.length == 0)
+        {
+            return null;
+        }
+        _loc2_ = [
+            Path.normalize(Path.join([_loc1_,"Resources","ffdec_fonts",param1])),
+        ];
+        for(_loc3_ in _loc2_)
+        {
+            if(FileSystem.exists(_loc3_))
+            {
+                return _loc3_;
+            }
+        }
+        return _loc2_[0];
+        #else
+        return null;
+        #end
+    }
+
+    static function normalizeFontLookupName(param1:String) : String
+    {
+        if(param1 == null)
+        {
+            return "";
+        }
+        param1 = StringTools.replace(param1,"\x00","");
+        param1 = StringTools.trim(param1);
+        return param1.toLowerCase();
+    }
+
+    static function isDeviceFontName(param1:String) : Bool
+    {
+        param1 = normalizeFontLookupName(param1);
+        return param1 == "arial" || param1 == "_sans" || param1 == "_serif" || param1 == "_typewriter";
     }
     #end
 

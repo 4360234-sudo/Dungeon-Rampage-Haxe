@@ -639,6 +639,7 @@ class SwfAsset extends Asset
         }
         _loc2_ = [
             Path.normalize(Path.join([_loc1_,"Resources","ffdec_fonts",param1])),
+            Path.normalize(Path.join([_loc1_,"..","Resources","Resources","ffdec_fonts",param1])),
         ];
         for(_loc3_ in _loc2_)
         {

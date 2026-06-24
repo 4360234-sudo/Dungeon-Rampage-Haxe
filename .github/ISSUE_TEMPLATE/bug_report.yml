@@ -1,0 +1,137 @@
+name: Bug report / Problem
+description: Report a DRH bug, crash, compatibility issue, or unexpected behavior.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem with Dungeon Rampage Haxe.
+        Please include enough detail to make the issue reproducible.
+
+  - type: input
+    id: drh-version
+    attributes:
+      label: DRH version
+      description: Which DRH version are you using?
+      placeholder: "Example: V10"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: installation-method
+    attributes:
+      label: Installation method
+      options:
+        - DRH Launcher
+        - Manual download
+        - Built from source
+    validations:
+      required: true
+
+  - type: dropdown
+    id: operating-system
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: affected-area
+    attributes:
+      label: Affected area
+      description: Pick the closest match.
+      options:
+        - Launch
+        - Login / server connection
+        - Gameplay
+        - Graphics / rendering
+        - Performance / FPS
+        - Audio
+        - Crash
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: launch-options
+    attributes:
+      label: Launch options
+      description: Which launch options are you using?
+      options:
+        - Game defaults / None
+        - DRHL recommended (launcher default)
+        - Custom
+    validations:
+      required: true
+
+  - type: textarea
+    id: custom-launch-options
+    attributes:
+      label: Custom launch options
+      description: If you selected "Custom", paste the exact launch options or arguments here.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you were doing when it happened.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: What did you expect to happen instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to reproduce
+      description: If possible, list the steps that trigger the problem.
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: false
+
+  - type: dropdown
+    id: official-game
+    attributes:
+      label: What happens in the official game?
+      options:
+        - Same issue
+        - Related console error
+        - No issue
+        - I do not know
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Paste relevant logs if you have them.
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or videos
+      description: Drag and drop screenshots or videos here if they help explain the problem.
+    validations:
+      required: false

@@ -41,6 +41,20 @@ body:
     validations:
       required: true
 
+  - type: textarea
+    id: system-details
+    attributes:
+      label: System details
+      description: OS version, CPU/GPU, RAM, display setup, or anything else that may be relevant.
+      placeholder: |
+        OS version:
+        CPU:
+        GPU:
+        RAM:
+        Display / refresh rate:
+    validations:
+      required: false
+
   - type: dropdown
     id: affected-area
     attributes:

@@ -1,34 +1,61 @@
-# Dungeon Rampage Haxe
-DRH is a port of [Dungeon Rampage](https://store.steampowered.com/app/3053950/Dungeon_Rampage/) from AS3/AIR to Haxe, targeting native Linux, macOS and Windows.
+<p align="center">
+  <img src="icon.jpg" width="96" alt="Dungeon Rampage Haxe" />
+</p>
+<h1 align="center">Dungeon Rampage Haxe</h1>
 
-It relies on OpenFL, a graphical library re-implementing the Flash/AIR APIs with various added benefits.
+<p align="center">
+A native Windows, Linux, and macOS version of Dungeon Rampage.
+Built to run smoother than the official AIR version, at 120 FPS instead of 24 FPS.
+</p>
 
-# Installation instructions
-Download it [here](https://github.com/Tutez64/Dungeon-Rampage-Haxe/releases), unzip it then launch `Dungeon Rampage Haxe(.exe|.app)`.
+## Install and play
 
-You need to have Steam open with the official game bought. Otherwise, it won't be able to connect to the official servers.
+The recommended way to play DRH is
+[DRH Launcher](https://github.com/Tutez64/DRH-Launcher), which handles DRH installation,
+updates, repairs, and launch for you.
 
-# Why?
-Because DR runs very poorly and has really annoying delay issues. 
+DRH Launcher also provides additional features such as launch option presets,
+custom launch arguments, session history with logs and playtime, release history,
+and more.
 
-On average, you should get much more FPS using DRH, especially in the "Quality" mode which is often unusable in the official game, and no delay issue!
+See the [DRH Launcher README](https://github.com/Tutez64/DRH-Launcher#readme)
+for downloads and installation instructions.
 
-Similarly to the official game, restarting it before each new party is recommended, as performance degrades overtime.
+You need to own the official
+[Dungeon Rampage](https://store.steampowered.com/app/3053950/Dungeon_Rampage/)
+on Steam and keep Steam open while playing. Otherwise, DRH cannot connect to the official servers.
 
-# Join the Discord
-More info are available in the [Discord server](https://discord.gg/VvWbNspZrQ). Any feedback is appreciated!
+## Why use DRH?
 
-# How?
-This project required months of hard work, most of it being put into the following open-source projects:
-- [ax4](https://github.com/Tutez64/ax4), my AS3 to Haxe converter, based on ax3.
-- [OpenFL](https://github.com/Tutez64/openfl), [SWF](https://github.com/Tutez64/swf), [Lime](https://github.com/Tutez64/lime) and [hxcpp](https://github.com/Tutez64/hxcpp)
-- [SteamWrap](https://github.com/Tutez64/SteamWrap), to replace the Steam ANE.
+The official game can run poorly and suffer from input delay issues.
+DRH runs at 120 FPS instead of the official game's 24 FPS, usually provides much better
+performance, especially in **Quality** mode, and avoids the delay issue.
 
-# How to compile it yourself
+Like the official game, restarting before each new party is recommended because performance can degrade over time.
 
-The project depends on forked versions of OpenFL, Lime, SWF, hxcpp and SteamWrap, which are included as Git submodules.
+## Community
 
-## Requirements
+Join the [Discord server](https://discord.gg/VvWbNspZrQ) to discuss DRH and DRH Launcher,
+get update notifications, and see occasional previews.
+
+## Technical overview
+
+DRH is a port of Dungeon Rampage from AS3/AIR to Haxe. It uses
+[OpenFL](https://www.openfl.org/), a graphical library that reimplements Flash/AIR APIs
+with native targets and modern tooling.
+
+This project required months of work, most of it in the following open-source projects:
+
+- [ax4](https://github.com/Tutez64/ax4), my AS3 to Haxe converter based on ax3.
+- [OpenFL](https://github.com/Tutez64/openfl), [SWF](https://github.com/Tutez64/swf), [Lime](https://github.com/Tutez64/lime), and [hxcpp](https://github.com/Tutez64/hxcpp).
+- [SteamWrap](https://github.com/Tutez64/SteamWrap), used to replace the Steam ANE.
+
+## Build from source
+
+The project depends on forked versions of OpenFL, Lime, SWF, hxcpp, and SteamWrap,
+which are included as Git submodules.
+
+### Requirements
 
 - [Haxe](https://haxe.org/)
 - A C++ toolchain supported by hxcpp
@@ -41,7 +68,7 @@ haxelib install format
 haxelib install hxp
 ```
 
-## Clone the repository
+### Clone the repository
 
 ```bash
 git clone --recurse-submodules https://github.com/Tutez64/Dungeon-Rampage-Haxe
@@ -54,9 +81,10 @@ If you cloned without `--recurse-submodules`, initialize the submodules afterwar
 git submodule update --init --recursive
 ```
 
-## Configure local development libraries
+### Configure local development libraries
 
-The project file references the submodules directly, but registering them with haxelib is useful for commands such as `haxelib run openfl` and for rebuilding tools:
+The project file references the submodules directly, but registering them with haxelib
+is useful for commands such as `haxelib run openfl` and for rebuilding tools:
 
 ```bash
 haxelib dev lime submodules/lime
@@ -66,7 +94,7 @@ haxelib dev steamwrap submodules/SteamWrap
 haxelib dev hxcpp submodules/hxcpp
 ```
 
-## Rebuild helper tools
+### Rebuild helper tools
 
 ```bash
 haxelib run lime rebuild cpp -debug
@@ -79,12 +107,12 @@ SteamWrap:
 
 ```bash
 cd submodules/SteamWrap
-./setup.sh # (.bat on Windows)
-./build # (.bat on Windows)
+./setup.sh # .bat on Windows
+./build # .bat on Windows
 cd ../..
 ```
 
-## Build the game
+### Build the game
 
 From the repository root:
 

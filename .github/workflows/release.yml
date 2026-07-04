@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "V*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Package ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            runner: ubuntu-22.04
+            platform: linux
+          - name: Windows x64
+            runner: windows-2022
+            platform: windows
+          - name: macOS universal
+            runner: macos-14
+            platform: macos
+    uses: ./.github/workflows/package-drh.yml
+    with:
+      artifact_name: drh-${{ matrix.platform }}
+      package_name: ${{ matrix.name }}
+      platform: ${{ matrix.platform }}
+      runner: ${{ matrix.runner }}
+      version: ${{ github.ref_name }}
+
+  release:
+    name: Create draft GitHub release
+    needs: package
+    runs-on: ubuntu-22.04
+    env:
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: drh-*
+          path: dist
+          merge-multiple: true
+
+      - name: Generate release manifest and checksums
+        run: |
+          set -euo pipefail
+
+          tools/release/generate_manifest.sh "$GITHUB_REF_NAME" dist
+          git diff --exit-code -- tools/release/launch_options.tsv
+
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+
+          dist = Path("dist")
+          paths = sorted(path for path in dist.iterdir() if path.is_file())
+          with (dist / "SHA256SUMS").open("w", encoding="utf-8") as output:
+              for path in paths:
+                  if path.name == "SHA256SUMS":
+                      continue
+                  digest = hashlib.sha256(path.read_bytes()).hexdigest()
+                  output.write(f"{digest}  {path.name}\n")
+          PY
+
+      - name: Generate release download notes
+        run: |
+          cat > "$RUNNER_TEMP/release-downloads.md" <<'EOF'
+          # Download Dungeon Rampage Haxe
+
+          Install, update, configure, and play Dungeon Rampage Haxe easily with **DRH Launcher**:
+
+          **[Download DRH Launcher](https://github.com/Tutez64/DRH-Launcher#readme)**
+
+          ## Changelog
+
+          EOF
+
+      - name: Create draft release
+        shell: bash
+        run: |
+          prerelease=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            prerelease=(--prerelease)
+          fi
+          release_notes="$(cat "$RUNNER_TEMP/release-downloads.md")"
+
+          gh release create "$GITHUB_REF_NAME" \
+            --draft \
+            --verify-tag \
+            --title "Dungeon Rampage Haxe $GITHUB_REF_NAME" \
+            --generate-notes \
+            --notes "$release_notes" \
+            "${prerelease[@]}" \
+            dist/*

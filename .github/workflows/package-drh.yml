@@ -253,4 +253,3 @@ jobs:
           name: ${{ inputs.artifact_name }}
           path: dist/*
           if-no-files-found: error
-          archive: false

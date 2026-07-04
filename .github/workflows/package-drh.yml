@@ -142,6 +142,24 @@ jobs:
           haxelib run lime rebuild hxcpp
           haxelib run lime rebuild swf
 
+      - name: Rebuild Lime native libraries
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          case "${{ inputs.platform }}" in
+            linux)
+              haxelib run lime rebuild linux -64
+              ;;
+            windows)
+              haxelib run lime rebuild windows -64
+              ;;
+            macos)
+              haxelib run lime rebuild mac -64
+              haxelib run lime rebuild mac -arm64
+              ;;
+          esac
+
       - name: Build SteamWrap
         shell: bash
         run: |

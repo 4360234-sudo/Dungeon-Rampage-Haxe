@@ -63,6 +63,12 @@ jobs:
           haxelib dev swf "$PWD/submodules/swf"
           haxelib dev steamwrap "$PWD/submodules/SteamWrap"
 
+      - name: Bootstrap hxcpp
+        shell: bash
+        run: |
+          cd submodules/hxcpp/tools/hxcpp
+          haxe compile.hxml
+
       - name: Clone Steamworks SDK
         shell: bash
         run: |

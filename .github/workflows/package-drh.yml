@@ -182,7 +182,7 @@ jobs:
       - name: Build Linux
         if: inputs.platform == 'linux'
         shell: bash
-        run: haxelib run openfl build project.xml cpp -Dfinal
+        run: haxelib run openfl build project.xml cpp
 
       - name: Package Linux
         if: inputs.platform == 'linux'
@@ -190,25 +190,24 @@ jobs:
         run: |
           set -euo pipefail
 
-          staging_parent="$RUNNER_TEMP/drh-package"
-          staging="$staging_parent/Dungeon Rampage Haxe"
+          package_dir="bin/linux/Dungeon Rampage Haxe"
           archive="dist/Dungeon.Rampage.Haxe.${{ inputs.version }}.Linux.tar.gz"
 
-          rm -rf "$staging_parent"
-          mkdir -p "$staging_parent" dist
-          cp -a "bin/linux/bin" "$staging"
-          rm -f "$staging/steam_appid.txt"
+          rm -rf "$package_dir"
+          mkdir -p dist
+          mv "bin/linux/bin" "$package_dir"
 
-          test -x "$staging/Dungeon Rampage Haxe"
-          test -f "$staging/steamwrap.ndll"
-          test -f "$staging/libsteam_api.so"
+          test -x "$package_dir/Dungeon Rampage Haxe"
+          test -f "$package_dir/steamwrap.ndll"
+          test -f "$package_dir/libsteam_api.so"
+          test -f "$package_dir/steam_appid.txt"
 
-          tar -C "$staging_parent" -czf "$archive" "Dungeon Rampage Haxe"
+          tar -C "bin/linux" -czf "$archive" "Dungeon Rampage Haxe"
 
       - name: Build Windows
         if: inputs.platform == 'windows'
         shell: pwsh
-        run: haxelib run openfl build project.xml cpp -Dfinal
+        run: haxelib run openfl build project.xml cpp
 
       - name: Package Windows
         if: inputs.platform == 'windows'
@@ -216,20 +215,19 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
-          $stagingParent = Join-Path $env:RUNNER_TEMP "drh-package"
-          $staging = Join-Path $stagingParent "Dungeon Rampage Haxe"
+          $packageDir = "bin/windows/Dungeon Rampage Haxe"
           $archive = "dist/Dungeon.Rampage.Haxe.${{ inputs.version }}.Windows.zip"
 
-          Remove-Item -Recurse -Force $stagingParent -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Force -Path $stagingParent, "dist" | Out-Null
-          Copy-Item -Recurse "bin/windows/bin" $staging
-          Remove-Item (Join-Path $staging "steam_appid.txt") -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force $packageDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+          Rename-Item -Path "bin/windows/bin" -NewName "Dungeon Rampage Haxe"
 
-          if (!(Test-Path (Join-Path $staging "Dungeon Rampage Haxe.exe"))) { throw "Missing Windows executable" }
-          if (!(Test-Path (Join-Path $staging "steamwrap.ndll"))) { throw "Missing steamwrap.ndll" }
-          if (!(Test-Path (Join-Path $staging "steam_api64.dll"))) { throw "Missing steam_api64.dll" }
+          if (!(Test-Path (Join-Path $packageDir "Dungeon Rampage Haxe.exe"))) { throw "Missing Windows executable" }
+          if (!(Test-Path (Join-Path $packageDir "steamwrap.ndll"))) { throw "Missing steamwrap.ndll" }
+          if (!(Test-Path (Join-Path $packageDir "steam_api64.dll"))) { throw "Missing steam_api64.dll" }
+          if (!(Test-Path (Join-Path $packageDir "steam_appid.txt"))) { throw "Missing steam_appid.txt" }
 
-          Compress-Archive -Path $staging -DestinationPath $archive -Force
+          Compress-Archive -Path $packageDir -DestinationPath $archive -Force
 
       - name: Build and package macOS
         if: inputs.platform == 'macos'
@@ -238,15 +236,16 @@ jobs:
           set -euo pipefail
 
           mkdir -p dist
+          output_zip="dist/Dungeon.Rampage.Haxe.${{ inputs.version }}.macOS.zip"
           tools/macos/release_macos_all.sh \
-            --output-zip "dist/Dungeon.Rampage.Haxe.${{ inputs.version }}.macOS.zip" \
-            -- -Dfinal
+            --output-zip "$output_zip"
 
           macos_app="bin/macos/bin/Dungeon Rampage Haxe.app"
+
           test -d "$macos_app"
           test -f "$macos_app/Contents/MacOS/steamwrap.ndll"
           test -f "$macos_app/Contents/MacOS/libsteam_api.dylib"
-          test ! -f "$macos_app/Contents/MacOS/steam_appid.txt"
+          test -f "$macos_app/Contents/MacOS/steam_appid.txt"
 
       - uses: actions/upload-artifact@v7
         with:

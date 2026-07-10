@@ -1,0 +1,35 @@
+name: Test Packages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: test-packages-${{ github.ref }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Package ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Linux x64
+            runner: ubuntu-22.04
+            platform: linux
+          - name: Windows x64
+            runner: windows-2022
+            platform: windows
+          - name: macOS universal
+            runner: macos-14
+            platform: macos
+    uses: ./.github/workflows/package-drh.yml
+    with:
+      artifact_name: drh-test-${{ matrix.platform }}
+      package_name: ${{ matrix.name }}
+      platform: ${{ matrix.platform }}
+      runner: ${{ matrix.runner }}
+      version: test-${{ github.run_number }}

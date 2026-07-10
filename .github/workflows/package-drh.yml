@@ -152,14 +152,14 @@ jobs:
 
           case "${{ inputs.platform }}" in
             linux)
-              haxelib run lime rebuild linux -64
+              haxelib run lime rebuild linux -64 -DHXCPP_OPTIMIZE_LINK
               ;;
             windows)
-              haxelib run lime rebuild windows -64
+              haxelib run lime rebuild windows -64 -DHXCPP_OPTIMIZE_LINK
               ;;
             macos)
-              haxelib run lime rebuild mac -64
-              haxelib run lime rebuild mac -arm64
+              haxelib run lime rebuild mac -64 -DHXCPP_OPTIMIZE_LINK
+              haxelib run lime rebuild mac -arm64 -DHXCPP_OPTIMIZE_LINK
               ;;
           esac
 
@@ -173,12 +173,12 @@ jobs:
 
           case "${{ inputs.platform }}" in
             linux|windows)
-              haxelib run hxcpp Build.xml -DHXCPP_M64
+              haxelib run hxcpp Build.xml -DHXCPP_M64 -DHXCPP_OPTIMIZE_LINK
               ;;
             macos)
-              haxelib run hxcpp Build.xml -DHXCPP_M64
+              haxelib run hxcpp Build.xml -DHXCPP_M64 -DHXCPP_OPTIMIZE_LINK
               rm -rf ../obj
-              haxelib run hxcpp Build.xml -DHXCPP_ARM64
+              haxelib run hxcpp Build.xml -DHXCPP_ARM64 -DHXCPP_OPTIMIZE_LINK
               ;;
           esac
 

@@ -33,12 +33,20 @@ jobs:
         with:
           haxe-version: 4.3.7
 
+      - name: Configure macOS build environment
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> "$GITHUB_ENV"
+          xcodebuild -version
+          xcrun clang++ --version
+
       - name: Install Linux build dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            g++-12 \
+            g++-14 \
             libasound2-dev \
             libgl1-mesa-dev \
             libglu1-mesa-dev \
@@ -52,8 +60,8 @@ jobs:
             libxrandr-dev \
             libxrender-dev
 
-          echo "CXX=g++-12" >> "$GITHUB_ENV"
-          g++-12 --version
+          echo "CXX=g++-14" >> "$GITHUB_ENV"
+          g++-14 --version
 
       - name: Install haxelib dependencies
         shell: bash

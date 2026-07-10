@@ -25,11 +25,11 @@ jobs:
     runs-on: ${{ inputs.runner }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           submodules: recursive
 
-      - uses: krdlab/setup-haxe@v2.1.0
+      - uses: krdlab/setup-haxe@d93667502be3b4f31a94a3308a74388f2e178a8d # v2.1.0
         with:
           haxe-version: 4.3.7
 
@@ -258,7 +258,7 @@ jobs:
           test -f "$macos_app/Contents/MacOS/libsteam_api.dylib"
           test -f "$macos_app/Contents/MacOS/steam_appid.txt"
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ inputs.artifact_name }}
           path: dist/*

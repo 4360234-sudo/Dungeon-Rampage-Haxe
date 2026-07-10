@@ -125,9 +125,9 @@ move_built_app() {
 echo "Building macOS x86_64"
 rm -rf "$BUILD_APP"
 if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
-  "${OPENFL_CMD[@]}" build "$PROJECT_FILE" "$TARGET_NAME" -x86_64 "${EXTRA_ARGS[@]}"
+  "${OPENFL_CMD[@]}" build "$PROJECT_FILE" "$TARGET_NAME" -x86_64 -DHXCPP_ARCH=x86_64 "${EXTRA_ARGS[@]}"
 else
-  "${OPENFL_CMD[@]}" build "$PROJECT_FILE" "$TARGET_NAME" -x86_64
+  "${OPENFL_CMD[@]}" build "$PROJECT_FILE" "$TARGET_NAME" -x86_64 -DHXCPP_ARCH=x86_64
 fi
 move_built_app "$BUILD_APP" "$X86_APP"
 echo "Saved x86_64 app to $X86_APP"
@@ -136,9 +136,9 @@ echo
 echo "Building macOS arm64"
 rm -rf "$BUILD_APP"
 if [[ ${#EXTRA_ARGS[@]} -gt 0 ]]; then
-  "${OPENFL_CMD[@]}" build "$PROJECT_FILE" "$TARGET_NAME" -arm64 "${EXTRA_ARGS[@]}"
+  "${OPENFL_CMD[@]}" build "$PROJECT_FILE" "$TARGET_NAME" -arm64 -DHXCPP_ARCH=arm64 "${EXTRA_ARGS[@]}"
 else
-  "${OPENFL_CMD[@]}" build "$PROJECT_FILE" "$TARGET_NAME" -arm64
+  "${OPENFL_CMD[@]}" build "$PROJECT_FILE" "$TARGET_NAME" -arm64 -DHXCPP_ARCH=arm64
 fi
 move_built_app "$BUILD_APP" "$ARM_APP"
 echo "Saved arm64 app to $ARM_APP"

@@ -15,6 +15,7 @@
 	<haxelib name="format" if="cpp" />
 
 	<haxedef name="HXCPP_GC_BIG_BLOCKS" />
+	<haxedef name="HXCPP_OPTIMIZE_LINK" />
 	<haxedef name="analyzer-optimize" />
 
 	<setenv name="STEAM_APP_ID" value="3053950" if="cpp" />

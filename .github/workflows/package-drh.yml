@@ -6,6 +6,10 @@ on:
       artifact_name:
         required: true
         type: string
+      fps:
+        required: false
+        type: number
+        default: 120
       package_name:
         required: true
         type: string
@@ -31,6 +35,35 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           submodules: recursive
+
+      - name: Configure target frame rate
+        shell: python
+        env:
+          TARGET_FPS: ${{ inputs.fps }}
+        run: |
+          import os
+          from decimal import Decimal, InvalidOperation
+          import xml.etree.ElementTree as ET
+
+          raw_fps = os.environ["TARGET_FPS"]
+          try:
+              decimal_fps = Decimal(raw_fps)
+          except InvalidOperation as error:
+              raise SystemExit(f"Invalid target frame rate: {raw_fps!r}") from error
+
+          if decimal_fps != decimal_fps.to_integral_value() or decimal_fps <= 0:
+              raise SystemExit(f"Target frame rate must be a positive integer, got {raw_fps!r}")
+
+          project_path = "project.xml"
+          tree = ET.parse(project_path)
+          window = tree.getroot().find("window")
+          if window is None:
+              raise SystemExit("project.xml does not contain a window element")
+
+          fps = str(int(decimal_fps))
+          window.set("fps", fps)
+          tree.write(project_path, encoding="utf-8", xml_declaration=True)
+          print(f"Configured project.xml for {fps} FPS")
 
       - uses: krdlab/setup-haxe@d93667502be3b4f31a94a3308a74388f2e178a8d # v2.1.0
         with:

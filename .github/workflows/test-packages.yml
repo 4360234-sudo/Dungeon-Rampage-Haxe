@@ -2,6 +2,12 @@ name: Test Packages
 
 on:
   workflow_dispatch:
+    inputs:
+      fps:
+        description: Target frame rate
+        required: true
+        default: 120
+        type: number
 
 permissions:
   contents: read
@@ -29,6 +35,7 @@ jobs:
     uses: ./.github/workflows/package-drh.yml
     with:
       artifact_name: drh-test-${{ matrix.platform }}
+      fps: ${{ inputs.fps }}
       package_name: ${{ matrix.name }}
       platform: ${{ matrix.platform }}
       runner: ${{ matrix.runner }}

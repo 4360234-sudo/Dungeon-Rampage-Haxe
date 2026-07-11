@@ -6,8 +6,8 @@ on:
       fps:
         description: Target frame rate
         required: true
-        default: 120
-        type: number
+        default: "120"
+        type: string
 
 permissions:
   contents: read

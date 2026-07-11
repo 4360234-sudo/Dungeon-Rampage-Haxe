@@ -8,8 +8,8 @@ on:
         type: string
       fps:
         required: false
-        type: number
-        default: 120
+        type: string
+        default: "120"
       package_name:
         required: true
         type: string

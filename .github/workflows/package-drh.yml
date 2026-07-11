@@ -202,9 +202,8 @@ jobs:
               haxelib run lime rebuild windows -64 -DHXCPP_OPTIMIZE_LINK
               ;;
             macos)
-              # LTO on Lime causes missing assets and incorrect transparency on macOS.
-              haxelib run lime rebuild mac -x86_64 -DHXCPP_ARCH=x86_64
-              haxelib run lime rebuild mac -arm64 -DHXCPP_ARCH=arm64
+              haxelib run lime rebuild mac -x86_64 -DHXCPP_ARCH=x86_64 -DHXCPP_OPTIMIZE_LINK
+              haxelib run lime rebuild mac -arm64 -DHXCPP_ARCH=arm64 -DHXCPP_OPTIMIZE_LINK
               ;;
           esac
 

@@ -245,6 +245,7 @@ jobs:
           mv "bin/linux/bin" "$package_dir"
 
           test -x "$package_dir/Dungeon Rampage Haxe"
+          test -f "$package_dir/lime.ndll"
           test -f "$package_dir/steamwrap.ndll"
           test -f "$package_dir/libsteam_api.so"
           test -f "$package_dir/steam_appid.txt"
@@ -270,6 +271,7 @@ jobs:
           Rename-Item -Path "bin/windows/bin" -NewName "Dungeon Rampage Haxe"
 
           if (!(Test-Path (Join-Path $packageDir "Dungeon Rampage Haxe.exe"))) { throw "Missing Windows executable" }
+          if (!(Test-Path (Join-Path $packageDir "lime.ndll"))) { throw "Missing lime.ndll" }
           if (!(Test-Path (Join-Path $packageDir "steamwrap.ndll"))) { throw "Missing steamwrap.ndll" }
           if (!(Test-Path (Join-Path $packageDir "steam_api64.dll"))) { throw "Missing steam_api64.dll" }
           if (!(Test-Path (Join-Path $packageDir "steam_appid.txt"))) { throw "Missing steam_appid.txt" }
@@ -290,6 +292,7 @@ jobs:
           macos_app="bin/macos/bin/Dungeon Rampage Haxe.app"
 
           test -d "$macos_app"
+          test -f "$macos_app/Contents/MacOS/lime.ndll"
           test -f "$macos_app/Contents/MacOS/steamwrap.ndll"
           test -f "$macos_app/Contents/MacOS/libsteam_api.dylib"
           test -f "$macos_app/Contents/MacOS/steam_appid.txt"

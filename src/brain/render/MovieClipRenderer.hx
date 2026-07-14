@@ -192,6 +192,7 @@ function  set_loop(param1:Bool) :Bool      {
          {
             return;
          }
+         var previousFrame= Math.fround(mPlayHead);
          mPlayHead += mFrameRate * param1.tickLength * mPlayRate;
          if(mPlayHead > mMaxFrames - 1 && !mLoop)
          {
@@ -210,7 +211,10 @@ function  set_loop(param1:Bool) :Bool      {
             }
             return;
          }
-         this.updateClip(mClip);
+         if(previousFrame != Math.fround(mPlayHead))
+         {
+            this.updateClip(mClip);
+         }
       }
       
             

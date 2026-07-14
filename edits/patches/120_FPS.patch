@@ -3302,3 +3302,87 @@ diff --git a/src/brain/clock/GameClock.hx b/src/brain/clock/GameClock.hx
        static var mServerTimeOffset:Float = 0;
        
        static var mWebServerTimeString:String = "";
+Index: src/brain/render/MovieClipRenderer.hx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/brain/render/MovieClipRenderer.hx b/src/brain/render/MovieClipRenderer.hx
+--- a/src/brain/render/MovieClipRenderer.hx	(revision 01acca451363f537dbdaab9a860100b5e1ef999e)
++++ b/src/brain/render/MovieClipRenderer.hx	(date 1783980000000)
+@@ -192,6 +192,7 @@
+          {
+             return;
+          }
++         var previousFrame= Math.fround(mPlayHead);
+          mPlayHead += mFrameRate * param1.tickLength * mPlayRate;
+          if(mPlayHead > mMaxFrames - 1 && !mLoop)
+          {
+@@ -210,7 +211,10 @@
+             }
+             return;
+          }
+-         this.updateClip(mClip);
++         if(previousFrame != Math.fround(mPlayHead))
++         {
++            this.updateClip(mClip);
++         }
+       }
+       
+             
+Index: src/brain/render/MovieClipRandomRenderer.hx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/brain/render/MovieClipRandomRenderer.hx b/src/brain/render/MovieClipRandomRenderer.hx
+--- a/src/brain/render/MovieClipRandomRenderer.hx	(revision 01acca451363f537dbdaab9a860100b5e1ef999e)
++++ b/src/brain/render/MovieClipRandomRenderer.hx	(date 1783980000000)
+@@ -42,12 +42,18 @@
+          {
+             return;
+          }
++         var previousFrame= Math.fround(mPlayHead);
++         var forceUpdate= false;
+          mPlayHead += mFrameRate * param1.tickLength * mPlayRate;
+          if(mPlayHead >= mCurrentRandomLabel.endFrameNumber)
+          {
+             playNewRandomLabel();
++            forceUpdate = true;
++         }
++         if(forceUpdate || previousFrame != Math.fround(mPlayHead))
++         {
++            this.updateClip(mClip);
+          }
+-         this.updateClip(mClip);
+       }
+       
+       function playNewRandomLabel() 
+Index: src/brain/render/MovieClipCutsceneRenderer.hx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/brain/render/MovieClipCutsceneRenderer.hx b/src/brain/render/MovieClipCutsceneRenderer.hx
+--- a/src/brain/render/MovieClipCutsceneRenderer.hx	(revision 01acca451363f537dbdaab9a860100b5e1ef999e)
++++ b/src/brain/render/MovieClipCutsceneRenderer.hx	(date 1783980000000)
+@@ -131,6 +131,7 @@
+          {
+             return;
+          }
++         var previousFrame= Math.fround(mPlayHead);
+          mPlayHead += mFrameRate * param1.tickLength * mPlayRate;
+          if(mPlayHead > mNextPauseFrame)
+          {
+@@ -152,7 +153,10 @@
+             }
+             return;
+          }
+-         this.updateClip(mClip);
++         if(previousFrame != Math.fround(mPlayHead))
++         {
++            this.updateClip(mClip);
++         }
+       }
+       
+       override function determineFrames(param1:MovieClip) 

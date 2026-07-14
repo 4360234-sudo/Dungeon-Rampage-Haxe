@@ -131,6 +131,7 @@ package brain.render
          {
             return;
          }
+         var previousFrame= Math.fround(mPlayHead);
          mPlayHead += mFrameRate * param1.tickLength * mPlayRate;
          if(mPlayHead > mNextPauseFrame)
          {
@@ -152,7 +153,10 @@ package brain.render
             }
             return;
          }
-         this.updateClip(mClip);
+         if(previousFrame != Math.fround(mPlayHead))
+         {
+            this.updateClip(mClip);
+         }
       }
       
       override function determineFrames(param1:MovieClip) 

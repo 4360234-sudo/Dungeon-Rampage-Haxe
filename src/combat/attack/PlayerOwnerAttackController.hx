@@ -53,6 +53,10 @@ package combat.attack
 
       var mNextWeaponCommand:PotentialWeaponInputQueueStruct;
 
+      var mComboTransitionCommand:PotentialWeaponInputQueueStruct;
+
+      var mComboTransitionReadyTime:Int = -1;
+
       var mDungeonBusterGMAttack:GMAttack;
 
       var mDungeonBusterAttackTimeline:AttackTimeline;
@@ -343,15 +347,18 @@ function  get_currentWeaponController() : WeaponController
          var _loc1_:ScriptTimeline = null;
          if(mNextWeaponCommand == null)
          {
+            clearComboTransitionDelay();
             return;
          }
          if(mDungeonBusterAttackTimeline != null && mDungeonBusterAttackTimeline.isPlaying)
          {
             mNextWeaponCommand = null;
+            clearComboTransitionDelay();
             return;
          }
          var _loc2_= false;
          var _loc3_= mNextWeaponCommand.weaponController;
+         var _loc4_= mComboTransitionCommand == mNextWeaponCommand;
          if(mDistributedPlayerOwner.stateMachine.currentStateName == "ActorDefaultState" && mDistributedPlayerOwner.canInitiateAnAttack)
          {
             if(mNextWeaponCommand.weaponIndex == 3)
@@ -361,6 +368,7 @@ function  get_currentWeaponController() : WeaponController
                   playDungeonBusterAttack();
                }
                mNextWeaponCommand = null;
+               clearComboTransitionDelay();
                return;
             }
             _loc1_ = currentWeaponController.currentTimeline;
@@ -373,11 +381,21 @@ function  get_currentWeaponController() : WeaponController
             }
             else if(_loc1_ == null)
             {
-               _loc2_ = true;
+               _loc2_ = !_loc4_ || mLogicalWorkComponent.gameClock.gameTime >= mComboTransitionReadyTime;
             }
-            else if(currentWeaponController.isRepeater() && currentWeaponController.weaponDownActive || currentWeaponController.canCombo())
+            else if(currentWeaponController.isRepeater() && currentWeaponController.weaponDownActive)
             {
                _loc2_ = true;
+            }
+            else if(currentWeaponController.canCombo())
+            {
+               if(!_loc4_)
+               {
+                  mComboTransitionCommand = mNextWeaponCommand;
+                  mComboTransitionReadyTime = getLegacyAttackQueueReadyTime(_loc1_);
+                  _loc4_ = true;
+               }
+               _loc2_ = mLogicalWorkComponent.gameClock.gameTime >= mComboTransitionReadyTime;
             }
             else
             {
@@ -387,10 +405,19 @@ function  get_currentWeaponController() : WeaponController
          else
          {
             mNextWeaponCommand = null;
+            clearComboTransitionDelay();
+            _loc4_ = false;
          }
          if(_loc1_ == null)
          {
-            resetCombosOnAllBut();
+            if(_loc4_)
+            {
+               resetCombosOnAllBut(mNextWeaponCommand.weaponIndex);
+            }
+            else
+            {
+               resetCombosOnAllBut();
+            }
          }
          if(_loc2_)
          {
@@ -403,7 +430,26 @@ function  get_currentWeaponController() : WeaponController
                onWeaponUp(mNextWeaponCommand.weaponIndex,mNextWeaponCommand.autoAim);
             }
             mNextWeaponCommand = null;
+            clearComboTransitionDelay();
          }
+      }
+
+      function clearComboTransitionDelay()
+      {
+         mComboTransitionCommand = null;
+         mComboTransitionReadyTime = -1;
+      }
+
+      function getLegacyAttackQueueReadyTime(param1:ScriptTimeline) : Int
+      {
+         var _loc1_= mLogicalWorkComponent.gameClock.gameTime;
+         var _loc2_= currentWeaponController.currentAttackStartTime;
+         var _loc3_= Std.int((_loc1_ - _loc2_) / LEGACY_ATTACK_QUEUE_INTERVAL_MS);
+         if(mLastQueuedTimeline != param1 || mLastQueuedTimelineTick != _loc3_)
+         {
+            return _loc1_;
+         }
+         return _loc2_ + (_loc3_ + 1) * LEGACY_ATTACK_QUEUE_INTERVAL_MS;
       }
 
       public function isCharging() : Bool
@@ -548,6 +594,7 @@ function  get_currentWeaponController() : WeaponController
       public function stopAttacking()
       {
          mNextWeaponCommand = null;
+         clearComboTransitionDelay();
          mLastQueuedTimeline = null;
          mLastQueuedTimelineTick = -1;
          mPotentialWeaponInputQueue.resize(0);

@@ -229,7 +229,7 @@ jobs:
       - name: Build Linux
         if: inputs.platform == 'linux'
         shell: bash
-        run: haxelib run openfl build project.xml cpp
+        run: haxelib run openfl build project.xml cpp -DHXCPP_OPTIMIZE_LINK
 
       - name: Package Linux
         if: inputs.platform == 'linux'
@@ -255,7 +255,7 @@ jobs:
       - name: Build Windows
         if: inputs.platform == 'windows'
         shell: pwsh
-        run: haxelib run openfl build project.xml cpp
+        run: haxelib run openfl build project.xml cpp -DHXCPP_OPTIMIZE_LINK
 
       - name: Package Windows
         if: inputs.platform == 'windows'
@@ -287,7 +287,8 @@ jobs:
           mkdir -p dist
           output_zip="dist/Dungeon.Rampage.Haxe.${{ inputs.version }}.macOS.zip"
           tools/macos/release_macos_all.sh \
-            --output-zip "$output_zip"
+            --output-zip "$output_zip" \
+            -- -DHXCPP_OPTIMIZE_LINK
 
           macos_app="bin/macos/bin/Dungeon Rampage Haxe.app"
 

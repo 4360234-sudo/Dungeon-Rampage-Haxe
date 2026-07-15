@@ -1158,7 +1158,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           if(mDungeonBusterAttackTimeline != null && mDungeonBusterAttackTimeline.isPlaying)
           {
-@@ -249,11 +256,21 @@
+@@ -249,11 +256,22 @@
              mPotentialWeaponInputQueue.push(new PotentialWeaponInputQueueStruct(mWeaponControllers[(param1 : Int)],param1,param2,param3));
           }
        }
@@ -1177,12 +1177,13 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
 +         }
 +         if(_loc3_ != null && mLastQueuedTimeline == _loc3_ && mLastQueuedTimelineTick == _loc4_)
 +         {
++            tryAttack();
 +            return;
 +         }
           while(mPotentialWeaponInputQueue.length > 0)
           {
              _loc2_ = ASCompat.dynamicAs(mPotentialWeaponInputQueue[0], combat.attack.PotentialWeaponInputQueueStruct);
-@@ -279,9 +296,11 @@
+@@ -279,9 +297,11 @@
              mPotentialWeaponInputQueue.shift();
           }
           tryAttack();
@@ -1195,7 +1196,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        function canQueueWeaponDown(param1:PotentialWeaponInputQueueStruct) : Bool
        {
           if(mNextWeaponCommand != null || currentWeaponController.weaponDownActive || param1.weaponController != null && param1.weaponController.IsInCooldown)
-@@ -290,7 +309,7 @@
+@@ -290,7 +310,7 @@
           }
           return true;
        }
@@ -1204,7 +1205,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        function canQueueWeaponUp(param1:PotentialWeaponInputQueueStruct) : Bool
        {
           if(mNextWeaponCommand != null && mNextWeaponCommand.down && mNextWeaponCommand.weaponController == param1.weaponController)
-@@ -311,14 +330,14 @@
+@@ -311,14 +331,14 @@
           }
           return currentWeaponController.canQueue(param1,mQueueNextAttackWindow);
        }
@@ -1222,7 +1223,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           var _loc1_:ScriptTimeline = null;
           if(mNextWeaponCommand == null)
-@@ -385,7 +404,7 @@
+@@ -385,7 +405,7 @@
              mNextWeaponCommand = null;
           }
        }
@@ -1231,7 +1232,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        public function isCharging() : Bool
        {
           var _loc1_= 0;
-@@ -400,8 +419,8 @@
+@@ -400,8 +420,8 @@
           }
           return false;
        }
@@ -1242,7 +1243,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           var _loc3_= mDistributedPlayerOwner.weaponControllers[(param1 : Int)];
           if(_loc3_ != null)
-@@ -410,8 +429,8 @@
+@@ -410,8 +430,8 @@
              _loc3_.onWeaponDown(param2);
           }
        }
@@ -1253,7 +1254,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           var _loc3_= mDistributedPlayerOwner.weaponControllers[(param1 : Int)];
           if(_loc3_ != null)
-@@ -421,8 +440,8 @@
+@@ -421,8 +441,8 @@
              mDistributedPlayerOwner.currentWeaponIndex = (param1 : Int);
           }
        }
@@ -1264,7 +1265,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
  {
           if (param1 == null) param1 = (Std.int(4294967295) : UInt);
           var _loc2_= 0;
-@@ -441,8 +460,8 @@
+@@ -441,8 +461,8 @@
              _loc2_ = ASCompat.toInt(_loc2_) + 1;
           }
        }
@@ -1275,7 +1276,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           var _loc1_= 0;
           var _loc2_:WeaponController = null;
-@@ -458,8 +477,8 @@
+@@ -458,8 +478,8 @@
              _loc1_ = ASCompat.toInt(_loc1_) + 1;
           }
        }
@@ -1286,7 +1287,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           var _loc3_= ASCompat.dynamicAs(mDBFacade.gameMaster.stackableById.itemFor(param1), gameMasterDictionary.GMStackable);
           if(_loc3_ == null)
-@@ -484,8 +503,8 @@
+@@ -484,8 +504,8 @@
              mDistributedPlayerOwner.attack(_loc4_.Id,null,_loc4_.AttackSpdF,_loc6_);
           }
        }
@@ -1297,7 +1298,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           var _loc2_:ChargeWeaponController = null;
           var _loc3_= 0;
-@@ -500,8 +519,8 @@
+@@ -500,8 +520,8 @@
              _loc3_ = ASCompat.toInt(_loc3_) + 1;
           }
        }
@@ -1308,7 +1309,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           var _loc2_:ChargeWeaponController = null;
           var _loc3_= 0;
-@@ -516,22 +535,24 @@
+@@ -516,22 +536,24 @@
              _loc3_ = ASCompat.toInt(_loc3_) + 1;
           }
        }
@@ -1339,7 +1340,7 @@ diff --git a/src/combat/attack/PlayerOwnerAttackController.hx b/src/combat/attac
        {
           stopAttacking();
           var _loc1_:WeaponController;
-@@ -545,8 +566,8 @@
+@@ -545,8 +567,8 @@
              }
           }
        }

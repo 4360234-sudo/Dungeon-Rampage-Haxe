@@ -269,6 +269,7 @@ public function  get_weaponControllers() : Vector<WeaponController>
          }
          if(_loc3_ != null && mLastQueuedTimeline == _loc3_ && mLastQueuedTimelineTick == _loc4_)
          {
+            tryAttack();
             return;
          }
          while(mPotentialWeaponInputQueue.length > 0)

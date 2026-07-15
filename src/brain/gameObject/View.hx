@@ -83,9 +83,10 @@ package brain.gameObject
       public function updateFade(param1:GameClock) 
       {
          var _loc2_= Math.NaN;
+         var _loc3_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
          if(mFading)
          {
-            mRoot.alpha *= 0.85;
+            mRoot.alpha *= Math.pow(0.85,_loc3_);
             if(mRoot.alpha <= 0.3)
             {
                mFading = false;
@@ -95,7 +96,7 @@ package brain.gameObject
          else
          {
             _loc2_ = 1 - mRoot.alpha;
-            mRoot.alpha = 1 - _loc2_ * _loc2_;
+            mRoot.alpha = 1 - Math.pow(_loc2_,Math.pow(2,_loc3_));
             if(mRoot.alpha > 0.975)
             {
                unFade();

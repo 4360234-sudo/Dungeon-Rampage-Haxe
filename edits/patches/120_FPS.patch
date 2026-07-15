@@ -165,8 +165,8 @@ diff --git a/src/combat/weapon/ScalingWeaponController.hx b/src/combat/weapon/Sc
           if(mTotalTime == 0)
 @@ -101,25 +101,25 @@
              Logger.error("Weapon has no ControllerTimeTillEnd data set !");
-          }
-       }
+         }
+      }
 -      
 +
        public function setStartEffectTotalTime() : Float
@@ -3253,7 +3253,7 @@ diff --git a/src/brain/facade/Facade.hx b/src/brain/facade/Facade.hx
        public static inline final MAX_TICKS_PER_FRAME= 5;
        
 -      public static inline final FPS= (24 : UInt);
-+      public static inline final FPS= (120 : UInt);
++      // The simulation cadence is read from Stage.frameRate during initialization.
        
        var mElapsedTime:Float = 0;
        
@@ -3262,7 +3262,7 @@ diff --git a/src/brain/facade/Facade.hx b/src/brain/facade/Facade.hx
           mSwfHeight = mStageRef.stageHeight;
           Logger.init(mStageRef,true);
 -         mGameClock = new GameClock(1 / 24);
-+         mGameClock = new GameClock(1 / FPS);
++         mGameClock = new GameClock(1 / param1.frameRate);
           mRealClock = new GameClock(1 / param1.frameRate);
           mEventManager = new EventManager(this);
           mAssetRepository = ASCompat.dynamicAs(ASCompat.createInstance(mAssetRepositoryClass, [this]), brain.assetRepository.AssetRepository);
@@ -3282,6 +3282,7 @@ diff --git a/src/actor/pets/PetPortraitUI.hx b/src/actor/pets/PetPortraitUI.hx
 +         mCoolDownClipLength = ASCompat.toNumber(ASCompat.toNumberField((root : ASAny).cooldown, "totalFrames") * brain.clock.GameClock.ANIMATION_FRAME_DURATION);
        }
        
+
        function setHp(param1:UInt, param2:UInt) 
 Index: src/brain/clock/GameClock.hx
 IDEA additional info:
@@ -3291,13 +3292,15 @@ Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
 diff --git a/src/brain/clock/GameClock.hx b/src/brain/clock/GameClock.hx
 --- a/src/brain/clock/GameClock.hx	(revision 01acca451363f537dbdaab9a860100b5e1ef999e)
 +++ b/src/brain/clock/GameClock.hx	(date 1777079914767)
-@@ -5,6 +5,10 @@
+@@ -5,6 +5,12 @@
      class GameClock
     {
        
 +      public static inline final ANIMATION_FRAME_RATE:Float = 24;
 +      
 +      public static inline final ANIMATION_FRAME_DURATION:Float = 1 / ANIMATION_FRAME_RATE;
++      
++      public static inline final LEGACY_STAGE_FRAME_RATE:Float = 60;
 +      
        static var mServerTimeOffset:Float = 0;
        
@@ -3386,3 +3389,483 @@ diff --git a/src/brain/render/MovieClipCutsceneRenderer.hx b/src/brain/render/Mo
        }
        
        override function determineFrames(param1:MovieClip) 
+
+diff --git a/src/actor/Revealer.hx b/src/actor/Revealer.hx
+index 6e66837..21b0a68 100644
+--- a/src/actor/Revealer.hx
++++ b/src/actor/Revealer.hx
+@@ -20,7 +20,7 @@ package actor
+       
+       var mFinishedCallback:ASFunction;
+       
+-      var mStartFrame:UInt = 0;
++      var mFramesElapsed:Float = 0;
+       
+       var mDuration:UInt = 0;
+       
+@@ -35,7 +35,7 @@ package actor
+          mRoot = param1;
+          mFinishedCallback = param4;
+          mDuration = param3;
+-         mStartFrame = param2.gameClock.frame;
++         mFramesElapsed = 0;
+          mTargetScale = param1.scaleX;
+          mRevealType = param5;
+          mWorkComponent = new LogicalWorkComponent(mDBFacade,"Revealer");
+@@ -47,7 +47,8 @@ package actor
+          var _loc4_= Math.NaN;
+          var _loc2_= Math.NaN;
+          var _loc3_= Math.NaN;
+-         var _loc5_= (param1.frame - mStartFrame : UInt);
++         mFramesElapsed += param1.tickLength * GameClock.LEGACY_STAGE_FRAME_RATE;
++         var _loc5_= mFramesElapsed;
+          if(_loc5_ > mDuration)
+          {
+             mRoot.alpha = 1;
+diff --git a/src/brain/camera/LetterboxEffect.hx b/src/brain/camera/LetterboxEffect.hx
+index 3c32282..7603136 100644
+--- a/src/brain/camera/LetterboxEffect.hx
++++ b/src/brain/camera/LetterboxEffect.hx
+@@ -16,7 +16,7 @@ package brain.camera
+       
+       var mRectSprite:Sprite;
+       
+-      var mDuration:UInt = 0;
++      var mDuration:Float = 0;
+       
+       var mTransitionDuration:Float = Math.NaN;
+       
+@@ -30,14 +30,14 @@ package brain.camera
+       
+       var mFadeTask:Task;
+       
+-      var mFramesElapsed:UInt = 0;
++      var mFramesElapsed:Float = 0;
+       
+       static inline final mPadding:Float = 512;
+       
+       public function new(param1:Facade)
+       {
+          
+-         mFramesElapsed = (0 : UInt);
++         mFramesElapsed = 0;
+          mFacade = param1;
+          mWorkComponent = new LogicalWorkComponent(param1,"LetterboxEffect");
+          MemoryTracker.track(mWorkComponent,"LogicalWorkComponent - created in LetterboxEffect()","brain");
+@@ -45,7 +45,7 @@ package brain.camera
+       
+       public function doFade(param1:UInt, param2:Float, param3:Vector3D, param4:Float) 
+       {
+-         var _loc5_= 0;
++         var _loc5_:Float = 0;
+          if(mRectSprite == null)
+          {
+             mDuration = param1;
+@@ -57,10 +57,10 @@ package brain.camera
+          }
+          else
+          {
+-            _loc5_ = (mDuration - mFramesElapsed : Int);
+-            mDuration = (ASCompat.toInt((_loc5_ : UInt) > param1 ? (_loc5_ : UInt) : param1) : UInt);
++            _loc5_ = mDuration - mFramesElapsed;
++            mDuration = Math.max(_loc5_,param1);
+             mTransitionDuration = param2;
+-            mFramesElapsed = (0 : UInt);
++            mFramesElapsed = 0;
+             mAlpha = mAlpha > param4 ? mAlpha : param4;
+             mOffset = mAlpha / mTransitionDuration;
+          }
+@@ -72,7 +72,7 @@ package brain.camera
+          {
+             ResetFade();
+          }
+-         mFramesElapsed = (0 : UInt);
++         mFramesElapsed = 0;
+          mRectSprite = new Sprite();
+          MemoryTracker.track(mRectSprite,"Sprite - letterbox rect created in LetterboxEffect.execute()","brain");
+          mRectSprite.graphics.beginFill((Std.int(mColor.x) << 16 | Std.int(mColor.y) << 8 | Std.int(mColor.z) : UInt),1);
+@@ -92,15 +92,16 @@ package brain.camera
+             Logger.warn("LetterboxEffect with null RectSprite");
+             return;
+          }
+-         mFramesElapsed = mFramesElapsed + 1;
++         var _loc1_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
++         mFramesElapsed += _loc1_;
+          if(mFramesElapsed <= mTransitionDuration)
+          {
+-            mRectSprite.alpha += mOffset;
++            mRectSprite.alpha += mOffset * _loc1_;
+             mRectSprite.alpha = Math.min(mRectSprite.alpha,mAlpha);
+          }
+          else if(mFramesElapsed >= mDuration - mTransitionDuration)
+          {
+-            mRectSprite.alpha -= mOffset;
++            mRectSprite.alpha -= mOffset * _loc1_;
+             mRectSprite.alpha = Math.max(mRectSprite.alpha,0);
+          }
+          else if(mFramesElapsed > mTransitionDuration)
+@@ -116,7 +117,7 @@ package brain.camera
+       
+       function ResetFade() 
+       {
+-         mFramesElapsed = (0 : UInt);
++         mFramesElapsed = 0;
+          mFacade.sceneGraphManager.removeChild(mRectSprite);
+          mRectSprite = null;
+          mFadeTask.destroy();
+diff --git a/src/brain/gameObject/View.hx b/src/brain/gameObject/View.hx
+index 55a1eb3..5608eb4 100644
+--- a/src/brain/gameObject/View.hx
++++ b/src/brain/gameObject/View.hx
+@@ -83,9 +83,10 @@ package brain.gameObject
+       public function updateFade(param1:GameClock) 
+       {
+          var _loc2_= Math.NaN;
++         var _loc3_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
+          if(mFading)
+          {
+-            mRoot.alpha *= 0.85;
++            mRoot.alpha *= Math.pow(0.85,_loc3_);
+             if(mRoot.alpha <= 0.3)
+             {
+                mFading = false;
+@@ -95,7 +96,7 @@ package brain.gameObject
+          else
+          {
+             _loc2_ = 1 - mRoot.alpha;
+-            mRoot.alpha = 1 - _loc2_ * _loc2_;
++            mRoot.alpha = 1 - Math.pow(_loc2_,Math.pow(2,_loc3_));
+             if(mRoot.alpha > 0.975)
+             {
+                unFade();
+diff --git a/src/brain/uI/UIProgressBar.hx b/src/brain/uI/UIProgressBar.hx
+index 47664a0..455e10d 100644
+--- a/src/brain/uI/UIProgressBar.hx
++++ b/src/brain/uI/UIProgressBar.hx
+@@ -96,9 +96,10 @@ public function  get_mimimum() : Float
+       {
+          var _loc2_= Math.NaN;
+          var _loc3_= false;
++         var _loc4_= 1 - Math.pow(1 - LERP_SPEED,param1.tickLength / GameClock.ANIMATION_FRAME_DURATION);
+          if(mTrueValue > mValue)
+          {
+-            _loc2_ = 1 - (mTrueValue - mValue) * 0.125;
++            _loc2_ = 1 - (mTrueValue - mValue) * _loc4_;
+             mValue += 1 - _loc2_ * _loc2_;
+             if(mTrueValue - mValue < 0.05)
+             {
+@@ -107,7 +108,7 @@ public function  get_mimimum() : Float
+          }
+          if(mTrueValue < mDeltaValue)
+          {
+-            _loc2_ = 1 - (mTrueValue - mDeltaValue) * 0.125;
++            _loc2_ = 1 - (mTrueValue - mDeltaValue) * _loc4_;
+             mDeltaValue += 1 - _loc2_ * _loc2_;
+             if(mDeltaValue - mTrueValue >= 0.05)
+             {
+diff --git a/src/combat/attack/ColorShiftTimelineAction.hx b/src/combat/attack/ColorShiftTimelineAction.hx
+index dc6380a..5cccc25 100644
+--- a/src/combat/attack/ColorShiftTimelineAction.hx
++++ b/src/combat/attack/ColorShiftTimelineAction.hx
+@@ -27,7 +27,7 @@ package combat.attack
+       
+       var mColorTransformTask:Task;
+       
+-      var mFramesElapsed:UInt = (0 : UInt);
++      var mFramesElapsed:Float = 0;
+       
+       var mOffsets:ColorTransform;
+       
+@@ -83,33 +83,33 @@ package combat.attack
+          mOffsets.greenOffset = (param2.greenOffset - param1.greenOffset) / param3;
+       }
+       
+-      function AddColorTransformOffsets() : ColorTransform
++      function AddColorTransformOffsets(param1:Float) : ColorTransform
+       {
+          var _loc1_= new ColorTransform();
+          var _loc2_= mActorView.body.transform.colorTransform;
+-         _loc1_.alphaMultiplier = _loc2_.alphaMultiplier + mOffsets.alphaMultiplier;
+-         _loc1_.alphaOffset = _loc2_.alphaOffset + mOffsets.alphaOffset;
+-         _loc1_.blueMultiplier = _loc2_.blueMultiplier + mOffsets.blueMultiplier;
+-         _loc1_.blueOffset = _loc2_.blueOffset + mOffsets.blueOffset;
+-         _loc1_.redMultiplier = _loc2_.redMultiplier + mOffsets.redMultiplier;
+-         _loc1_.redOffset = _loc2_.redOffset + mOffsets.redOffset;
+-         _loc1_.greenMultiplier = _loc2_.greenMultiplier + mOffsets.greenMultiplier;
+-         _loc1_.greenOffset = _loc2_.greenOffset + mOffsets.greenOffset;
++         _loc1_.alphaMultiplier = _loc2_.alphaMultiplier + mOffsets.alphaMultiplier * param1;
++         _loc1_.alphaOffset = _loc2_.alphaOffset + mOffsets.alphaOffset * param1;
++         _loc1_.blueMultiplier = _loc2_.blueMultiplier + mOffsets.blueMultiplier * param1;
++         _loc1_.blueOffset = _loc2_.blueOffset + mOffsets.blueOffset * param1;
++         _loc1_.redMultiplier = _loc2_.redMultiplier + mOffsets.redMultiplier * param1;
++         _loc1_.redOffset = _loc2_.redOffset + mOffsets.redOffset * param1;
++         _loc1_.greenMultiplier = _loc2_.greenMultiplier + mOffsets.greenMultiplier * param1;
++         _loc1_.greenOffset = _loc2_.greenOffset + mOffsets.greenOffset * param1;
+          return _loc1_;
+       }
+       
+-      function SubtractColorTransformOffsets() : ColorTransform
++      function SubtractColorTransformOffsets(param1:Float) : ColorTransform
+       {
+          var _loc1_= new ColorTransform();
+          var _loc2_= mActorView.body.transform.colorTransform;
+-         _loc1_.alphaMultiplier = _loc2_.alphaMultiplier - mOffsets.alphaMultiplier;
+-         _loc1_.alphaOffset = _loc2_.alphaOffset - mOffsets.alphaOffset;
+-         _loc1_.blueMultiplier = _loc2_.blueMultiplier - mOffsets.blueMultiplier;
+-         _loc1_.blueOffset = _loc2_.blueOffset - mOffsets.blueOffset;
+-         _loc1_.redMultiplier = _loc2_.redMultiplier - mOffsets.redMultiplier;
+-         _loc1_.redOffset = _loc2_.redOffset - mOffsets.redOffset;
+-         _loc1_.greenMultiplier = _loc2_.greenMultiplier - mOffsets.greenMultiplier;
+-         _loc1_.greenOffset = _loc2_.greenOffset - mOffsets.greenOffset;
++         _loc1_.alphaMultiplier = _loc2_.alphaMultiplier - mOffsets.alphaMultiplier * param1;
++         _loc1_.alphaOffset = _loc2_.alphaOffset - mOffsets.alphaOffset * param1;
++         _loc1_.blueMultiplier = _loc2_.blueMultiplier - mOffsets.blueMultiplier * param1;
++         _loc1_.blueOffset = _loc2_.blueOffset - mOffsets.blueOffset * param1;
++         _loc1_.redMultiplier = _loc2_.redMultiplier - mOffsets.redMultiplier * param1;
++         _loc1_.redOffset = _loc2_.redOffset - mOffsets.redOffset * param1;
++         _loc1_.greenMultiplier = _loc2_.greenMultiplier - mOffsets.greenMultiplier * param1;
++         _loc1_.greenOffset = _loc2_.greenOffset - mOffsets.greenOffset * param1;
+          return _loc1_;
+       }
+       
+@@ -120,7 +120,7 @@ package combat.attack
+          {
+             ResetColorTransform();
+          }
+-         mFramesElapsed = (0 : UInt);
++         mFramesElapsed = 0;
+          mOldColorTransform = CopyColorTransform(new ColorTransform());
+          var _loc2_= new ColorTransform(mColorMul.x,mColorMul.y,mColorMul.z,mAlphaMul,mColorAdd.x,mColorAdd.y,mColorAdd.z,mAlphaAdd);
+          CalculateColorTransformOffsets(mOldColorTransform,_loc2_,mTransitionDuration);
+@@ -139,14 +139,15 @@ package combat.attack
+       {
+          if(mActorView != null && mActorView.body != null)
+          {
+-            mFramesElapsed = mFramesElapsed + 1;
++            var _loc1_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
++            mFramesElapsed += _loc1_;
+             if(mFramesElapsed <= mTransitionDuration)
+             {
+-               mActorView.body.transform.colorTransform = AddColorTransformOffsets();
++               mActorView.body.transform.colorTransform = AddColorTransformOffsets(_loc1_);
+             }
+             else if(mFramesElapsed >= mDuration - mTransitionDuration)
+             {
+-               mActorView.body.transform.colorTransform = SubtractColorTransformOffsets();
++               mActorView.body.transform.colorTransform = SubtractColorTransformOffsets(_loc1_);
+             }
+             if(mFramesElapsed > mDuration)
+             {
+@@ -160,7 +161,7 @@ package combat.attack
+       
+       function ResetColorTransform() 
+       {
+-         mFramesElapsed = (0 : UInt);
++         mFramesElapsed = 0;
+          if(mActorView != null && mActorView.body != null)
+          {
+             mActorView.body.transform.colorTransform = CopyColorTransform(mOldColorTransform);
+diff --git a/src/combat/attack/TeleportTimelineAction.hx b/src/combat/attack/TeleportTimelineAction.hx
+index e30babb..95becf1 100644
+--- a/src/combat/attack/TeleportTimelineAction.hx
++++ b/src/combat/attack/TeleportTimelineAction.hx
+@@ -13,7 +13,7 @@ package combat.attack
+       
+       public static inline final TYPE= "teleport";
+       
+-      var mFramesElapsed:UInt = 0;
++      var mFramesElapsed:Float = 0;
+       
+       var mDuration:UInt = 0;
+       
+@@ -44,7 +44,7 @@ package combat.attack
+          {
+             ResetMovement();
+          }
+-         mFramesElapsed = (0 : UInt);
++         mFramesElapsed = 0;
+          if(mMovementTask != null)
+          {
+             mMovementTask.destroy();
+@@ -126,8 +126,9 @@ package combat.attack
+       {
+          if(mActorView != null && mActorView.body != null)
+          {
+-            mFramesElapsed = mFramesElapsed + 1;
+-            if(mFramesElapsed == 1)
++            var _loc1_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
++            mFramesElapsed += _loc1_;
++            if(mFramesElapsed <= _loc1_)
+             {
+                stopHeroMovement();
+                initMovementData();
+@@ -149,7 +150,7 @@ package combat.attack
+       function ResetMovement() 
+       {
+          var _loc1_:HeroGameObjectOwner = null;
+-         mFramesElapsed = (0 : UInt);
++         mFramesElapsed = 0;
+          if(mActorView != null && mActorView.body != null)
+          {
+          }
+diff --git a/src/distributedObjects/DistributedDungeonSummary.hx b/src/distributedObjects/DistributedDungeonSummary.hx
+index f73cf56..865d76d 100644
+--- a/src/distributedObjects/DistributedDungeonSummary.hx
++++ b/src/distributedObjects/DistributedDungeonSummary.hx
+@@ -2520,7 +2520,7 @@ function  get_dungeonSuccess() : UInt
+       function updateBannerAlpha(param1:GameClock) 
+       {
+          var _loc2_= ASCompat.toNumber(1 - ASCompat.toNumberField((mScoreReportRoot : ASAny).stats_a, "alpha"));
+-         _loc2_ = 1 - _loc2_ * _loc2_;
++         _loc2_ = 1 - Math.pow(_loc2_,Math.pow(2,param1.tickLength / GameClock.ANIMATION_FRAME_DURATION));
+          ASCompat.setProperty((mScoreReportRoot : ASAny).stats_a, "alpha", _loc2_);
+          ASCompat.setProperty((mScoreReportRoot : ASAny).stats_b, "alpha", _loc2_);
+          ASCompat.setProperty((mScoreReportRoot : ASAny).stats_c, "alpha", _loc2_);
+diff --git a/src/effects/LerpEffectGameObject.hx b/src/effects/LerpEffectGameObject.hx
+index 2e3326a..553bbf4 100644
+--- a/src/effects/LerpEffectGameObject.hx
++++ b/src/effects/LerpEffectGameObject.hx
+@@ -1,6 +1,7 @@
+ package effects
+ ;
+    import actor.ActorGameObject;
++   import brain.clock.GameClock;
+    import brain.event.EventComponent;
+    import facade.DBFacade;
+    import com.greensock.TimelineMax;
+@@ -72,7 +73,7 @@ package effects
+             _loc4_ = _loc3_.subtract(mEffectView.position);
+             _loc2_ = _loc4_.length;
+             _loc4_.normalize();
+-            _loc4_.scaleBy(mLerpTempSpeed);
++            _loc4_.scaleBy(mLerpTempSpeed * mDBFacade.realClock.tickLength * GameClock.LEGACY_STAGE_FRAME_RATE);
+             mEffectView.position = mEffectView.position.add(_loc4_);
+             if(_loc2_ < 15)
+             {
+diff --git a/src/stateMachine/mainStateMachine/LoadingScreenState.hx b/src/stateMachine/mainStateMachine/LoadingScreenState.hx
+index fcb42bd..659eb1a 100644
+--- a/src/stateMachine/mainStateMachine/LoadingScreenState.hx
++++ b/src/stateMachine/mainStateMachine/LoadingScreenState.hx
+@@ -286,6 +286,7 @@ import flash.net.NetStream;
+          {
+             _loc2_ = AssetLoader.pendingBytesLoaded / AssetLoader.pendingBytesTotal;
+             mProgressTarget = Math.max(mLoadingBar.value,_loc2_);
+-            mLoadingBar.value += (mProgressTarget - mLoadingBar.value) * 0.04;
++            var _loc3_= 1 - Math.pow(1 - 0.04,param1.tickLength / GameClock.ANIMATION_FRAME_DURATION);
++            mLoadingBar.value += (mProgressTarget - mLoadingBar.value) * _loc3_;
+          }
+       }
+diff --git a/src/brain/render/MovieClipRenderer.hx b/src/brain/render/MovieClipRenderer.hx
+--- a/src/brain/render/MovieClipRenderer.hx
++++ b/src/brain/render/MovieClipRenderer.hx
+@@ -17,6 +17,8 @@ package brain.render
+       static inline final LOOP_LABEL= "loop";
+       
+       static inline final NO_LOOP_LABEL= "noloop";
++
++      static inline final RENDERER_OWNER_PROPERTY= "MCR_renderer";
+       
+       var mFrameRate:Float = 24;
+       
+@@ -109,6 +111,10 @@ public function  set_finishedCallback(param1:ASFunction) :ASFunction      {
+          {
+             mClip.removeEventListener("addedToStage",onAdd);
+             mClip.removeEventListener("removedFromStage",onRemove);
++            if(ASCompat.getProperty(mClip,RENDERER_OWNER_PROPERTY) == this)
++            {
++               ASCompat.deleteProperty(mClip,RENDERER_OWNER_PROPERTY);
++            }
+          }
+          if(mOnFrameTask != null)
+          {
+@@ -224,7 +230,12 @@ public function  set_clip(param1:MovieClip) :MovieClip      {
+          {
+             return param1;
+          }
++         if(mClip != null && ASCompat.getProperty(mClip,RENDERER_OWNER_PROPERTY) == this)
++         {
++            ASCompat.deleteProperty(mClip,RENDERER_OWNER_PROPERTY);
++         }
+          mClip = param1;
++         ASCompat.setProperty(mClip,RENDERER_OWNER_PROPERTY,this);
+          mPlayHead = mStartFrame;
+          mMaxFrames = initialize(mClip);
+          this.updateClip(mClip);
+@@ -247,6 +258,11 @@ public function  get_numFrames() : UInt
+       
+       function updateClip(param1:DisplayObjectContainer) 
+       {
++         var rendererOwner= ASCompat.getProperty(param1,RENDERER_OWNER_PROPERTY);
++         if(param1 != mClip && rendererOwner != null && rendererOwner != this)
++         {
++            return;
++         }
+          var _loc5_:MovieClip = null;
+          var _loc4_:DisplayObject = null;
+          var _loc7_:DisplayObjectContainer = null;
+@@ -324,6 +340,11 @@ public function  get_isPlaying() : Bool
+       
+       function initialize(param1:DisplayObjectContainer, param2:UInt = (0 : UInt), param3:String = "") : UInt
+       {
++         var rendererOwner= ASCompat.getProperty(param1,RENDERER_OWNER_PROPERTY);
++         if(param1 != mClip && rendererOwner != null && rendererOwner != this)
++         {
++            return param2;
++         }
+          var _loc7_:DisplayObject = null;
+          var _loc4_:MovieClip = null;
+          var _loc5_:DisplayObjectContainer = null;
+diff --git a/src/distributedObjects/DistributedDungeonSummary.hx b/src/distributedObjects/DistributedDungeonSummary.hx
+--- a/src/distributedObjects/DistributedDungeonSummary.hx
++++ b/src/distributedObjects/DistributedDungeonSummary.hx
+@@ -464,7 +464,7 @@ import flash.display.MovieClip;
+       function setRevealState(param1:UInt, param2:Float) 
+       {
+          mRevealState = param1;
+-         mWorkComponent.doLater(param2,updateRevealState);
++         mWorkComponent.doLater(Math.max(param2,GameClock.ANIMATION_FRAME_DURATION),updateRevealState);
+       }
+       
+       function setUILootSlotsTwoTreasuresVisible(param1:Bool) 
+diff --git a/src/brain/assetRepository/SwfAsset.hx b/src/brain/assetRepository/SwfAsset.hx
+--- a/src/brain/assetRepository/SwfAsset.hx
++++ b/src/brain/assetRepository/SwfAsset.hx
+@@ -1,5 +1,6 @@
+ package brain.assetRepository
+ ;
++import brain.clock.GameClock;
+ import brain.logger.Logger;
+ import flash.display.Bitmap;
+ import flash.display.DisplayObject;
+@@ -697,6 +698,7 @@ class SwfAsset extends Asset
+         _loc1_ = cast Assets.getLibrary(param1);
+         if(_loc1_ != null)
+         {
++            applyLegacyTimelineFrameRate(_loc1_);
+             sLoadedPreprocessedLibraries.set(param1,_loc1_);
+             return _loc1_;
+         }
+@@ -711,6 +713,7 @@ class SwfAsset extends Asset
+             {
+                 cast(_loc1_, AnimateLibrary).load();
+             }
++            applyLegacyTimelineFrameRate(_loc1_);
+             Assets.registerLibrary(param1,_loc1_);
+             sLoadedPreprocessedLibraries.set(param1,_loc1_);
+             return _loc1_;
+@@ -723,6 +726,15 @@ class SwfAsset extends Asset
+         return null;
+     }
+ 
++    static function applyLegacyTimelineFrameRate(param1:AssetLibrary) : Void
++    {
++        var _loc1_:AnimateLibrary = Std.isOfType(param1, AnimateLibrary) ? cast param1 : null;
++        if(_loc1_ != null)
++        {
++            @:privateAccess _loc1_.frameRate = GameClock.LEGACY_STAGE_FRAME_RATE;
++        }
++    }
++
+     static function getPreprocessedBundlePath(param1:String) : String
+     {
+         var _loc1_= Path.directory(Sys.programPath());

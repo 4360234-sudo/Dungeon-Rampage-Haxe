@@ -27,7 +27,7 @@ package combat.attack
       
       var mColorTransformTask:Task;
       
-      var mFramesElapsed:UInt = (0 : UInt);
+      var mFramesElapsed:Float = 0;
       
       var mOffsets:ColorTransform;
       
@@ -83,33 +83,33 @@ package combat.attack
          mOffsets.greenOffset = (param2.greenOffset - param1.greenOffset) / param3;
       }
       
-      function AddColorTransformOffsets() : ColorTransform
+      function AddColorTransformOffsets(param1:Float) : ColorTransform
       {
          var _loc1_= new ColorTransform();
          var _loc2_= mActorView.body.transform.colorTransform;
-         _loc1_.alphaMultiplier = _loc2_.alphaMultiplier + mOffsets.alphaMultiplier;
-         _loc1_.alphaOffset = _loc2_.alphaOffset + mOffsets.alphaOffset;
-         _loc1_.blueMultiplier = _loc2_.blueMultiplier + mOffsets.blueMultiplier;
-         _loc1_.blueOffset = _loc2_.blueOffset + mOffsets.blueOffset;
-         _loc1_.redMultiplier = _loc2_.redMultiplier + mOffsets.redMultiplier;
-         _loc1_.redOffset = _loc2_.redOffset + mOffsets.redOffset;
-         _loc1_.greenMultiplier = _loc2_.greenMultiplier + mOffsets.greenMultiplier;
-         _loc1_.greenOffset = _loc2_.greenOffset + mOffsets.greenOffset;
+         _loc1_.alphaMultiplier = _loc2_.alphaMultiplier + mOffsets.alphaMultiplier * param1;
+         _loc1_.alphaOffset = _loc2_.alphaOffset + mOffsets.alphaOffset * param1;
+         _loc1_.blueMultiplier = _loc2_.blueMultiplier + mOffsets.blueMultiplier * param1;
+         _loc1_.blueOffset = _loc2_.blueOffset + mOffsets.blueOffset * param1;
+         _loc1_.redMultiplier = _loc2_.redMultiplier + mOffsets.redMultiplier * param1;
+         _loc1_.redOffset = _loc2_.redOffset + mOffsets.redOffset * param1;
+         _loc1_.greenMultiplier = _loc2_.greenMultiplier + mOffsets.greenMultiplier * param1;
+         _loc1_.greenOffset = _loc2_.greenOffset + mOffsets.greenOffset * param1;
          return _loc1_;
       }
       
-      function SubtractColorTransformOffsets() : ColorTransform
+      function SubtractColorTransformOffsets(param1:Float) : ColorTransform
       {
          var _loc1_= new ColorTransform();
          var _loc2_= mActorView.body.transform.colorTransform;
-         _loc1_.alphaMultiplier = _loc2_.alphaMultiplier - mOffsets.alphaMultiplier;
-         _loc1_.alphaOffset = _loc2_.alphaOffset - mOffsets.alphaOffset;
-         _loc1_.blueMultiplier = _loc2_.blueMultiplier - mOffsets.blueMultiplier;
-         _loc1_.blueOffset = _loc2_.blueOffset - mOffsets.blueOffset;
-         _loc1_.redMultiplier = _loc2_.redMultiplier - mOffsets.redMultiplier;
-         _loc1_.redOffset = _loc2_.redOffset - mOffsets.redOffset;
-         _loc1_.greenMultiplier = _loc2_.greenMultiplier - mOffsets.greenMultiplier;
-         _loc1_.greenOffset = _loc2_.greenOffset - mOffsets.greenOffset;
+         _loc1_.alphaMultiplier = _loc2_.alphaMultiplier - mOffsets.alphaMultiplier * param1;
+         _loc1_.alphaOffset = _loc2_.alphaOffset - mOffsets.alphaOffset * param1;
+         _loc1_.blueMultiplier = _loc2_.blueMultiplier - mOffsets.blueMultiplier * param1;
+         _loc1_.blueOffset = _loc2_.blueOffset - mOffsets.blueOffset * param1;
+         _loc1_.redMultiplier = _loc2_.redMultiplier - mOffsets.redMultiplier * param1;
+         _loc1_.redOffset = _loc2_.redOffset - mOffsets.redOffset * param1;
+         _loc1_.greenMultiplier = _loc2_.greenMultiplier - mOffsets.greenMultiplier * param1;
+         _loc1_.greenOffset = _loc2_.greenOffset - mOffsets.greenOffset * param1;
          return _loc1_;
       }
       
@@ -120,7 +120,7 @@ package combat.attack
          {
             ResetColorTransform();
          }
-         mFramesElapsed = (0 : UInt);
+         mFramesElapsed = 0;
          mOldColorTransform = CopyColorTransform(new ColorTransform());
          var _loc2_= new ColorTransform(mColorMul.x,mColorMul.y,mColorMul.z,mAlphaMul,mColorAdd.x,mColorAdd.y,mColorAdd.z,mAlphaAdd);
          CalculateColorTransformOffsets(mOldColorTransform,_loc2_,mTransitionDuration);
@@ -139,14 +139,15 @@ package combat.attack
       {
          if(mActorView != null && mActorView.body != null)
          {
-            mFramesElapsed = mFramesElapsed + 1;
+            var _loc1_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
+            mFramesElapsed += _loc1_;
             if(mFramesElapsed <= mTransitionDuration)
             {
-               mActorView.body.transform.colorTransform = AddColorTransformOffsets();
+               mActorView.body.transform.colorTransform = AddColorTransformOffsets(_loc1_);
             }
             else if(mFramesElapsed >= mDuration - mTransitionDuration)
             {
-               mActorView.body.transform.colorTransform = SubtractColorTransformOffsets();
+               mActorView.body.transform.colorTransform = SubtractColorTransformOffsets(_loc1_);
             }
             if(mFramesElapsed > mDuration)
             {
@@ -160,7 +161,7 @@ package combat.attack
       
       function ResetColorTransform() 
       {
-         mFramesElapsed = (0 : UInt);
+         mFramesElapsed = 0;
          if(mActorView != null && mActorView.body != null)
          {
             mActorView.body.transform.colorTransform = CopyColorTransform(mOldColorTransform);

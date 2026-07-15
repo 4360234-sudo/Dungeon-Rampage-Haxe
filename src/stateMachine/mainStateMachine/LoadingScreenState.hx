@@ -286,7 +286,8 @@ import flash.net.NetStream;
          {
             _loc2_ = AssetLoader.pendingBytesLoaded / AssetLoader.pendingBytesTotal;
             mProgressTarget = Math.max(mLoadingBar.value,_loc2_);
-            mLoadingBar.value += (mProgressTarget - mLoadingBar.value) * 0.04;
+            var _loc3_= 1 - Math.pow(1 - 0.04,param1.tickLength / GameClock.ANIMATION_FRAME_DURATION);
+            mLoadingBar.value += (mProgressTarget - mLoadingBar.value) * _loc3_;
          }
       }
       

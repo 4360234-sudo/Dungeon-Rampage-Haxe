@@ -96,9 +96,10 @@ public function  get_mimimum() : Float
       {
          var _loc2_= Math.NaN;
          var _loc3_= false;
+         var _loc4_= 1 - Math.pow(1 - LERP_SPEED,param1.tickLength / GameClock.ANIMATION_FRAME_DURATION);
          if(mTrueValue > mValue)
          {
-            _loc2_ = 1 - (mTrueValue - mValue) * 0.125;
+            _loc2_ = 1 - (mTrueValue - mValue) * _loc4_;
             mValue += 1 - _loc2_ * _loc2_;
             if(mTrueValue - mValue < 0.05)
             {
@@ -107,7 +108,7 @@ public function  get_mimimum() : Float
          }
          if(mTrueValue < mDeltaValue)
          {
-            _loc2_ = 1 - (mTrueValue - mDeltaValue) * 0.125;
+            _loc2_ = 1 - (mTrueValue - mDeltaValue) * _loc4_;
             mDeltaValue += 1 - _loc2_ * _loc2_;
             if(mDeltaValue - mTrueValue >= 0.05)
             {

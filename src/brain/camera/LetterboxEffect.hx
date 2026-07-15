@@ -16,7 +16,7 @@ package brain.camera
       
       var mRectSprite:Sprite;
       
-      var mDuration:UInt = 0;
+      var mDuration:Float = 0;
       
       var mTransitionDuration:Float = Math.NaN;
       
@@ -30,14 +30,14 @@ package brain.camera
       
       var mFadeTask:Task;
       
-      var mFramesElapsed:UInt = 0;
+      var mFramesElapsed:Float = 0;
       
       static inline final mPadding:Float = 512;
       
       public function new(param1:Facade)
       {
          
-         mFramesElapsed = (0 : UInt);
+         mFramesElapsed = 0;
          mFacade = param1;
          mWorkComponent = new LogicalWorkComponent(param1,"LetterboxEffect");
          MemoryTracker.track(mWorkComponent,"LogicalWorkComponent - created in LetterboxEffect()","brain");
@@ -45,7 +45,7 @@ package brain.camera
       
       public function doFade(param1:UInt, param2:Float, param3:Vector3D, param4:Float) 
       {
-         var _loc5_= 0;
+         var _loc5_:Float = 0;
          if(mRectSprite == null)
          {
             mDuration = param1;
@@ -57,10 +57,10 @@ package brain.camera
          }
          else
          {
-            _loc5_ = (mDuration - mFramesElapsed : Int);
-            mDuration = (ASCompat.toInt((_loc5_ : UInt) > param1 ? (_loc5_ : UInt) : param1) : UInt);
+            _loc5_ = mDuration - mFramesElapsed;
+            mDuration = Math.max(_loc5_,param1);
             mTransitionDuration = param2;
-            mFramesElapsed = (0 : UInt);
+            mFramesElapsed = 0;
             mAlpha = mAlpha > param4 ? mAlpha : param4;
             mOffset = mAlpha / mTransitionDuration;
          }
@@ -72,7 +72,7 @@ package brain.camera
          {
             ResetFade();
          }
-         mFramesElapsed = (0 : UInt);
+         mFramesElapsed = 0;
          mRectSprite = new Sprite();
          MemoryTracker.track(mRectSprite,"Sprite - letterbox rect created in LetterboxEffect.execute()","brain");
          mRectSprite.graphics.beginFill((Std.int(mColor.x) << 16 | Std.int(mColor.y) << 8 | Std.int(mColor.z) : UInt),1);
@@ -92,15 +92,16 @@ package brain.camera
             Logger.warn("LetterboxEffect with null RectSprite");
             return;
          }
-         mFramesElapsed = mFramesElapsed + 1;
+         var _loc1_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
+         mFramesElapsed += _loc1_;
          if(mFramesElapsed <= mTransitionDuration)
          {
-            mRectSprite.alpha += mOffset;
+            mRectSprite.alpha += mOffset * _loc1_;
             mRectSprite.alpha = Math.min(mRectSprite.alpha,mAlpha);
          }
          else if(mFramesElapsed >= mDuration - mTransitionDuration)
          {
-            mRectSprite.alpha -= mOffset;
+            mRectSprite.alpha -= mOffset * _loc1_;
             mRectSprite.alpha = Math.max(mRectSprite.alpha,0);
          }
          else if(mFramesElapsed > mTransitionDuration)
@@ -116,7 +117,7 @@ package brain.camera
       
       function ResetFade() 
       {
-         mFramesElapsed = (0 : UInt);
+         mFramesElapsed = 0;
          mFacade.sceneGraphManager.removeChild(mRectSprite);
          mRectSprite = null;
          mFadeTask.destroy();

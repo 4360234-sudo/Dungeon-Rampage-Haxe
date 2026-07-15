@@ -17,6 +17,8 @@ package brain.render
       static inline final LOOP_LABEL= "loop";
       
       static inline final NO_LOOP_LABEL= "noloop";
+
+      static inline final RENDERER_OWNER_PROPERTY= "MCR_renderer";
       
       var mFrameRate:Float = 24;
       
@@ -109,6 +111,10 @@ public function  set_finishedCallback(param1:ASFunction) :ASFunction      {
          {
             mClip.removeEventListener("addedToStage",onAdd);
             mClip.removeEventListener("removedFromStage",onRemove);
+            if(ASCompat.getProperty(mClip,RENDERER_OWNER_PROPERTY) == this)
+            {
+               ASCompat.deleteProperty(mClip,RENDERER_OWNER_PROPERTY);
+            }
          }
          if(mOnFrameTask != null)
          {
@@ -224,7 +230,12 @@ public function  set_clip(param1:MovieClip) :MovieClip      {
          {
             return param1;
          }
+         if(mClip != null && ASCompat.getProperty(mClip,RENDERER_OWNER_PROPERTY) == this)
+         {
+            ASCompat.deleteProperty(mClip,RENDERER_OWNER_PROPERTY);
+         }
          mClip = param1;
+         ASCompat.setProperty(mClip,RENDERER_OWNER_PROPERTY,this);
          mPlayHead = mStartFrame;
          mMaxFrames = initialize(mClip);
          this.updateClip(mClip);
@@ -247,6 +258,11 @@ public function  get_numFrames() : UInt
       
       function updateClip(param1:DisplayObjectContainer) 
       {
+         var rendererOwner= ASCompat.getProperty(param1,RENDERER_OWNER_PROPERTY);
+         if(param1 != mClip && rendererOwner != null && rendererOwner != this)
+         {
+            return;
+         }
          var _loc5_:MovieClip = null;
          var _loc4_:DisplayObject = null;
          var _loc7_:DisplayObjectContainer = null;
@@ -324,6 +340,11 @@ public function  get_isPlaying() : Bool
       
       function initialize(param1:DisplayObjectContainer, param2:UInt = (0 : UInt), param3:String = "") : UInt
       {
+         var rendererOwner= ASCompat.getProperty(param1,RENDERER_OWNER_PROPERTY);
+         if(param1 != mClip && rendererOwner != null && rendererOwner != this)
+         {
+            return param2;
+         }
          var _loc7_:DisplayObject = null;
          var _loc4_:MovieClip = null;
          var _loc5_:DisplayObjectContainer = null;

@@ -29,7 +29,7 @@ package brain.facade
       
       public static inline final MAX_TICKS_PER_FRAME= 5;
       
-      public static inline final FPS= (120 : UInt);
+      // The simulation cadence is read from Stage.frameRate during initialization.
       
       var mElapsedTime:Float = 0;
       
@@ -288,7 +288,7 @@ public function  get_skippingFrame() : Bool
          mSwfWidth = mStageRef.stageWidth;
          mSwfHeight = mStageRef.stageHeight;
          Logger.init(mStageRef,true);
-         mGameClock = new GameClock(1 / FPS);
+         mGameClock = new GameClock(1 / param1.frameRate);
          mRealClock = new GameClock(1 / param1.frameRate);
          mEventManager = new EventManager(this);
          mAssetRepository = ASCompat.dynamicAs(ASCompat.createInstance(mAssetRepositoryClass, [this]), brain.assetRepository.AssetRepository);

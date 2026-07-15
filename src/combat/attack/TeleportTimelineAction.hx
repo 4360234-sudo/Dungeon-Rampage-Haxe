@@ -13,7 +13,7 @@ package combat.attack
       
       public static inline final TYPE= "teleport";
       
-      var mFramesElapsed:UInt = 0;
+      var mFramesElapsed:Float = 0;
       
       var mDuration:UInt = 0;
       
@@ -44,7 +44,7 @@ package combat.attack
          {
             ResetMovement();
          }
-         mFramesElapsed = (0 : UInt);
+         mFramesElapsed = 0;
          if(mMovementTask != null)
          {
             mMovementTask.destroy();
@@ -126,8 +126,9 @@ package combat.attack
       {
          if(mActorView != null && mActorView.body != null)
          {
-            mFramesElapsed = mFramesElapsed + 1;
-            if(mFramesElapsed == 1)
+            var _loc1_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
+            mFramesElapsed += _loc1_;
+            if(mFramesElapsed <= _loc1_)
             {
                stopHeroMovement();
                initMovementData();
@@ -149,7 +150,7 @@ package combat.attack
       function ResetMovement() 
       {
          var _loc1_:HeroGameObjectOwner = null;
-         mFramesElapsed = (0 : UInt);
+         mFramesElapsed = 0;
          if(mActorView != null && mActorView.body != null)
          {
          }

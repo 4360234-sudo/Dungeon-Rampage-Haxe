@@ -20,7 +20,7 @@ package actor
       
       var mFinishedCallback:ASFunction;
       
-      var mStartFrame:UInt = 0;
+      var mFramesElapsed:Float = 0;
       
       var mDuration:UInt = 0;
       
@@ -35,7 +35,7 @@ package actor
          mRoot = param1;
          mFinishedCallback = param4;
          mDuration = param3;
-         mStartFrame = param2.gameClock.frame;
+         mFramesElapsed = 0;
          mTargetScale = param1.scaleX;
          mRevealType = param5;
          mWorkComponent = new LogicalWorkComponent(mDBFacade,"Revealer");
@@ -47,7 +47,8 @@ package actor
          var _loc4_= Math.NaN;
          var _loc2_= Math.NaN;
          var _loc3_= Math.NaN;
-         var _loc5_= (param1.frame - mStartFrame : UInt);
+         mFramesElapsed += param1.tickLength * GameClock.LEGACY_STAGE_FRAME_RATE;
+         var _loc5_= mFramesElapsed;
          if(_loc5_ > mDuration)
          {
             mRoot.alpha = 1;

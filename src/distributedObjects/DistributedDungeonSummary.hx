@@ -464,7 +464,7 @@ import flash.display.MovieClip;
       function setRevealState(param1:UInt, param2:Float) 
       {
          mRevealState = param1;
-         mWorkComponent.doLater(param2,updateRevealState);
+         mWorkComponent.doLater(Math.max(param2,GameClock.ANIMATION_FRAME_DURATION),updateRevealState);
       }
       
       function setUILootSlotsTwoTreasuresVisible(param1:Bool) 
@@ -2520,7 +2520,7 @@ function  get_dungeonSuccess() : UInt
       function updateBannerAlpha(param1:GameClock) 
       {
          var _loc2_= ASCompat.toNumber(1 - ASCompat.toNumberField((mScoreReportRoot : ASAny).stats_a, "alpha"));
-         _loc2_ = 1 - _loc2_ * _loc2_;
+         _loc2_ = 1 - Math.pow(_loc2_,Math.pow(2,param1.tickLength / GameClock.ANIMATION_FRAME_DURATION));
          ASCompat.setProperty((mScoreReportRoot : ASAny).stats_a, "alpha", _loc2_);
          ASCompat.setProperty((mScoreReportRoot : ASAny).stats_b, "alpha", _loc2_);
          ASCompat.setProperty((mScoreReportRoot : ASAny).stats_c, "alpha", _loc2_);

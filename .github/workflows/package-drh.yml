@@ -9,7 +9,7 @@ on:
       fps:
         required: false
         type: string
-        default: "120"
+        default: ""
       package_name:
         required: true
         type: string
@@ -45,7 +45,15 @@ jobs:
           from decimal import Decimal, InvalidOperation
           import xml.etree.ElementTree as ET
 
+          project_path = "project.xml"
+          tree = ET.parse(project_path)
+          window = tree.getroot().find("window")
+          if window is None:
+              raise SystemExit("project.xml does not contain a window element")
+
           raw_fps = os.environ["TARGET_FPS"]
+          if not raw_fps:
+              raw_fps = window.get("fps", "")
           try:
               decimal_fps = Decimal(raw_fps)
           except InvalidOperation as error:
@@ -53,12 +61,6 @@ jobs:
 
           if decimal_fps != decimal_fps.to_integral_value() or decimal_fps <= 0:
               raise SystemExit(f"Target frame rate must be a positive integer, got {raw_fps!r}")
-
-          project_path = "project.xml"
-          tree = ET.parse(project_path)
-          window = tree.getroot().find("window")
-          if window is None:
-              raise SystemExit("project.xml does not contain a window element")
 
           fps = str(int(decimal_fps))
           window.set("fps", fps)

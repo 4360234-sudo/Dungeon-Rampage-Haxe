@@ -120,10 +120,11 @@ From the repository root:
 haxelib run openfl build project.xml cpp
 ```
 
-For a debug build:
-
-```bash
-haxelib run openfl build project.xml cpp -debug
-```
+For a debug build, append `-debug`.
 
 Replace `build` with `test` if you want the game to launch automatically after compiling.
+
+Native builds accept `--fps auto` or `--fps <value>` to override the default
+frame rate at launch. `auto` selects the first 24 FPS step at or above the primary display refresh
+rate, up to 240 FPS, with a 120 FPS fallback. [DRH Launcher](https://github.com/Tutez64/DRH-Launcher) defaults to `auto`
+and provides matching 24 FPS presets; manual values from 1 to 10000 are also accepted.

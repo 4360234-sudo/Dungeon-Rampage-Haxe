@@ -5,6 +5,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 
 FEATURE_FLAGS_FILE="$PROJECT_ROOT/src/brain/utils/FeatureFlags.hx"
+PROJECT_FILE="$PROJECT_ROOT/project.xml"
 OPTIONS_FILE="$SCRIPT_DIR/launch_options.tsv"
 DEFAULT_DIST_DIR="$PROJECT_ROOT/dist"
 
@@ -24,7 +25,8 @@ Expected archives in DIST_DIR:
   Dungeon.Rampage.Haxe.VERSION.Windows.zip
   Dungeon.Rampage.Haxe.VERSION.macOS.zip
 
-The script keeps tools/release/launch_options.tsv synchronized with
+The script derives frame-rate metadata from src/DungeonBustersProject.hx
+and keeps tools/release/launch_options.tsv synchronized with
 src/brain/utils/FeatureFlags.hx:
   - removed options are removed from launch_options.tsv
   - flag names, config keys and default values are refreshed from source
@@ -225,17 +227,20 @@ for platform in linux-x64 windows-x64 macos-universal; do
   require_archive "$(platform_archive "$platform")"
 done
 
-python3 - "$VERSION" "$DIST_DIR" "$OPTIONS_FILE" "$OUTPUT" <<'PY'
+python3 - "$VERSION" "$DIST_DIR" "$OPTIONS_FILE" "$PROJECT_FILE" "$OUTPUT" <<'PY'
 import csv
 import hashlib
 import json
+import re
 import sys
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 version = sys.argv[1]
 dist_dir = Path(sys.argv[2])
 options_file = Path(sys.argv[3])
-output = Path(sys.argv[4])
+project_file = Path(sys.argv[4])
+output = Path(sys.argv[5])
 
 archive_names = {
     "linux-x64": f"Dungeon.Rampage.Haxe.{version}.Linux.tar.gz",
@@ -280,10 +285,72 @@ with options_file.open(newline="", encoding="utf-8") as file:
             argument["recommended"] = recommended_bool
         game_arguments.append(argument)
 
+source_file = project_file.parent / "src" / "DungeonBustersProject.hx"
+source = source_file.read_text(encoding="utf-8")
+
+
+def float_constant(name: str) -> int:
+    match = re.search(
+        rf"static\s+inline\s+final\s+{name}:Float\s*=\s*([0-9]+);",
+        source,
+    )
+    if match is None:
+        raise SystemExit(f"Could not read {name} from {source_file}")
+    return int(match.group(1))
+
+
+flag_match = re.search(
+    r'static\s+inline\s+final\s+FRAME_RATE_ARGUMENT:String\s*=\s*"([^"]+)";',
+    source,
+)
+if flag_match is None:
+    raise SystemExit(f"Could not read FRAME_RATE_ARGUMENT from {source_file}")
+
+flag = flag_match.group(1)
+custom_min = float_constant("MIN_FRAME_RATE")
+custom_max = float_constant("MAX_FRAME_RATE")
+auto_fallback = float_constant("AUTO_FRAME_RATE_FALLBACK")
+auto_step = float_constant("AUTO_FRAME_RATE_STEP")
+auto_maximum = float_constant("AUTO_FRAME_RATE_MAXIMUM")
+if not flag.startswith("--") or len(flag) <= 2:
+    raise SystemExit(f"Invalid FRAME_RATE_ARGUMENT in {source_file}: {flag!r}")
+if custom_min <= 0 or custom_max < custom_min:
+    raise SystemExit(f"Invalid custom frame-rate range in {source_file}")
+if auto_step <= 0 or auto_maximum < auto_step or auto_maximum % auto_step != 0:
+    raise SystemExit(f"Invalid automatic frame-rate policy in {source_file}")
+if (
+    auto_fallback < auto_step
+    or auto_fallback > auto_maximum
+    or auto_fallback % auto_step != 0
+):
+    raise SystemExit(f"Automatic frame-rate fallback must be one of the generated presets in {source_file}")
+if auto_step < custom_min or auto_maximum > custom_max:
+    raise SystemExit(f"Frame-rate presets must fit inside the custom range in {source_file}")
+
+frame_rate = {
+    "flag": flag,
+    "auto": {
+        "fallback": auto_fallback,
+        "step": auto_step,
+        "maximum": auto_maximum,
+    },
+    "custom_min": custom_min,
+    "custom_max": custom_max,
+}
+
+window = ET.parse(project_file).getroot().find("window")
+project_default = None if window is None else window.get("fps")
+if project_default != str(auto_fallback):
+    raise SystemExit(
+        f"AUTO_FRAME_RATE_FALLBACK in {source_file} ({auto_fallback}) does not match "
+        f"{project_file} ({project_default!r})"
+    )
+
 manifest = {
     "version": version,
     "platforms": platforms,
     "launch_options": {
+        "frame_rate": frame_rate,
         "game_arguments": game_arguments,
     },
 }

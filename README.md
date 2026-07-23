@@ -128,3 +128,19 @@ Native builds accept `--fps auto` or `--fps <value>` to override the default
 frame rate at launch. `auto` selects the first 24 FPS step at or above the primary display refresh
 rate, up to 240 FPS, with a 120 FPS fallback. [DRH Launcher](https://github.com/Tutez64/DRH-Launcher) defaults to `auto`
 and provides matching 24 FPS presets; manual values from 1 to 10000 are also accepted.
+
+## License and disclaimer
+
+Dungeon Rampage Haxe is an unofficial, fan-made project and is not affiliated
+with, endorsed by, sponsored by, or authorized by the developers, publishers,
+or other rights holders of Dungeon Rampage.
+
+Dungeon Rampage and all original game code, assets, artwork, audio, characters,
+trademarks, and other intellectual property belong to their respective rights
+holders.
+
+The GNU General Public License v3.0 or later included in this repository applies only to
+original code and modifications created by Dungeon Rampage Haxe contributors,
+to the extent that they hold the necessary rights. It does not grant any rights
+to material originating from Dungeon Rampage or from other third parties.
+Third-party components remain governed by their respective licenses.

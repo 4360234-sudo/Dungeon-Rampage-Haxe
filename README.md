@@ -4,8 +4,8 @@
 <h1 align="center">Dungeon Rampage Haxe</h1>
 
 <p align="center">
-A native Windows, Linux, and macOS version of Dungeon Rampage.
-Built to run smoother than the official AIR version, at 120 FPS instead of 24 FPS.
+A smoother native port of Dungeon Rampage for Windows, Linux, and macOS,
+with a configurable frame rate.
 </p>
 
 ## Install and play
@@ -28,8 +28,9 @@ on Steam and keep Steam open while playing. Otherwise, DRH cannot connect to the
 ## Why use DRH?
 
 The official game can run poorly and suffer from input delay issues.
-DRH runs at 120 FPS instead of the official game's 24 FPS, usually provides much better
-performance, especially in **Quality** mode, and avoids the delay issue.
+DRH supports a configurable frame rate, with 120 FPS as its built-in default, instead
+of the official game's fixed 24 FPS. It usually provides much better performance,
+especially in **Quality** mode, and avoids the input delay issue.
 
 Like the official game, restarting before each new party is recommended because performance can degrade over time.
 

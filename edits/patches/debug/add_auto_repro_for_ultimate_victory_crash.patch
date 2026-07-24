@@ -1,0 +1,121 @@
+Subject: [PATCH] Add debug auto repro for Ultimate Rampage terminal victory crash. Used with Fix_infinite_dungeon_victory_null_renderer_crash.patch
+
+On the first completed Ultimate Rampage floor, replace the normal floor-ending
+popup with the terminal dungeon-victory GUI path.
+
+Modes are selected with DEBUG_ULTIMATE_VICTORY_REPRO_MODE:
+- OFF: normal game behavior.
+- VERIFY_FIX: run the terminal path through the null guard.
+- ORIGINAL_CRASH: bypass the guard to reproduce the original crash (default).
+
+This calls only the GUI path, avoiding completion metrics and Steam achievement
+side effects while preserving the failing FloorEndingGui control flow.
+---
+Index: src/distributedObjects/DistributedDungionArea.hx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/distributedObjects/DistributedDungionArea.hx b/src/distributedObjects/DistributedDungionArea.hx
+--- a/src/distributedObjects/DistributedDungionArea.hx	(revision e5b86b535872ab69c9e6b4ff908e1f31ed89ba4c)
++++ b/src/distributedObjects/DistributedDungionArea.hx
+@@ -4,6 +4,7 @@
+    import brain.event.EventComponent;
+    import brain.logger.Logger;
+    import brain.sceneGraph.SceneGraphComponent;
++   import dr_floor.FloorEndingGui;
+    import events.CacheLoadRequestNpcEvent;
+    import facade.DBFacade;
+    import gameMasterDictionary.GMAttack;
+@@ -24,6 +25,8 @@
+       
+       var mEventComponent:EventComponent;
+       
++      var mDebugUltimateVictoryReproTriggered:Bool = false;
++      
+       public var mCacheNpc:Vector<UInt>;
+       
+       public var mCacheSfc:Vector<String>;
+@@ -107,6 +110,13 @@
+          {
+             return;
+          }
++         if(FloorEndingGui.DEBUG_ULTIMATE_VICTORY_REPRO_MODE != FloorEndingGui.DEBUG_ULTIMATE_VICTORY_REPRO_MODE_OFF && !mDebugUltimateVictoryReproTriggered && mActiveFloor.isInfiniteDungeon)
++         {
++            mDebugUltimateVictoryReproTriggered = true;
++            Logger.warn("[UltimateVictoryRepro] replacing floorEnding with terminal victory currentFloor=" + Std.string(mActiveFloor.getCurrentFloorNum()) + " countdown=" + Std.string(param1) + " mode=" + Std.string(FloorEndingGui.DEBUG_ULTIMATE_VICTORY_REPRO_MODE));
++            mActiveFloor.debugReproDungeonVictory();
++            return;
++         }
+          mActiveFloor.floorEnding(param1);
+       }
+       
+Index: src/distributedObjects/Floor.hx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/distributedObjects/Floor.hx b/src/distributedObjects/Floor.hx
+--- a/src/distributedObjects/Floor.hx	(revision e5b86b535872ab69c9e6b4ff908e1f31ed89ba4c)
++++ b/src/distributedObjects/Floor.hx
+@@ -155,6 +155,11 @@
+          mFloorEndingGui.dungeonVictory();
+       }
+       
++      public function debugReproDungeonVictory() 
++      {
++         mFloorEndingGui.dungeonVictory();
++      }
++      
+       public function defeat() 
+       {
+          mIsADefeat = true;
+Index: src/dr_floor/FloorEndingGui.hx
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/dr_floor/FloorEndingGui.hx b/src/dr_floor/FloorEndingGui.hx
+--- a/src/dr_floor/FloorEndingGui.hx	(revision e5b86b535872ab69c9e6b4ff908e1f31ed89ba4c)
++++ b/src/dr_floor/FloorEndingGui.hx
+@@ -35,6 +35,14 @@
+       
+       public static inline final DUNGEON_MODIFIER_ICONS_SWF_PATH= "Resources/Art2D/Icons/Modifier/db_icons_modifier.swf";
+       
++      public static inline final DEBUG_ULTIMATE_VICTORY_REPRO_MODE_OFF= (0 : UInt);
++      
++      public static inline final DEBUG_ULTIMATE_VICTORY_REPRO_MODE_VERIFY_FIX= (1 : UInt);
++      
++      public static inline final DEBUG_ULTIMATE_VICTORY_REPRO_MODE_ORIGINAL_CRASH= (2 : UInt);
++      
++      public static inline final DEBUG_ULTIMATE_VICTORY_REPRO_MODE= DEBUG_ULTIMATE_VICTORY_REPRO_MODE_ORIGINAL_CRASH;
++      
+       static inline final DEFEAT_COUNTDOWN_FIRST_SCREEN_TIME= 2;
+       
+       var mRoot:Sprite;
+@@ -208,11 +216,25 @@
+       
+       public function dungeonVictory() 
+       {
++         if(DEBUG_ULTIMATE_VICTORY_REPRO_MODE != DEBUG_ULTIMATE_VICTORY_REPRO_MODE_OFF)
++         {
++            Logger.warn("[UltimateVictoryRepro] dungeonVictory nodeType=" + mNodeType + " screensRootNull=" + Std.string(mScreensRoot == null) + " victoryRendererNull=" + Std.string(mVictoryRenderer == null) + " mode=" + Std.string(DEBUG_ULTIMATE_VICTORY_REPRO_MODE));
++         }
++         if(mScreensRoot != null && mNodeType == "INFINITE" && DEBUG_ULTIMATE_VICTORY_REPRO_MODE == DEBUG_ULTIMATE_VICTORY_REPRO_MODE_ORIGINAL_CRASH)
++         {
++            Logger.warn("[UltimateVictoryRepro] reproducing original unguarded displayVictory call");
++            displayVictory();
++            return;
++         }
+          if(mScreensRoot != null && mVictoryRenderer != null)
+          {
+             displayVictory();
+             checkToAddRootToScene();
+          }
++         else if(DEBUG_ULTIMATE_VICTORY_REPRO_MODE != DEBUG_ULTIMATE_VICTORY_REPRO_MODE_OFF)
++         {
++            Logger.warn("[UltimateVictoryRepro] fixed path skipped missing victory renderer");
++         }
+       }
+       
+       public function dungeonFailure() 

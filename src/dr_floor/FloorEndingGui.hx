@@ -208,7 +208,7 @@ package dr_floor
       
       public function dungeonVictory() 
       {
-         if(mScreensRoot != null)
+         if(mScreensRoot != null && mVictoryRenderer != null)
          {
             displayVictory();
             checkToAddRootToScene();

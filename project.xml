@@ -17,6 +17,7 @@
 	<haxedef name="HXCPP_GC_BIG_BLOCKS" />
 	<haxedef name="HXCPP_GC_SUMMARY" />
 	<haxedef name="analyzer-optimize" />
+	<haxedef name="swf_hardware_bitmap_cache" />
 
 	<setenv name="STEAM_APP_ID" value="3053950" if="cpp" />
 	<dependency name="com.amanitadesign.steam.FRESteamWorks" path="extensions/FRESteamWorks.ane" if="air" />

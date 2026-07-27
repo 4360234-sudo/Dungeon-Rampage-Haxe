@@ -15,6 +15,7 @@
 	<haxelib name="format" if="cpp" />
 
 	<haxedef name="HXCPP_GC_BIG_BLOCKS" />
+	<haxedef name="HXCPP_GC_GENERATIONAL" />
 	<haxedef name="HXCPP_GC_SUMMARY" />
 	<haxedef name="analyzer-optimize" />
 	<haxedef name="swf_compact_animate_timelines" />

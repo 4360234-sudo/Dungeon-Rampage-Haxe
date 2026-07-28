@@ -1,0 +1,22 @@
+Subject: [PATCH] Fix abandon-loot leave leaking menu nav layer
+
+diff --git a/src/uI/popup/DBUIPopup.hx b/src/uI/popup/DBUIPopup.hx
+index 7b2f252..6b7fa5b 100644
+--- a/src/uI/popup/DBUIPopup.hx
++++ b/src/uI/popup/DBUIPopup.hx
+@@ -249,6 +249,15 @@ package uI.popup
+       
+       function close(param1:ASFunction, param2:GMOffer = null) 
+       {
++         // Pop this popup's nav layer before the callback. Otherwise callbacks that
++         // pop a parent layer (e.g. DISTRIBUTED_DUNGEON_SUMMARY after the abandon-loot
++         // confirm) fail because this popup layer is still on top, leaking a stale
++         // UIObject reference that later Null Object Reference crashes town teardown.
++         if(ASCompat.stringAsBool(mUILayerName))
++         {
++            popMenuNavigationLayer();
++            mUILayerName = null;
++         }
+          if(param1 != null)
+          {
+             if(param2 == null)

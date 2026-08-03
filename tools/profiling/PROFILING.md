@@ -62,7 +62,15 @@ git apply -R tools/profiling/patches/stall_profiler.patch
 ```
 
 Le patch ajoute `src/brain/utils/StallProfiler.hx`, les hooks CLI / marks
-(chat, floor, swf, input) et des helpers de stats SWF pour le snapshot mémoire.
+(chat, floor, swf, input), des helpers de stats SWF dans `SwfAsset`, et
+l’instrumentation `clearBitmapCaches` / `getBitmapCacheCounts` dans
+`submodules/swf/.../AnimateLibrary.hx`.
+
+Sous Windows, si `git apply` échoue sur les fins de ligne :
+
+```bash
+git apply --ignore-whitespace tools/profiling/patches/stall_profiler.patch
+```
 
 ## Session réaliste longue
 

@@ -587,22 +587,24 @@ index a3d1a79..d330bc9 100644
           mActiveOwnerAvatar = null;
           if(mBgMusic != null)
 diff --git a/src/brain/assetRepository/SwfAsset.hx b/src/brain/assetRepository/SwfAsset.hx
+index 9341344..657093f 100644
 --- a/src/brain/assetRepository/SwfAsset.hx
 +++ b/src/brain/assetRepository/SwfAsset.hx
-@@ -716,6 +716,9 @@ class SwfAsset extends Asset
+@@ -700,6 +700,9 @@ class SwfAsset extends Asset
+         {
              applyLegacyTimelineFrameRate(_loc1_);
-             Assets.registerLibrary(param1,_loc1_);
              sLoadedPreprocessedLibraries.set(param1,_loc1_);
 +            #if cpp
 +            brain.utils.StallProfiler.mark("swf-load:" + param1, 4000);
 +            #end
              return _loc1_;
          }
-         catch(e:Dynamic)
-@@ -735,6 +738,46 @@ class SwfAsset extends Asset
+         try
+@@ -735,6 +738,42 @@ class SwfAsset extends Asset
          }
      }
  
++
 +    public static function getPreprocessedLibraryCount() : Int
 +    {
 +        #if cpp
@@ -638,7 +640,96 @@ diff --git a/src/brain/assetRepository/SwfAsset.hx b/src/brain/assetRepository/S
 +        return "swfLibs=0 hwBmp=0 readableBmp=0";
 +        #end
 +    }
-+
      static function getPreprocessedBundlePath(param1:String) : String
      {
          var _loc1_= Path.directory(Sys.programPath());
+diff --git a/submodules/swf/src/swf/exporters/animate/AnimateLibrary.hx b/submodules/swf/src/swf/exporters/animate/AnimateLibrary.hx
+index 1e11ba3..d4f3718 100644
+--- a/submodules/swf/src/swf/exporters/animate/AnimateLibrary.hx
++++ b/submodules/swf/src/swf/exporters/animate/AnimateLibrary.hx
+@@ -250,6 +250,72 @@ import openfl.filters.GlowFilter;
+ 		}
+ 	}
+ 
++	/**
++		Drops decoded Animate bitmap caches while keeping library structure.
++		Bitmaps are recreated lazily on next use.
++	**/
++	public function clearBitmapCaches(disposeBitmaps:Bool = false):Void
++	{
++		#if (lime && !flash && swf_hardware_bitmap_cache)
++		if (disposeBitmaps)
++		{
++			if (hardwareBitmapData != null)
++			{
++				for (bitmapData in hardwareBitmapData)
++				{
++					if (bitmapData != null)
++					{
++						bitmapData.dispose();
++					}
++				}
++			}
++
++			if (readableShapeBitmapData != null)
++			{
++				for (bitmapData in readableShapeBitmapData)
++				{
++					if (bitmapData != null)
++					{
++						bitmapData.dispose();
++					}
++				}
++			}
++		}
++
++		hardwareBitmapData = new Map();
++		readableBitmapDataKeys = new Map();
++		readableShapeBitmapData = new Map();
++		#end
++	}
++
++	public function getBitmapCacheCounts():{hardware:Int, readable:Int}
++	{
++		#if (lime && !flash && swf_hardware_bitmap_cache)
++		var hardware = 0;
++		var readable = 0;
++
++		if (hardwareBitmapData != null)
++		{
++			for (_ in hardwareBitmapData)
++			{
++				hardware++;
++			}
++		}
++
++		if (readableShapeBitmapData != null)
++		{
++			for (_ in readableShapeBitmapData)
++			{
++				readable++;
++			}
++		}
++
++		return {hardware: hardware, readable: readable};
++		#else
++		return {hardware: 0, readable: 0};
++		#end
++	}
++
+ 	@:allow(swf.exporters.animate.AnimateShapeSymbol)
+ 	private function __getReadableShapeBitmapData(symbol:AnimateBitmapSymbol):BitmapData
+ 	{
+@@ -732,10 +798,8 @@ import openfl.filters.GlowFilter;
+ 	public override function unload():Void
+ 	{
+ 		instances.remove(uuid);
+-		#if (lime && !flash && swf_hardware_bitmap_cache)
+-		hardwareBitmapData = new Map();
+-		readableBitmapDataKeys = new Map();
+-		readableShapeBitmapData = new Map();
++		#if (!flash && swf_hardware_bitmap_cache)
++		clearBitmapCaches(true);
+ 		#end
+ 		if (symbols == null) return;
+ 		// if (swf == null) return;

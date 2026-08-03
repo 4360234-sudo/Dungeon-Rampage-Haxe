@@ -1,0 +1,811 @@
+diff --git a/docs/build_xml/Defines.md b/docs/build_xml/Defines.md
+index 319c47cc..a897f63e 100755
+--- a/docs/build_xml/Defines.md
++++ b/docs/build_xml/Defines.md
+@@ -28,6 +28,9 @@ Defines affecting how the code is compiled.  These can be on the command line wh
+ |-------------------------|--------------------|
+ | *HXCPP_GC_MOVING*       | Allow garbage collector to move memory to reduce fragmentation |
+ | *HXCPP_GC_SUMMARY*      | Print small profiling summary at end of program |
++| *HXCPP_GC_TIMELINE*     | Print one low-overhead CSV profiling record per collection |
++| *HXCPP_GC_CENSUS*       | Print live object classes and raw buffer sizes during full scans |
++| *HXCPP_GC_RETENTION_TRACE* | Trace GC root paths to selected retained objects in diagnostic builds |
+ | *HXCPP_GC_DYNAMIC_SIZE* | Monitor GC times and expand memory working space if required |
+ | *HXCPP_GC_BIG_BLOCKS*   | Allow working memory greater than 1 Gig |
+ | *HXCPP_GC_DEBUG_LEVEL*  | Number 1-4 indicating additional debugging in GC |
+diff --git a/include/hx/GC.h b/include/hx/GC.h
+index a4ce9b49..65f91bba 100644
+--- a/include/hx/GC.h
++++ b/include/hx/GC.h
+@@ -252,7 +252,7 @@ void MarkObjectArray(hx::Object **inPtr, int inLength, hx::MarkContext *__inCtx)
+ void MarkStringArray(String *inPtr, int inLength, hx::MarkContext *__inCtx);
+ 
+ // Provide extra debug info to the marking routines
+-#ifdef HXCPP_DEBUG
++#if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE) || defined(HXCPP_GC_RETENTION_NAMES)
+ HXCPP_EXTERN_CLASS_ATTRIBUTES void MarkSetMember(const char *inName ,hx::MarkContext *__inCtx);
+ HXCPP_EXTERN_CLASS_ATTRIBUTES void MarkPushClass(const char *inName ,hx::MarkContext *__inCtx);
+ HXCPP_EXTERN_CLASS_ATTRIBUTES void MarkPopClass(hx::MarkContext *__inCtx);
+@@ -542,7 +542,7 @@ inline void MarkObjectAlloc(hx::Object *inPtr ,hx::MarkContext *__inCtx)
+ // They also perform some inline checking to avoid function calls if possible
+ 
+ 
+-#ifdef HXCPP_DEBUG
++#if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE) || defined(HXCPP_GC_RETENTION_NAMES)
+ 
+ #define HX_MARK_MEMBER_NAME(x,name) { ::hx::MarkSetMember(name, __inCtx); ::hx::MarkMember(x, __inCtx ); }
+ #define HX_MARK_BEGIN_CLASS(x) ::hx::MarkPushClass(#x, __inCtx );
+diff --git a/src/hx/gc/Immix.cpp b/src/hx/gc/Immix.cpp
+index b2c243c8..cc286ac0 100644
+--- a/src/hx/gc/Immix.cpp
++++ b/src/hx/gc/Immix.cpp
+@@ -20,6 +20,8 @@
+ #endif
+ 
+ #include <string>
++#include <algorithm>
++#include <unordered_map>
+ #include <stdlib.h>
+ 
+ 
+@@ -226,6 +228,68 @@ static volatile int sThreadZeroMisses = 0;
+ enum { MARK_BYTE_MASK = 0x0f };
+ enum { FULL_MARK_BYTE_MASK = 0x3f };
+ 
++#ifdef HXCPP_GC_CENSUS
++struct GcCensusStats
++{
++   unsigned long long count;
++   unsigned long long bytes;
++
++   GcCensusStats() : count(0), bytes(0) { }
++};
++
++struct GcCensus
++{
++   typedef std::unordered_map<const char *, GcCensusStats> ClassStats;
++   typedef std::unordered_map<unsigned int, GcCensusStats> SizeStats;
++
++   ClassStats classes;
++   SizeStats rawSmallSizes;
++   SizeStats rawLargeSizes;
++   unsigned long long objectCount;
++   unsigned long long objectBytes;
++   unsigned long long rawSmallCount;
++   unsigned long long rawSmallBytes;
++   unsigned long long rawLargeCount;
++   unsigned long long rawLargeBytes;
++
++   GcCensus()
++      : objectCount(0), objectBytes(0), rawSmallCount(0), rawSmallBytes(0),
++        rawLargeCount(0), rawLargeBytes(0) { }
++
++   void addObject(hx::Object *inObject, unsigned int inSize)
++   {
++      const char *name = "_unknown";
++      hx::Class objectClass = inObject->__GetClass();
++      if (objectClass.mPtr && objectClass->mName)
++         name = objectClass->mName;
++
++      GcCensusStats &stats = classes[name];
++      stats.count++;
++      stats.bytes += inSize;
++      objectCount++;
++      objectBytes += inSize;
++   }
++
++   void addRawSmall(unsigned int inSize)
++   {
++      GcCensusStats &stats = rawSmallSizes[inSize];
++      stats.count++;
++      stats.bytes += inSize;
++      rawSmallCount++;
++      rawSmallBytes += inSize;
++   }
++
++   void addRawLarge(unsigned int inSize)
++   {
++      GcCensusStats &stats = rawLargeSizes[inSize];
++      stats.count++;
++      stats.bytes += inSize;
++      rawLargeCount++;
++      rawLargeBytes += inSize;
++   }
++};
++#endif
++
+ 
+ enum
+ {
+@@ -259,10 +323,26 @@ static GcMode sGcMode = gcmFull;
+ #define IMMIX_BLOCK_GROUP_BITS  5
+ 
+ 
+-#ifdef HXCPP_DEBUG
++#if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+ static hx::Object *gCollectTrace = 0;
+ static bool gCollectTraceDoPrint = false;
+ static int gCollectTraceCount = 0;
++#ifdef HXCPP_GC_RETENTION_TRACE
++typedef std::unordered_map<std::string, unsigned long long> GcRetentionPathCounts;
++static const char *gCollectTraceClassName = 0;
++static unsigned int gCollectTraceRawSize = 0;
++static GcRetentionPathCounts gCollectTracePaths;
++static std::mutex gCollectTracePathsMutex;
++static unsigned long long gCollectTraceUnrecordedMatches = 0;
++enum
++{
++   GC_RETENTION_MAX_UNIQUE_PATHS = 512,
++   GC_RETENTION_MAX_PRINTED_PATHS = 100,
++};
++#endif
++#endif
++
++#ifdef HXCPP_DEBUG
+ static int sgSpamCollects = 0;
+ #endif
+ 
+@@ -283,12 +363,18 @@ volatile int sgAllocsSinceLastSpam = 0;
+    static int sObjectMarks =0;
+    static int sAllocMarks =0;
+ 
++#elif defined(HXCPP_GC_TIMELINE)
++   // Keep the production marking algorithm and thread count unchanged.  The
++   // timeline only needs the coarse phase timestamps local to Collect().
++   #define STAMP(t) double t = __hxcpp_time_stamp();
++   #define MEM_STAMP(t)
++
+ #else
+    #define STAMP(t)
+    #define MEM_STAMP(t)
+ #endif
+ 
+-#if defined(HXCPP_GC_SUMMARY) || defined(HXCPP_GC_DYNAMIC_SIZE)
++#if defined(HXCPP_GC_SUMMARY) || defined(HXCPP_GC_DYNAMIC_SIZE) || defined(HXCPP_GC_TIMELINE)
+ struct ProfileCollectSummary
+ {
+    enum { COUNT = 10 };
+@@ -327,7 +413,7 @@ struct ProfileCollectSummary
+       #endif
+    }
+ 
+-   void addTime(double inCollectStart)
++   double addTime(double inCollectStart)
+    {
+       double now = __hxcpp_time_stamp();
+       double dt =  now-inCollectStart;
+@@ -368,13 +454,22 @@ struct ProfileCollectSummary
+          }
+       }
+       #endif
++      return now;
+    }
+ 
+ };
+ 
+ static ProfileCollectSummary profileCollectSummary;
++#ifdef HXCPP_GC_TIMELINE
++static unsigned long long sgGcTimelineSequence = 0;
++static double sgGcTimelineLastEnd = 0;
++#endif
+ #define PROFILE_COLLECT_SUMMARY_START double collectT0 = __hxcpp_time_stamp();
++#ifdef HXCPP_GC_TIMELINE
++#define PROFILE_COLLECT_SUMMARY_END double collectTEnd = profileCollectSummary.addTime(collectT0);
++#else
+ #define PROFILE_COLLECT_SUMMARY_END profileCollectSummary.addTime(collectT0);
++#endif
+ 
+ #else
+ #define PROFILE_COLLECT_SUMMARY_START 
+@@ -1354,6 +1449,45 @@ struct BlockDataInfo
+    }
+    #endif
+ 
++#ifdef HXCPP_GC_CENSUS
++   void AddToCensus(GcCensus &outCensus)
++   {
++      if (isEmpty())
++         return;
++
++      for(int r=IMMIX_HEADER_LINES;r<IMMIX_LINES;r++)
++      {
++         unsigned int starts = allocStart[r];
++         if (!starts)
++            continue;
++
++         unsigned char *row = mPtr->mRow[r];
++         for(int i=0;i<32;i++)
++         {
++            int pos = i<<2;
++            if (!(starts & (1<<i)))
++               continue;
++
++            unsigned int header = *(unsigned int *)(row+pos);
++            if ((header & IMMIX_ALLOC_MARK_ID) != hx::gMarkID)
++               continue;
++
++            unsigned int size = (header & IMMIX_ALLOC_SIZE_MASK) >> IMMIX_ALLOC_SIZE_SHIFT;
++            if (header & IMMIX_ALLOC_IS_CONTAINER)
++            {
++               hx::Object *obj = (hx::Object *)(row+pos+sizeof(int));
++               if (*(void **)obj)
++                  outCensus.addObject(obj,size);
++            }
++            else
++            {
++               outCensus.addRawSmall(size);
++            }
++         }
++      }
++   }
++#endif
++
+    #ifdef HXCPP_GC_VERIFY
+    void verify(const char *inWhere)
+    {
+@@ -1782,7 +1916,7 @@ GlobalChunks sGlobalChunks;
+ 
+ class MarkContext
+ {
+-    #ifdef HXCPP_DEBUG
++    #if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+     MarkInfo  *mInfo;
+     int       mPos;
+     #endif
+@@ -1798,7 +1932,7 @@ public:
+ 
+     MarkContext(int inThreadId = -1)
+     {
+-       #ifdef HXCPP_DEBUG
++       #if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+        mInfo = new MarkInfo[StackSize];
+        mPos = 0;
+        #endif
+@@ -1810,14 +1944,14 @@ public:
+     ~MarkContext()
+     {
+        if (marking) sGlobalChunks.free(marking);
+-       #ifdef HXCPP_DEBUG
++       #if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+        delete [] mInfo;
+        #endif
+        // TODO: Free slabs
+     }
+ 
+ 
+-    #ifdef HXCPP_DEBUG
++    #if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+     void PushClass(const char *inClass)
+     {
+        if (mPos<StackSize-1)
+@@ -1842,6 +1976,27 @@ public:
+     void Trace()
+     {
+        int n = mPos < StackSize ? mPos : StackSize;
++       #ifdef HXCPP_GC_RETENTION_TRACE
++       std::string path;
++       path.reserve(n*32);
++       for(int i=0;i<n;i++)
++       {
++          path += ",";
++          path += mInfo[i].mClass ? mInfo[i].mClass : "Unknown";
++          path += ".";
++          path += mInfo[i].mMember ? mInfo[i].mMember : "Unknown";
++       }
++       if (mPos>=StackSize)
++          path += ",... + deeper";
++
++       GcRetentionPathCounts::iterator found = gCollectTracePaths.find(path);
++       if (found!=gCollectTracePaths.end())
++          found->second++;
++       else if (gCollectTracePaths.size()<GC_RETENTION_MAX_UNIQUE_PATHS)
++          gCollectTracePaths[path] = 1;
++       else
++          gCollectTraceUnrecordedMatches++;
++       #else
+        #ifdef ANDROID
+        __android_log_print(ANDROID_LOG_ERROR, "trace", "Class referenced from");
+        #else
+@@ -1863,6 +2018,7 @@ public:
+           printf("... + deeper\n");
+           #endif
+        }
++       #endif
+     }
+     #endif
+ 
+@@ -1975,23 +2131,35 @@ void MarkerReleaseWorkerLocked( )
+ 
+ 
+ 
+-#ifdef HXCPP_DEBUG
++#if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+ static bool breakOnce = 1;
+ void MarkSetMember(const char *inName,hx::MarkContext *__inCtx)
+ {
+-   if (gCollectTrace)
++   if (gCollectTrace
++      #ifdef HXCPP_GC_RETENTION_TRACE
++      || gCollectTraceClassName || gCollectTraceRawSize
++      #endif
++      )
+       __inCtx->SetMember(inName);
+ }
+ 
+ void MarkPushClass(const char *inName,hx::MarkContext *__inCtx)
+ {
+-   if (gCollectTrace)
++   if (gCollectTrace
++      #ifdef HXCPP_GC_RETENTION_TRACE
++      || gCollectTraceClassName || gCollectTraceRawSize
++      #endif
++      )
+       __inCtx->PushClass(inName);
+ }
+ 
+ void MarkPopClass(hx::MarkContext *__inCtx)
+ {
+-   if (gCollectTrace)
++   if (gCollectTrace
++      #ifdef HXCPP_GC_RETENTION_TRACE
++      || gCollectTraceClassName || gCollectTraceRawSize
++      #endif
++      )
+       __inCtx->PopClass();
+ }
+ #endif
+@@ -2004,7 +2172,7 @@ struct AutoMarkPush
+    hx::MarkContext *mCtx;
+    AutoMarkPush(hx::MarkContext *ctx, const char *cls, const char *member)
+    {
+-      #ifdef HXCPP_DEBUG
++      #if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+       mCtx = ctx;
+       MarkPushClass(cls,mCtx);
+       MarkSetMember(member,mCtx);
+@@ -2012,7 +2180,7 @@ struct AutoMarkPush
+    }
+    ~AutoMarkPush()
+    {
+-      #ifdef HXCPP_DEBUG
++      #if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+       MarkPopClass(mCtx);
+       #endif
+    }
+@@ -2032,6 +2200,20 @@ void MarkAllocUnchecked(void *inPtr,hx::MarkContext *__inCtx)
+    size_t ptr_i = ((size_t)inPtr)-sizeof(int);
+    unsigned int flags =  *((unsigned int *)ptr_i);
+ 
++   #ifdef HXCPP_GC_RETENTION_TRACE
++   if (gCollectTraceRawSize && !(flags & IMMIX_ALLOC_ROW_COUNT))
++   {
++      unsigned int rawSize = ((unsigned int *)inPtr)[-2];
++      if (rawSize==gCollectTraceRawSize)
++      {
++         std::lock_guard<std::mutex> retentionTraceLock(gCollectTracePathsMutex);
++         gCollectTraceCount++;
++         if (gCollectTraceDoPrint)
++            __inCtx->Trace();
++      }
++   }
++   #endif
++
+    #ifdef HXCPP_GC_NURSERY
+    if (!(flags & 0xff000000))
+    {
+@@ -2186,9 +2368,21 @@ void MarkObjectAllocUnchecked(hx::Object *inPtr,hx::MarkContext *__inCtx)
+          sObjectMarks++;
+          #endif
+ 
+-         #ifdef HXCPP_DEBUG
+-            if (gCollectTrace && gCollectTrace==inPtr->__GetClass().GetPtr())
++         #if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
++            bool traceClassMatch = gCollectTrace && gCollectTrace==inPtr->__GetClass().GetPtr();
++            #ifdef HXCPP_GC_RETENTION_TRACE
++            if (gCollectTraceClassName)
++            {
++               hx::Class traceObjectClass = inPtr->__GetClass();
++               traceClassMatch = traceObjectClass.mPtr && traceObjectClass->mName &&
++                  strcmp(traceObjectClass->mName, gCollectTraceClassName)==0;
++            }
++            #endif
++            if (traceClassMatch)
+             {
++               #ifdef HXCPP_GC_RETENTION_TRACE
++               std::lock_guard<std::mutex> retentionTraceLock(gCollectTracePathsMutex);
++               #endif
+                gCollectTraceCount++;
+                if (gCollectTraceDoPrint)
+                    __inCtx->Trace();
+@@ -2198,7 +2392,11 @@ void MarkObjectAllocUnchecked(hx::Object *inPtr,hx::MarkContext *__inCtx)
+             #if (HXCPP_GC_DEBUG_LEVEL>0)
+             inPtr->__Mark(__inCtx);
+             #else
+-            if (gCollectTrace)
++            if (gCollectTrace
++               #ifdef HXCPP_GC_RETENTION_TRACE
++               || gCollectTraceClassName || gCollectTraceRawSize
++               #endif
++               )
+                inPtr->__Mark(__inCtx);
+             else
+                __inCtx->pushObj(inPtr);
+@@ -3119,6 +3317,7 @@ public:
+       memset((void *)mNextFreeBlockOfSize,0,sizeof(mNextFreeBlockOfSize));
+       mRowsInUse = 0;
+       mLargeAllocated = 0;
++      mLargeListAllocated = 0;
+       mLargeAllocSpace = 40 << 20;
+       mLargeAllocForceRefresh = mLargeAllocSpace;
+       // Start at 1 Meg...
+@@ -3200,6 +3399,7 @@ public:
+          unsigned int size = *blob;
+          mLargeListLock.lock();
+          mLargeAllocated -= size;
++         mLargeListAllocated -= size;
+          // Could somehow keep it in the list, but mark as recycled?
+          mLargeList.qerase_val(blob);
+          // We could maybe free anyhow?
+@@ -3306,6 +3506,7 @@ public:
+ 
+       mLargeList.push(result);
+       mLargeAllocated += inSize;
++      mLargeListAllocated += inSize;
+ 
+       if (do_lock)
+          mLargeListLock.unlock();
+@@ -4766,8 +4967,6 @@ public:
+          mMarker.processMarkStack();
+       #endif
+ 
+-
+-
+       MEM_STAMP(tMarked);
+ 
+       hx::FindZombies(mMarker);
+@@ -4839,6 +5038,59 @@ public:
+    }
+    #endif
+ 
++#if defined(HXCPP_GC_CENSUS) && defined(HXCPP_GC_TIMELINE)
++   void LogCensus(unsigned long long inGcSequence)
++   {
++      GcCensus census;
++
++      for(int i=0;i<mAllBlocks.size();i++)
++         mAllBlocks[i]->AddToCensus(census);
++
++      for(int i=0;i<mLargeList.size();i++)
++         census.addRawLarge(mLargeList[i][0]);
++
++      double elapsedMs = (__hxcpp_time_stamp() - profileCollectSummary.startTime) * 1000.0;
++      GCLOG("HXCPP_GC_CENSUS_SUMMARY,%llu,%.3f,%llu,%llu,%llu,%llu,%llu,%llu,%llu\n",
++         inGcSequence,
++         elapsedMs,
++         census.objectCount,
++         census.objectBytes,
++         census.rawSmallCount,
++         census.rawSmallBytes,
++         census.rawLargeCount,
++         census.rawLargeBytes,
++         (unsigned long long)MemLargeExternal());
++
++      typedef std::pair<const char *, GcCensusStats> ClassRow;
++      std::vector<ClassRow> classes(census.classes.begin(),census.classes.end());
++      std::sort(classes.begin(),classes.end(),
++         [](const ClassRow &inA, const ClassRow &inB)
++         {
++            return strcmp(inA.first,inB.first)<0;
++         });
++      for(size_t i=0;i<classes.size();i++)
++         GCLOG("HXCPP_GC_CENSUS_CLASS,%llu,%llu,%llu,%s\n",
++            inGcSequence,classes[i].second.count,classes[i].second.bytes,classes[i].first);
++
++      typedef std::pair<unsigned int, GcCensusStats> SizeRow;
++      std::vector<SizeRow> smallSizes(census.rawSmallSizes.begin(),census.rawSmallSizes.end());
++      std::vector<SizeRow> largeSizes(census.rawLargeSizes.begin(),census.rawLargeSizes.end());
++      std::sort(smallSizes.begin(),smallSizes.end(),
++         [](const SizeRow &inA, const SizeRow &inB) { return inA.first<inB.first; });
++      std::sort(largeSizes.begin(),largeSizes.end(),
++         [](const SizeRow &inA, const SizeRow &inB) { return inA.first<inB.first; });
++
++      for(size_t i=0;i<smallSizes.size();i++)
++         GCLOG("HXCPP_GC_CENSUS_RAW_SMALL,%llu,%u,%llu,%llu\n",
++            inGcSequence,smallSizes[i].first,smallSizes[i].second.count,smallSizes[i].second.bytes);
++      for(size_t i=0;i<largeSizes.size();i++)
++         GCLOG("HXCPP_GC_CENSUS_RAW_LARGE,%llu,%u,%llu,%llu\n",
++            inGcSequence,largeSizes[i].first,largeSizes[i].second.count,largeSizes[i].second.bytes);
++
++      fflush(stdout);
++   }
++#endif
++
+    void Collect(bool inMajor, bool inForceCompact, bool inLocked,bool inFreeIsFragged)
+    {
+       PROFILE_COLLECT_SUMMARY_START;
+@@ -4868,6 +5120,12 @@ public:
+ 
+       STAMP(t0)
+ 
++      #ifdef HXCPP_GC_TIMELINE
++      size_t timelineBeforeUsage = MemUsage();
++      size_t timelineBeforeCurrent = MemCurrent();
++      size_t timelineBeforeReserved = MemReserved();
++      #endif
++
+       // We are the collector - all must wait for us
+       LocalAllocator *this_local = 0;
+       #ifndef HXCPP_SINGLE_THREADED_APP
+@@ -4918,6 +5176,9 @@ public:
+ 
+       // Now all threads have mTopOfStack & mBottomOfStack set.
+       bool generational = false; 
++      #ifdef HXCPP_GC_TIMELINE
++      unsigned long long timelineRememberedSetSize = 0;
++      #endif
+ 
+       #ifdef HXCPP_GC_GENERATIONAL
+       bool compactSurviors = false;
+@@ -4940,6 +5201,9 @@ public:
+       if (sGcMode==gcmGenerational)
+       {
+          hx::sGlobalChunks.copyPointers(rememberedSet,!generational);
++         #ifdef HXCPP_GC_TIMELINE
++         timelineRememberedSetSize = rememberedSet.size();
++         #endif
+          #ifdef SHOW_MEM_EVENTS
+          GCLOG("Patch remembered set marks %d\n", rememberedSet.size());
+          #endif
+@@ -4950,8 +5214,97 @@ public:
+ 
+       STAMP(t1)
+ 
++      #if defined(HXCPP_GC_RETENTION_TRACE) && defined(HXCPP_GC_TIMELINE)
++      const unsigned long long retentionTraceSequence = sgGcTimelineSequence + 1;
++      #if defined(HXCPP_GC_RETENTION_TRACE_GRAPH)
++      static bool retentionTraceAfterDungeonDone = false;
++      const bool retentionTraceAfterDungeon =
++         !retentionTraceAfterDungeonDone && retentionTraceSequence > 31 &&
++         !inFreeIsFragged && !inMajor && !inForceCompact;
++      const char *retentionTraceClassName =
++         retentionTraceSequence == 16 ? "Array" :
++         retentionTraceSequence == 31 ? "Dynamic" :
++         retentionTraceSequence == 61 ? "Array" :
++         retentionTraceSequence == 91 ? "brain.workLoop.LogicalWorkComponent" :
++         retentionTraceSequence == 106 || retentionTraceAfterDungeon ? "Array" : 0;
++      const unsigned int retentionTraceRawSize = 0;
++      const char *retentionTraceName = retentionTraceClassName;
++      #elif defined(HXCPP_GC_RETENTION_TRACE_ANIMATE)
++      const char *retentionTraceClassName =
++         retentionTraceSequence == 16 ? "swf.exporters.animate.AnimateFrameObject" :
++         retentionTraceSequence == 31 ? "swf.exporters.animate.AnimateFrame" :
++         retentionTraceSequence == 46 ? "swf.exporters.animate._AnimateTimeline.FrameSymbolInstance" :
++         retentionTraceSequence == 61 ? "openfl.display.Graphics" : 0;
++      const unsigned int retentionTraceRawSize = 0;
++      const char *retentionTraceName = retentionTraceClassName;
++      #else
++      const char *retentionTraceClassName =
++         retentionTraceSequence == 46 ? "openfl.geom.Matrix" :
++         retentionTraceSequence == 61 ? "openfl.text._internal.GlyphPosition" : 0;
++      const unsigned int retentionTraceRawSize =
++         retentionTraceSequence == 16 ? 8294400 :
++         retentionTraceSequence == 31 ? 8306404 : 0;
++      const char *retentionTraceName =
++         retentionTraceClassName != 0 ? retentionTraceClassName :
++         retentionTraceRawSize == 8294400 ? "raw:8294400" :
++         retentionTraceRawSize == 8306404 ? "raw:8306404" : 0;
++      #endif
++      const bool retentionTraceThisCollection =
++         retentionTraceClassName != 0 || retentionTraceRawSize != 0;
++      if (retentionTraceThisCollection)
++      {
++         #if defined(HXCPP_GC_RETENTION_TRACE_GRAPH)
++         if (retentionTraceAfterDungeon)
++            retentionTraceAfterDungeonDone = true;
++         #endif
++         gCollectTraceClassName = retentionTraceClassName;
++         gCollectTraceRawSize = retentionTraceRawSize;
++         gCollectTraceCount = 0;
++         gCollectTracePaths.clear();
++         gCollectTraceUnrecordedMatches = 0;
++         gCollectTraceDoPrint = true;
++         GCLOG("HXCPP_GC_RETENTION_TRACE_BEGIN,%llu,%s\n",
++            retentionTraceSequence, retentionTraceName);
++      }
++      #endif
++
+       MarkAll(generational);
+ 
++      #if defined(HXCPP_GC_RETENTION_TRACE) && defined(HXCPP_GC_TIMELINE)
++      if (retentionTraceThisCollection)
++      {
++         typedef std::pair<std::string, unsigned long long> GcRetentionPathRow;
++         std::vector<GcRetentionPathRow> retentionPaths(
++            gCollectTracePaths.begin(),gCollectTracePaths.end());
++         std::sort(retentionPaths.begin(),retentionPaths.end(),
++            [](const GcRetentionPathRow &a, const GcRetentionPathRow &b)
++            {
++               if (a.second!=b.second)
++                  return a.second>b.second;
++               return a.first<b.first;
++            });
++
++         size_t retentionPathsToPrint = retentionPaths.size();
++         if (retentionPathsToPrint>GC_RETENTION_MAX_PRINTED_PATHS)
++            retentionPathsToPrint = GC_RETENTION_MAX_PRINTED_PATHS;
++         for(size_t retentionPath=0;retentionPath<retentionPathsToPrint;retentionPath++)
++            GCLOG("HXCPP_GC_RETENTION_PATH,%llu%s\n",
++               retentionPaths[retentionPath].second,
++               retentionPaths[retentionPath].first.c_str());
++
++         GCLOG("HXCPP_GC_RETENTION_TRACE_END,%llu,%s,%d,%llu,%llu,%llu\n",
++            retentionTraceSequence, retentionTraceName, gCollectTraceCount,
++            (unsigned long long)gCollectTracePaths.size(),
++            (unsigned long long)retentionPathsToPrint,
++            gCollectTraceUnrecordedMatches);
++         gCollectTraceClassName = 0;
++         gCollectTraceRawSize = 0;
++         gCollectTracePaths.clear();
++         gCollectTraceDoPrint = false;
++         fflush(stdout);
++      }
++      #endif
++
+       #ifdef HX_GC_VERIFY_GENERATIONAL
+       {
+          #ifdef SHOW_MEM_EVENTS
+@@ -5116,6 +5469,7 @@ public:
+          {
+             unsigned int size = *blob;
+             mLargeAllocated -= size;
++            mLargeListAllocated -= size;
+             if (size < recycleRemaining)
+             {
+                recycleRemaining -= size;
+@@ -5134,6 +5488,14 @@ public:
+ 
+       int l1 = mLargeList.size();
+ 
++#if defined(HXCPP_GC_CENSUS) && defined(HXCPP_GC_TIMELINE)
++      bool logCensus = full;
++      #if defined(HXCPP_GC_RETENTION_TRACE_GRAPH) && defined(HXCPP_GC_RETENTION_TRACE)
++      logCensus = logCensus || retentionTraceThisCollection;
++      #endif
++      if (logCensus)
++         LogCensus(sgGcTimelineSequence + 1);
++#endif
+ 
+       STAMP(t4)
+ 
+@@ -5321,8 +5683,9 @@ public:
+       GCLOG("Collect Done\n");
+       #endif
+ 
+-      #ifdef PROFILE_COLLECT
+       STAMP(t6)
++
++      #ifdef PROFILE_COLLECT
+       double period = t6-sLastCollect;
+       sLastCollect=t6;
+       GCLOG("Collect time %s total=%.2fms =%.1f%%\n  setup=%.2f\n  %s=%.2f(init=%.2f/roots=%.2f %d+%d/loc=%.2f*%d %d+%d/mark=%.2f %d+%d/fin=%.2f*%d/ids=%.2f)\n  reclaim=%.2f\n  large(%d->%d, recyc %d)=%.2f\n  defrag=%.2f\n",
+@@ -5401,6 +5764,60 @@ public:
+ 
+ 
+       PROFILE_COLLECT_SUMMARY_END;
++
++      #ifdef HXCPP_GC_TIMELINE
++      sgGcTimelineSequence++;
++      double timelineInterval = sgGcTimelineLastEnd == 0 ? 0 : collectTEnd - sgGcTimelineLastEnd;
++      sgGcTimelineLastEnd = collectTEnd;
++      long long timelineActiveBytes = full ? (long long)stats.bytesInUse : -1;
++      long long timelineFraggedBlocks = full ? (long long)stats.fraggedBlocks : -1;
++      double timelineFragScore = full && mAllBlocks.size() ? (double)stats.fragScore / mAllBlocks.size() : -1;
++      const char *timelineCause = inFreeIsFragged ? "allocation" :
++         (inForceCompact ? "compact" : (inMajor ? "explicit-major" : "explicit"));
++
++      if (sgGcTimelineSequence == 1)
++         GCLOG("HXCPP_GC_TIMELINE_HEADER,seq,elapsed_ms,interval_ms,stall_ms,cause,requested_major,force_compact,full_scan,mode,remembered_set,before_usage_bytes,before_current_bytes,before_reserved_bytes,after_usage_bytes,after_current_bytes,after_reserved_bytes,large_bytes,large_gc_bytes,large_external_bytes,large_count,working_bytes,target_bytes,rows_in_use_bytes,active_bytes,block_count,empty_blocks,fragged_blocks,frag_score,finalizers,gc_threads,sync_ms,mark_ms,reclaim_ms,large_sweep_ms,defrag_ms,finalize_ms,resume_ms\n");
++
++      GCLOG("HXCPP_GC_TIMELINE,%llu,%.3f,%.3f,%.3f,%s,%d,%d,%d,%s,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%llu,%lld,%llu,%d,%lld,%.6f,%d,%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n",
++         sgGcTimelineSequence,
++         (collectTEnd - profileCollectSummary.startTime) * 1000.0,
++         timelineInterval * 1000.0,
++         (collectTEnd - collectT0) * 1000.0,
++         timelineCause,
++         inMajor ? 1 : 0,
++         inForceCompact ? 1 : 0,
++         full ? 1 : 0,
++         generational ? "gen" : "std",
++         timelineRememberedSetSize,
++         (unsigned long long)timelineBeforeUsage,
++         (unsigned long long)timelineBeforeCurrent,
++         (unsigned long long)timelineBeforeReserved,
++         (unsigned long long)MemUsage(),
++         (unsigned long long)MemCurrent(),
++         (unsigned long long)MemReserved(),
++         (unsigned long long)MemLarge(),
++         (unsigned long long)MemLargeGc(),
++         (unsigned long long)MemLargeExternal(),
++         (unsigned long long)LargeCount(),
++         (unsigned long long)GetWorkingMemory(),
++         (unsigned long long)sWorkingMemorySize,
++         (unsigned long long)(mRowsInUse << IMMIX_LINE_BITS),
++         timelineActiveBytes,
++         (unsigned long long)mAllBlocks.size(),
++         stats.emptyBlocks,
++         timelineFraggedBlocks,
++         timelineFragScore,
++         hx::finalizerCount,
++         MAX_GC_THREADS,
++         (t1 - t0) * 1000.0,
++         (t2 - t1) * 1000.0,
++         (t3 - t2) * 1000.0,
++         (t4 - t3) * 1000.0,
++         (t5 - t4) * 1000.0,
++         (t6 - t5) * 1000.0,
++         (collectTEnd - t6) * 1000.0);
++      fflush(stdout);
++      #endif
+    }
+ 
+    void reclaimBlocks(bool full, BlockDataStats &outStats)
+@@ -5515,6 +5932,21 @@ public:
+       return mLargeAllocated;
+    }
+ 
++   size_t MemLargeGc()
++   {
++      return mLargeListAllocated;
++   }
++
++   size_t MemLargeExternal()
++   {
++      return mLargeAllocated >= mLargeListAllocated ? mLargeAllocated - mLargeListAllocated : 0;
++   }
++
++   size_t LargeCount()
++   {
++      return mLargeList.size();
++   }
++
+    size_t MemReserved()
+    {
+       return mLargeAllocated + (mAllBlocksCount*IMMIX_USEFUL_LINES<<IMMIX_LINE_BITS);
+@@ -5594,6 +6026,7 @@ public:
+    size_t mLargeAllocSpace;
+    size_t mLargeAllocForceRefresh;
+    size_t mLargeAllocated;
++   size_t mLargeListAllocated;
+    size_t mTotalAfterLastCollect;
+    size_t mAllBlocksCount;
+    double mGenerationalRetainEstimate;
+@@ -6415,7 +6848,7 @@ public:
+       //GCLOG("=========== Mark Stack ==================== %p ... %p (%p)\n",mBottomOfStack,mTopOfStack,&here);
+       #endif
+ 
+-      #ifdef HXCPP_DEBUG
++      #if defined(HXCPP_DEBUG) || defined(HXCPP_GC_RETENTION_TRACE)
+          MarkPushClass("Stack",__inCtx);
+          MarkSetMember("Stack",__inCtx);
+ 
+@@ -7120,4 +7553,3 @@ unsigned int __hxcpp_obj_hash(Dynamic inObj)
+ 
+ 
+ void DummyFunction(void *inPtr) { }
+-
+diff --git a/toolchain/common-defines.xml b/toolchain/common-defines.xml
+index 3d14752d..04dab78d 100644
+--- a/toolchain/common-defines.xml
++++ b/toolchain/common-defines.xml
+@@ -21,6 +21,12 @@
+  <flag value="-DHXCPP_GC_MOVING" if="HXCPP_GC_MOVING" tag="gc" />
+  <flag value="-DHXCPP_GC_BIG_BLOCKS" if="HXCPP_GC_BIG_BLOCKS" tag="gc" />
+  <flag value="-DHXCPP_GC_SUMMARY" if="HXCPP_GC_SUMMARY" tag="gc" />
++ <flag value="-DHXCPP_GC_TIMELINE" if="HXCPP_GC_TIMELINE" tag="gc" />
++ <flag value="-DHXCPP_GC_CENSUS" if="HXCPP_GC_CENSUS" tag="gc" />
++ <flag value="-DHXCPP_GC_RETENTION_TRACE" if="HXCPP_GC_RETENTION_TRACE" tag="gc" />
++ <flag value="-DHXCPP_GC_RETENTION_TRACE_ANIMATE" if="HXCPP_GC_RETENTION_TRACE_ANIMATE" tag="gc" />
++ <flag value="-DHXCPP_GC_RETENTION_TRACE_GRAPH" if="HXCPP_GC_RETENTION_TRACE_GRAPH" tag="gc" />
++ <flag value="-DHXCPP_GC_RETENTION_NAMES" if="HXCPP_GC_RETENTION_TRACE" tag="haxe" />
+  <flag value="-DHXCPP_GC_DYNAMIC_SIZE" if="HXCPP_GC_DYNAMIC_SIZE" tag="gc" />
+  <flag value="-DHXCPP_GC_CHECK_POINTER" if="HXCPP_GC_CHECK_POINTER" tag="haxe" />
+  <flag value="-DHXCPP_GC_DEBUG_ALWAYS_MOVE" if="HXCPP_GC_DEBUG_ALWAYS_MOVE" tag="haxe" />

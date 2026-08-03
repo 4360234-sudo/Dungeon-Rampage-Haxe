@@ -1,0 +1,644 @@
+diff --git a/src/brain/utils/StallProfiler.hx b/src/brain/utils/StallProfiler.hx
+new file mode 100644
+index 0000000..968129c
+--- /dev/null
++++ b/src/brain/utils/StallProfiler.hx
+@@ -0,0 +1,458 @@
++package brain.utils;
++
++#if cpp
++import brain.logger.Logger;
++import cpp.vm.Gc;
++import flash.Lib;
++import flash.display.Stage;
++import flash.events.Event;
++import flash.events.FocusEvent;
++import flash.system.System;
++import haxe.CallStack;
++
++/**
++	Lightweight release-friendly stall + GC memory profiler.
++
++	Enable with `--profile-stalls` or `--profile-stalls=80` (threshold in ms).
++	Optional `--profile-memory-interval=5` overrides the periodic memory sample interval (seconds).
++	Optional `--profile-alloc-spike=100` logs sudden heap/large jumps (MB, default 100).
++**/
++class StallProfiler
++{
++	static inline final ARGUMENT:String = "--profile-stalls";
++	static inline final MEMORY_INTERVAL_ARGUMENT:String = "--profile-memory-interval";
++	static inline final ALLOC_SPIKE_ARGUMENT:String = "--profile-alloc-spike";
++	static inline final DEFAULT_THRESHOLD_MS:Float = 50;
++	static inline final DEFAULT_MEMORY_INTERVAL_MS:Float = 5000;
++	static inline final DEFAULT_ALLOC_SPIKE_MB:Float = 100;
++	static inline final DEFAULT_HINT_TTL_MS:Int = 1500;
++	static inline final RECENT_MARK_CAPACITY:Int = 16;
++	static inline final RECENT_MARK_TTL_MS:Int = 15000;
++	/** Log BitmapData (and similar) creations at/above this size when profiling. */
++	static inline final LARGE_BITMAP_LOG_MB:Float = 32;
++
++	static var enabled:Bool = false;
++	static var thresholdMs:Float = DEFAULT_THRESHOLD_MS;
++	static var memoryIntervalMs:Float = DEFAULT_MEMORY_INTERVAL_MS;
++	static var allocSpikeMb:Float = DEFAULT_ALLOC_SPIKE_MB;
++	static var lastFrameMs:Int = 0;
++	static var lastMemorySampleMs:Int = 0;
++	static var hint:String = "none";
++	static var hintExpireMs:Int = 0;
++	static var stallCount:Int = 0;
++	static var spikeCount:Int = 0;
++	static var lastUsageMb:Float = -1;
++	static var lastLargeMb:Float = -1;
++	static var lastHeapSampleMs:Int = 0;
++	static var recentMarks:Array<String> = [];
++	static var recentMarkExpireMs:Array<Int> = [];
++
++	public static function maybeStartFromArgs(args:Array<String>, stage:Stage):Void
++	{
++		var threshold:Null<Float> = null;
++		var memoryInterval:Null<Float> = null;
++		var spikeThreshold:Null<Float> = null;
++		var i = 0;
++		while (i < args.length)
++		{
++			var arg = args[i];
++			if (arg == ARGUMENT)
++			{
++				threshold = DEFAULT_THRESHOLD_MS;
++				if (i + 1 < args.length && ~/^[0-9]+(?:\.[0-9]+)?$/.match(args[i + 1]))
++				{
++					threshold = Std.parseFloat(args[i + 1]);
++					i++;
++				}
++			}
++			else if (StringTools.startsWith(arg, ARGUMENT + "="))
++			{
++				var value = arg.substr(ARGUMENT.length + 1);
++				if (value.length == 0)
++				{
++					threshold = DEFAULT_THRESHOLD_MS;
++				}
++				else if (~/^[0-9]+(?:\.[0-9]+)?$/.match(value))
++				{
++					threshold = Std.parseFloat(value);
++				}
++				else
++				{
++					Logger.warn("Ignoring invalid " + ARGUMENT + " value: " + value);
++				}
++			}
++			else if (arg == MEMORY_INTERVAL_ARGUMENT)
++			{
++				if (i + 1 < args.length && ~/^[0-9]+(?:\.[0-9]+)?$/.match(args[i + 1]))
++				{
++					memoryInterval = Std.parseFloat(args[i + 1]) * 1000;
++					i++;
++				}
++			}
++			else if (StringTools.startsWith(arg, MEMORY_INTERVAL_ARGUMENT + "="))
++			{
++				var intervalValue = arg.substr(MEMORY_INTERVAL_ARGUMENT.length + 1);
++				if (~/^[0-9]+(?:\.[0-9]+)?$/.match(intervalValue))
++				{
++					memoryInterval = Std.parseFloat(intervalValue) * 1000;
++				}
++			}
++			else if (arg == ALLOC_SPIKE_ARGUMENT)
++			{
++				spikeThreshold = DEFAULT_ALLOC_SPIKE_MB;
++				if (i + 1 < args.length && ~/^[0-9]+(?:\.[0-9]+)?$/.match(args[i + 1]))
++				{
++					spikeThreshold = Std.parseFloat(args[i + 1]);
++					i++;
++				}
++			}
++			else if (StringTools.startsWith(arg, ALLOC_SPIKE_ARGUMENT + "="))
++			{
++				var spikeValue = arg.substr(ALLOC_SPIKE_ARGUMENT.length + 1);
++				if (spikeValue.length == 0)
++				{
++					spikeThreshold = DEFAULT_ALLOC_SPIKE_MB;
++				}
++				else if (~/^[0-9]+(?:\.[0-9]+)?$/.match(spikeValue))
++				{
++					spikeThreshold = Std.parseFloat(spikeValue);
++				}
++				else
++				{
++					Logger.warn("Ignoring invalid " + ALLOC_SPIKE_ARGUMENT + " value: " + spikeValue);
++				}
++			}
++			i++;
++		}
++
++		if (threshold == null)
++		{
++			return;
++		}
++
++		thresholdMs = Math.max(1, threshold);
++		if (memoryInterval != null)
++		{
++			memoryIntervalMs = Math.max(1000, memoryInterval);
++		}
++		if (spikeThreshold != null)
++		{
++			allocSpikeMb = Math.max(10, spikeThreshold);
++		}
++		start(stage);
++	}
++
++	public static function start(stage:Stage):Void
++	{
++		if (enabled || stage == null)
++		{
++			return;
++		}
++
++		enabled = true;
++		lastFrameMs = Lib.getTimer();
++		lastMemorySampleMs = lastFrameMs;
++		lastHeapSampleMs = lastFrameMs;
++		stage.addEventListener(Event.ENTER_FRAME, onEnterFrame, false, 1000, true);
++		stage.addEventListener(Event.MOUSE_LEAVE, onMouseLeave, false, 1000, true);
++		stage.addEventListener(Event.DEACTIVATE, onDeactivate, false, 1000, true);
++		stage.addEventListener(Event.ACTIVATE, onActivate, false, 1000, true);
++		stage.addEventListener(Event.RESIZE, onResize, false, 1000, true);
++		stage.addEventListener(FocusEvent.FOCUS_IN, onFocusIn, false, 1000, true);
++		stage.addEventListener(FocusEvent.FOCUS_OUT, onFocusOut, false, 1000, true);
++		#if lime
++		bindLimeWindow(stage);
++		#end
++
++		Logger.info("[StallProfiler] enabled threshold="
++			+ thresholdMs
++			+ "ms memoryInterval="
++			+ (memoryIntervalMs / 1000)
++			+ "s allocSpike="
++			+ allocSpikeMb
++			+ "MB");
++		logMemory("startup");
++		sampleHeap(true);
++	}
++
++	public static inline function mark(cause:String, ttlMs:Int = DEFAULT_HINT_TTL_MS):Void
++	{
++		if (!enabled)
++		{
++			return;
++		}
++		hint = cause;
++		hintExpireMs = Lib.getTimer() + ttlMs;
++		pushRecentMark(cause);
++	}
++
++	public static function isEnabled():Bool
++	{
++		return enabled;
++	}
++
++	/**
++		Optional helper for call sites that know they allocate a large bitmap.
++		No-op unless `--profile-stalls` is active.
++	**/
++	public static function noteLargeBitmap(width:Int, height:Int, source:String = "BitmapData"):Void
++	{
++		if (!enabled || width <= 0 || height <= 0)
++		{
++			return;
++		}
++
++		var bytes = (width : Float) * (height : Float) * 4;
++		var mb = bytes / (1024 * 1024);
++		if (mb < LARGE_BITMAP_LOG_MB)
++		{
++			return;
++		}
++
++		var tag = source + ":" + width + "x" + height + "=" + formatMb(mb) + "MB";
++		mark(tag, 5000);
++		#if HXCPP_STACK_TRACE
++		var stack = CallStack.toString(CallStack.callStack());
++		Logger.warn("[StallProfiler] large-bitmap " + tag + " stack=\n" + stack);
++		#else
++		Logger.warn("[StallProfiler] large-bitmap " + tag);
++		#end
++	}
++
++	#if lime
++	static function bindLimeWindow(stage:Stage):Void
++	{
++		var window = stage.window;
++		if (window == null)
++		{
++			return;
++		}
++		window.onResize.add(onWindowResize);
++		window.onFocusIn.add(onWindowFocusIn);
++		window.onFocusOut.add(onWindowFocusOut);
++		window.onFullscreen.add(onWindowFullscreen);
++	}
++
++	static function onWindowResize(width:Int, height:Int):Void
++	{
++		mark("win-resize:" + width + "x" + height, 3000);
++		Logger.info("[StallProfiler] win-resize " + width + "x" + height);
++	}
++
++	static function onWindowFocusIn():Void
++	{
++		mark("win-focus-in");
++	}
++
++	static function onWindowFocusOut():Void
++	{
++		mark("win-focus-out");
++	}
++
++	static function onWindowFullscreen():Void
++	{
++		var stage = Lib.current != null ? Lib.current.stage : null;
++		var fullscreen = stage != null && stage.window != null && stage.window.fullscreen;
++		mark(fullscreen ? "win-fullscreen-on" : "win-fullscreen-off", 3000);
++		Logger.info("[StallProfiler] win-fullscreen " + fullscreen);
++	}
++	#end
++
++	static function onMouseLeave(_:Event):Void
++	{
++		mark("mouse-leave");
++	}
++
++	static function onResize(_:Event):Void
++	{
++		var stage = Lib.current != null ? Lib.current.stage : null;
++		if (stage != null)
++		{
++			mark("stage-resize:" + stage.stageWidth + "x" + stage.stageHeight, 3000);
++			Logger.info("[StallProfiler] stage-resize " + stage.stageWidth + "x" + stage.stageHeight);
++		}
++		else
++		{
++			mark("stage-resize");
++		}
++	}
++
++	static function onDeactivate(_:Event):Void
++	{
++		mark("deactivate");
++		// Avoid counting suspended/background time as a stall when focus returns.
++		lastFrameMs = 0;
++	}
++
++	static function onActivate(_:Event):Void
++	{
++		mark("activate");
++		lastFrameMs = Lib.getTimer();
++	}
++
++	static function onFocusIn(event:FocusEvent):Void
++	{
++		var targetName = event.target != null ? Std.string(event.target) : "null";
++		if (targetName.indexOf("TextField") >= 0 || targetName.indexOf("text") >= 0)
++		{
++			mark("focus-in-text");
++		}
++		else
++		{
++			mark("focus-in");
++		}
++	}
++
++	static function onFocusOut(_:FocusEvent):Void
++	{
++		mark("focus-out");
++	}
++
++	static function onEnterFrame(_:Event):Void
++	{
++		var now = Lib.getTimer();
++		if (lastFrameMs <= 0)
++		{
++			lastFrameMs = now;
++			sampleHeap(false);
++			return;
++		}
++
++		var dt = now - lastFrameMs;
++		lastFrameMs = now;
++
++		if (dt >= thresholdMs)
++		{
++			stallCount++;
++			var cause = now <= hintExpireMs ? hint : "none";
++			Logger.warn("[StallProfiler] stall#" + stallCount + " frame=" + dt + "ms cause=" + cause + " recent=[" + recentMarksJoined(now) + "] " + memorySnapshot());
++		}
++
++		sampleHeap(false);
++
++		if (now - lastMemorySampleMs >= memoryIntervalMs)
++		{
++			lastMemorySampleMs = now;
++			logMemory("periodic");
++		}
++	}
++
++	static function sampleHeap(forceBaseline:Bool):Void
++	{
++		var now = Lib.getTimer();
++		var usageMb = Gc.memInfo64(Gc.MEM_INFO_USAGE) / (1024 * 1024);
++		var largeMb = Gc.memInfo64(Gc.MEM_INFO_LARGE) / (1024 * 1024);
++
++		if (forceBaseline || lastUsageMb < 0)
++		{
++			lastUsageMb = usageMb;
++			lastLargeMb = largeMb;
++			lastHeapSampleMs = now;
++			return;
++		}
++
++		var dUsage = usageMb - lastUsageMb;
++		var dLarge = largeMb - lastLargeMb;
++		var overMs = now - lastHeapSampleMs;
++		var spiked = dUsage >= allocSpikeMb || dLarge >= allocSpikeMb;
++
++		if (spiked)
++		{
++			spikeCount++;
++			var cause = now <= hintExpireMs ? hint : "none";
++			Logger.warn("[StallProfiler] alloc-spike#"
++				+ spikeCount
++				+ " dUsageMB="
++				+ signedMb(dUsage)
++				+ " dLargeMB="
++				+ signedMb(dLarge)
++				+ " over="
++				+ overMs
++				+ "ms cause="
++				+ cause
++				+ " recent=["
++				+ recentMarksJoined(now)
++				+ "] "
++				+ memorySnapshot());
++		}
++
++		lastUsageMb = usageMb;
++		lastLargeMb = largeMb;
++		lastHeapSampleMs = now;
++	}
++
++	static function pushRecentMark(cause:String):Void
++	{
++		var now = Lib.getTimer();
++		expireRecentMarks(now);
++		recentMarks.push(cause);
++		recentMarkExpireMs.push(now + RECENT_MARK_TTL_MS);
++		while (recentMarks.length > RECENT_MARK_CAPACITY)
++		{
++			recentMarks.shift();
++			recentMarkExpireMs.shift();
++		}
++	}
++
++	static function expireRecentMarks(now:Int):Void
++	{
++		while (recentMarkExpireMs.length > 0 && recentMarkExpireMs[0] <= now)
++		{
++			recentMarks.shift();
++			recentMarkExpireMs.shift();
++		}
++	}
++
++	static function recentMarksJoined(now:Int):String
++	{
++		expireRecentMarks(now);
++		if (recentMarks.length == 0)
++		{
++			return "";
++		}
++		return recentMarks.join(",");
++	}
++
++	static function logMemory(reason:String):Void
++	{
++		Logger.info("[StallProfiler] memory reason=" + reason + " " + memorySnapshot());
++	}
++
++	static function memorySnapshot():String
++	{
++		var usageMb = Gc.memInfo64(Gc.MEM_INFO_USAGE) / (1024 * 1024);
++		var currentMb = Gc.memInfo64(Gc.MEM_INFO_CURRENT) / (1024 * 1024);
++		var reservedMb = Gc.memInfo64(Gc.MEM_INFO_RESERVED) / (1024 * 1024);
++		var largeMb = Gc.memInfo64(Gc.MEM_INFO_LARGE) / (1024 * 1024);
++		var totalMb = System.totalMemoryNumber / (1024 * 1024);
++		var swfStats = brain.assetRepository.SwfAsset.getPreprocessedBitmapCacheStats();
++		return "gcUsageMB="
++			+ formatMb(usageMb)
++			+ " gcCurrentMB="
++			+ formatMb(currentMb)
++			+ " gcReservedMB="
++			+ formatMb(reservedMb)
++			+ " gcLargeMB="
++			+ formatMb(largeMb)
++			+ " totalMemoryMB="
++			+ formatMb(totalMb)
++			+ " "
++			+ swfStats;
++	}
++
++	static function formatMb(value:Float):String
++	{
++		return Std.string(Math.fround(value * 10) / 10);
++	}
++
++	static function signedMb(value:Float):String
++	{
++		var rounded = Math.fround(value * 10) / 10;
++		if (rounded > 0)
++		{
++			return "+" + Std.string(rounded);
++		}
++		return Std.string(rounded);
++	}
++}
++#end
+diff --git a/src/DungeonBustersProject.hx b/src/DungeonBustersProject.hx
+index 6e36562..c55fd6b 100644
+--- a/src/DungeonBustersProject.hx
++++ b/src/DungeonBustersProject.hx
+@@ -3,6 +3,9 @@
+    import brain.GameEntry;
+    import brain.logger.Logger;
+    import brain.mouseScrollPlugin.*;
++   #if cpp
++   import brain.utils.StallProfiler;
++   #end
+    import dBGlobals.DBGlobal;
+    import facade.DBFacade;
+    import com.amanitadesign.steam.SteamEvent;
+@@ -42,6 +45,9 @@
+          stage.scaleMode = "showAll";
+          stage.quality = "high";
+          stage.align = "";
++         #if cpp
++         StallProfiler.maybeStartFromArgs(Sys.args(), this.stage);
++         #end
+          mDBFacade = new DBFacade();
+          mDBFacade.init(this.stage);
+          if(_loc1_ != null)
+diff --git a/src/uI/UIChatLog.hx b/src/uI/UIChatLog.hx
+index 0b4b8a9..973525e 100644
+--- a/src/uI/UIChatLog.hx
++++ b/src/uI/UIChatLog.hx
+@@ -4,6 +4,9 @@ package uI
+    import brain.assetRepository.AssetLoadingComponent;
+    import brain.event.EventComponent;
+    import brain.logger.Logger;
++   #if cpp
++   import brain.utils.StallProfiler;
++   #end
+    import brain.sceneGraph.SceneGraphComponent;
+    import brain.uI.UIButton;
+    import brain.uI.UIInputText;
+@@ -136,6 +139,9 @@ public function  set_heroOwner(param1:HeroGameObjectOwner) :HeroGameObjectOwner
+       
+       function onChatTextFieldFocus(param1:FocusEvent) 
+       {
++         #if cpp
++         StallProfiler.mark("chat-focus");
++         #end
+          if(mHeroOwner != null)
+          {
+             mHeroOwner.showPlayerIsTyping(true);
+@@ -145,6 +151,9 @@ public function  set_heroOwner(param1:HeroGameObjectOwner) :HeroGameObjectOwner
+       
+       function onChatTextFieldLoseFocus(param1:FocusEvent) 
+       {
++         #if cpp
++         StallProfiler.mark("chat-focus-out");
++         #end
+          if(mHeroOwner != null)
+          {
+             mHeroOwner.showPlayerIsTyping(false);
+@@ -172,6 +181,9 @@ public function  set_heroOwner(param1:HeroGameObjectOwner) :HeroGameObjectOwner
+       
+       function sendChat(param1:String) 
+       {
++         #if cpp
++         StallProfiler.mark("chat-send");
++         #end
+          mChatInputText.clear();
+          mDBFacade.regainFocus();
+          mDBFacade.inputManager.clear();
+diff --git a/src/brain/input/InputManager.hx b/src/brain/input/InputManager.hx
+index 79d1783..6706deb 100644
+--- a/src/brain/input/InputManager.hx
++++ b/src/brain/input/InputManager.hx
+@@ -4,6 +4,9 @@ package brain.input
+    import brain.logger.Logger;
+    import brain.mouseScrollPlugin.CustomMouseWheelEvent;
+    import brain.utils.MemoryTracker;
++   #if cpp
++   import brain.utils.StallProfiler;
++   #end
+    import flash.events.Event;
+    import flash.events.KeyboardEvent;
+    import flash.events.MouseEvent;
+@@ -194,11 +197,17 @@ public function  get_mouseFlashY() : Int
+       
+       function onDeactivate(param1:Event) 
+       {
++         #if cpp
++         StallProfiler.mark("deactivate");
++         #end
+          clear();
+       }
+       
+       function onMouseLeave(param1:Event) 
+       {
++         #if cpp
++         StallProfiler.mark("mouse-leave");
++         #end
+          clear();
+       }
+       
+diff --git a/src/distributedObjects/DistributedDungeonFloor.hx b/src/distributedObjects/DistributedDungeonFloor.hx
+index a3d1a79..d330bc9 100644
+--- a/src/distributedObjects/DistributedDungeonFloor.hx
++++ b/src/distributedObjects/DistributedDungeonFloor.hx
+@@ -93,6 +93,9 @@ package distributedObjects
+       public function new(param1:DBFacade, param2:UInt)
+       {
+          Logger.debug("New  DistributedDungeonFloor******************************");
++         #if cpp
++         brain.utils.StallProfiler.mark("floor-new");
++         #end
+          mPostGenerate = false;
+          super(param1,param2);
+          mRemoteHeroes = new Map();
+@@ -543,6 +546,9 @@ function  set_currentFloorNum(param1:UInt) :UInt      {
+       {
+          var _loc2_:DooberGameObject = null;
+          Logger.debug("destroy DistributedDungeonFloor " + Std.string(id));
++         #if cpp
++         brain.utils.StallProfiler.mark("floor-destroy");
++         #end
+          mEventComponent.dispatchEvent(new Event("DUNGEON_FLOOR_DESTROY"));
+          mActiveOwnerAvatar = null;
+          if(mBgMusic != null)
+diff --git a/src/brain/assetRepository/SwfAsset.hx b/src/brain/assetRepository/SwfAsset.hx
+--- a/src/brain/assetRepository/SwfAsset.hx
++++ b/src/brain/assetRepository/SwfAsset.hx
+@@ -716,6 +716,9 @@ class SwfAsset extends Asset
+             applyLegacyTimelineFrameRate(_loc1_);
+             Assets.registerLibrary(param1,_loc1_);
+             sLoadedPreprocessedLibraries.set(param1,_loc1_);
++            #if cpp
++            brain.utils.StallProfiler.mark("swf-load:" + param1, 4000);
++            #end
+             return _loc1_;
+         }
+         catch(e:Dynamic)
+@@ -735,6 +738,46 @@ class SwfAsset extends Asset
+         }
+     }
+ 
++    public static function getPreprocessedLibraryCount() : Int
++    {
++        #if cpp
++        var _loc1_ = 0;
++        for (_ in sLoadedPreprocessedLibraries)
++        {
++            _loc1_++;
++        }
++        return _loc1_;
++        #else
++        return 0;
++        #end
++    }
++
++    public static function getPreprocessedBitmapCacheStats() : String
++    {
++        #if cpp
++        var libCount = 0;
++        var hardwareCount = 0;
++        var readableCount = 0;
++        for (library in sLoadedPreprocessedLibraries)
++        {
++            libCount++;
++            if (Std.isOfType(library, AnimateLibrary))
++            {
++                var counts = cast(library, AnimateLibrary).getBitmapCacheCounts();
++                hardwareCount += counts.hardware;
++                readableCount += counts.readable;
++            }
++        }
++        return "swfLibs=" + libCount + " hwBmp=" + hardwareCount + " readableBmp=" + readableCount;
++        #else
++        return "swfLibs=0 hwBmp=0 readableBmp=0";
++        #end
++    }
++
+     static function getPreprocessedBundlePath(param1:String) : String
+     {
+         var _loc1_= Path.directory(Sys.programPath());

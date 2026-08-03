@@ -1,5 +1,12 @@
 # Diagnostic mémoire et GC
 
+Deux volets complémentaires :
+
+- **Linux / builds GC** (sections suivantes) : chronologie, recensement et traces
+  de rétention hxcpp (`tools/run_gc_session.sh`, builds `bin/gc-*`).
+- **Windows / freezes** (fin du fichier) : `StallProfiler` in-process, sampler
+  Working Set, PDB + LocalDumps pour les access violations après spirale GC.
+
 ## Prérequis hxcpp
 
 L’instrumentation (`HXCPP_GC_TIMELINE`, `HXCPP_GC_CENSUS`,
@@ -32,6 +39,30 @@ moment de l’écriture). Après une mise à jour du submodule, vérifier
 Ces defines ne doivent jamais être activés dans `project.xml` de la release.
 Sans le patch, un build qui les demande ne compilera pas ou n’émettra pas les
 lignes CSV attendues.
+
+## Prérequis StallProfiler (jeu)
+
+Le profiler in-process (`--profile-stalls`, marks, `alloc-spike`) n’est **pas**
+dans le code release. Il vit dans :
+
+```text
+tools/profiling/patches/stall_profiler.patch
+```
+
+Appliquer depuis la racine (working tree jeu) pour un build de diagnostic :
+
+```bash
+git apply tools/profiling/patches/stall_profiler.patch
+```
+
+Retirer :
+
+```bash
+git apply -R tools/profiling/patches/stall_profiler.patch
+```
+
+Le patch ajoute `src/brain/utils/StallProfiler.hx`, les hooks CLI / marks
+(chat, floor, swf, input) et des helpers de stats SWF pour le snapshot mémoire.
 
 ## Session réaliste longue
 
@@ -252,3 +283,114 @@ lente, pas pendant toute une partie de deux heures :
 tools/profiling/profile_native_perf.sh <pid> profiling/perf-run
 tools/profiling/report_native_perf.sh profiling/perf-run/perf.data
 ```
+
+`--profile-stalls` fonctionne aussi sous Linux et sert surtout à comparer la
+pente mémoire / l’absence de longs stalls face à Windows.
+
+---
+
+## Windows : stalls, Working Set et dumps
+
+Objectif : corréler les freezes Windows (souvent plusieurs secondes à plusieurs
+dizaines de secondes, `cause=none`) avec la croissance du heap hxcpp / Working
+Set OS, puis capturer un dump natif si la session finit en `0xc0000005`.
+
+Les freezes focus/chat/autre écran plus courts restent utiles comme
+révélateurs ; la cible de fond est la spirale GC, pas le crash terminal.
+
+### StallProfiler (in-process)
+
+Le profiler n’est actif que via CLI (coût quasi nul sinon) :
+
+```bat
+Dungeon Rampage Haxe.exe --profile-stalls --fps=auto
+```
+
+Options :
+
+- `--profile-stalls` : seuil 50 ms
+- `--profile-stalls=80` : seuil personnalisé en ms
+- `--profile-memory-interval=5` : sample mémoire hxcpp toutes les N secondes (défaut 5)
+- `--profile-alloc-spike=100` : loguer les sauts soudains de `gcUsage` / `gcLarge` (Mo, défaut 100)
+
+Lignes utiles dans les logs :
+
+```text
+[StallProfiler] enabled threshold=50ms memoryInterval=5s allocSpike=100MB
+[StallProfiler] memory reason=periodic gcUsageMB=... gcCurrentMB=... gcReservedMB=... gcLargeMB=... swfLibs=... hwBmp=... readableBmp=...
+[StallProfiler] stall#12 frame=173ms cause=mouse-leave recent=[floor-new,swf-load:...] gcUsageMB=...
+[StallProfiler] alloc-spike#3 dUsageMB=+412.5 dLargeMB=+380.1 over=16ms cause=swf-load:... recent=[floor-destroy,floor-new,swf-load:...] ...
+[StallProfiler] large-bitmap BitmapData:16384x16384=1024MB stack=...
+[StallProfiler] win-resize 1920x1080
+[StallProfiler] stage-resize 1920x1080
+```
+
+`cause=none` = stall sans hint récent (typiquement pause GC / gros travail hors
+leave/focus/chat). `recent=[...]` garde les derniers breadcrumbs (floor, swf-load,
+focus, chat, resize, …) même si le hint immédiat a expiré. Le temps passé en
+arrière-plan après alt-tab n’est **pas** compté comme stall.
+
+Les `alloc-spike` sont la piste principale pour un déclencheur mémoire : un
++centaines de Mo / +1 Gio en une ou quelques frames, avec `recent=` pour nommer
+le chemin. Exemple résolu : codes SDL (bit `0x40000000`) fuités dans
+`KeyboardEvent.keyCode` → `Vector` Flash-style de longueur 256 qui grossissait
+à ~1 GiB. `noteLargeBitmap` reste dispo pour instrumenter manuellement un
+allocateur suspect.
+
+### Sampler mémoire OS (Working Set / Private)
+
+Dans un autre terminal PowerShell, pendant que le jeu tourne :
+
+```powershell
+$proc = Get-Process -Name "Dungeon Rampage Haxe" | Select-Object -First 1
+.\tools\profiling\profile_native_memory.ps1 -ProcessId $proc.Id -OutputCsv profiling\win1\memory.csv -IntervalSeconds 0.5
+```
+
+CSV :
+
+```text
+timestamp_sec,rss_kb,private_kb,virtual_kb
+```
+
+Croiser l’horloge des stalls (`Logger`) avec `private_kb` / `rss_kb`. Task
+Manager peut montrer des chutes brutales du Working Set pendant un gros GC
+(parfois jusqu’à quelques dizaines de Mo puis remontée) : signal bruyant, à
+confirmer avec le sampler et `gcUsageMB` du StallProfiler.
+
+### Build avec PDB + LocalDumps
+
+Pour une stack native exploitable après AV :
+
+```bat
+haxelib run openfl build project.xml cpp -D HXCPP_DEBUG_LINK
+```
+
+Copier l’exe **et** le `.pdb` côte à côte (ex. dossier `current` du launcher).
+
+LocalDumps (exemple actuel) :
+
+```reg
+[HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps\Dungeon Rampage Haxe.exe]
+"DumpFolder"="F:\\DungeonRampageHaxe\\dumps"
+"DumpCount"=dword:0000000a
+"DumpType"=dword:00000002
+```
+
+`DumpType=2` = full dump : il faut assez d’espace disque (plusieurs Gio). Un
+minidump (`DumpType=1`) suffit souvent avec le PDB pour la stack.
+
+Analyser avec `cdb` / WinDbg en pointant le PDB du même build.
+
+### Scénario de session
+
+1. Lancer le build local (PDB) avec `--profile-stalls`
+2. Démarrer le sampler mémoire
+3. Enchaîner donjons / floors sans relancer le process
+4. Quand les longs stalls apparaissent, noter l’heure et les `gcLargeMB` /
+   `hwBmp` / `swfLibs`
+5. Si crash : récupérer le `.dmp` + le log `.zst` du launcher
+
+Interprétation typique observée : heap/`gcLargeMB` qui montent, frames de
+5–60+ s en `cause=none`, parfois reclaim ~1 Gio puis reprise ; sans reclaim,
+dégradation puis AV. Le crash natif sous charge est une conséquence ; la cause
+à traiter est la spirale qui précède.

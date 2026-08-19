@@ -203,7 +203,9 @@ function Write-RuntimeConfig([string]$DecompiledAbs, [string]$Ax4Abs) {
     $cfg.swc = @(Get-RelativePath $AirglobalTmp $Root)
 
     $json = $cfg | ConvertTo-Json -Depth 10
-    Set-Content -LiteralPath $RuntimeConfig -Value $json -Encoding utf8
+    # Windows PowerShell 5.1 utf8 encoding writes a BOM; Haxe JsonParser rejects it.
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($RuntimeConfig, $json, $utf8)
 }
 
 $Ax4Abs = Find-Ax4Dir

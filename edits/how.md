@@ -1,29 +1,33 @@
-### Note that this is only a minimal explanation, not currently intended for anyone to redo everything.
+## Decompile
 
-Decompile the game using [JPEXS](https://github.com/jindrapetrik/jpexs-decompiler). \
-Fix the errors to make the AS3 code work. \
-Convert it to Haxe using [ax4](https://github.com/Tutez64/ax4):
-```JSON
-{
-  "src": "../DungeonRampageRecompiled/src",
-  "hxout": "../DungeonRampageHaxe/src",
-  "copy": [
-    {"unit": "compat", "to": "../DungeonRampageHaxe/compat"}
-  ],
-  "swc": [
-    "test-game/lib/airglobal.swc",
-    "test-game/lib/FRESteamWorks.swc"
-  ],
-  "packagePartRenames": {
-    "floor": "dr_floor"
-  },
-  "settings": {
-    "checkNullIteratee": true
-    }
-}
+See [Dungeon Rampage Decompiled](https://github.com/Tutez64/Dungeon-Rampage-Decompiled).
+
+## Convert to Haxe
+
+Recommended layout:
+
+```text
+ax4/
+Dungeon-Rampage-Decompiled/
+Dungeon-Rampage-Haxe/
+jpexs-decompiler/   # optional; FFDEC_HOME or PATH also work
 ```
-Add/replace the Haxe files with the one in ./src \
-SteamEvent.hx is needed for AIR target, the others are for native targets.
+
+Run the **Convert from AS3** IntelliJ configuration (or execute `./edits/conversion/convert.cmd` from this repository).
+
+The script:
+
+1. Extracts `library.swf` from `Dungeon-Rampage-Decompiled/extensions/FRESteamWorks.ane`
+2. Decompiles it with FFDec into a temporary folder (the ANE ActionScript is not part of the game SWF)
+3. Runs [ax4](https://github.com/Tutez64/ax4) with `edits/conversion/config.json`
+4. Moves `com.amanitadesign` to `src-steam/` (C++ classpath only)
+
+Useful options: `--prepare-only`, `--keep-tmp`, `--build-ax4`.
+Overrides: `--ax4` / `AX4_DIR`, `--decompiled` / `DECOMPILED_DIR`, `--ffdec` / `FFDEC_HOME`, `--air-sdk` / `AIR_SDK`, `--ane`.
+
+## After conversion
+
+Copy `edits/src` over `src/` and `edits/src-steam` over `src-steam/` (`SwfAsset.hx` and the SteamWrap `FRESteamWorks.hx` replace generated files; the `openfl/` files are new).
 
 Export the fonts using FFDec:
 

@@ -25,6 +25,7 @@
 	<dependency name="com.amanitadesign.steam.FRESteamWorks" path="extensions/FRESteamWorks.ane" if="air" />
 
 	<source path="src" />
+	<source path="src-steam" if="cpp" />
 	<source path="compat" />
 
 	<assets path="Resources" embed="false" exclude="*.swf" if="cpp" />

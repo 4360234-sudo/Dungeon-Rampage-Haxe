@@ -1,0 +1,20 @@
+{
+  "src": [
+    "../Dungeon-Rampage-Decompiled/src",
+    "edits/conversion/.tmp/ane-src"
+  ],
+  "hxout": "src",
+  "copy": [
+    {"unit": "../ax4/compat", "to": "compat"}
+  ],
+  "swc": [
+    "edits/conversion/.tmp/airglobal.swc"
+  ],
+  "packagePartRenames": {
+    "floor": "dr_floor"
+  },
+  "settings": {
+    "checkNullIteratee": true
+  },
+  "skipXmlLiterals": true
+}

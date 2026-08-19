@@ -41,12 +41,14 @@ get update notifications, and see occasional previews.
 
 ## Technical overview
 
-DRH is a port of Dungeon Rampage from AS3/AIR to Haxe. It uses
-[OpenFL](https://www.openfl.org/), a graphical library that reimplements Flash/AIR APIs
+DRH is a port of Dungeon Rampage from AS3/AIR
+(see [Dungeon Rampage Decompiled](https://github.com/Tutez64/Dungeon-Rampage-Decompiled)) to Haxe.
+It uses [OpenFL](https://www.openfl.org/), a graphical library that reimplements Flash/AIR APIs
 with native targets and modern tooling.
 
 This project required months of work, most of it in the following open-source projects:
 
+- [JPEXS](https://github.com/Tutez64/jpexs-decompiler/tree/dev), the decompiler (see [Dungeon Rampage Decompiled](https://github.com/Tutez64/Dungeon-Rampage-Decompiled)).
 - [ax4](https://github.com/Tutez64/ax4), my AS3 to Haxe converter based on ax3.
 - [OpenFL](https://github.com/Tutez64/openfl), [SWF](https://github.com/Tutez64/swf), [Lime](https://github.com/Tutez64/lime), and [hxcpp](https://github.com/Tutez64/hxcpp).
 - [SteamWrap](https://github.com/Tutez64/SteamWrap), used to replace the Steam ANE.

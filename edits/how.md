@@ -17,10 +17,11 @@ Run the **Convert from AS3** IntelliJ configuration (or execute `./edits/convers
 
 The script:
 
-1. Extracts `library.swf` from `Dungeon-Rampage-Decompiled/extensions/FRESteamWorks.ane`
-2. Decompiles it with FFDec into a temporary folder (the ANE ActionScript is not part of the game SWF)
-3. Runs [ax4](https://github.com/Tutez64/ax4) with `edits/conversion/config.json`
-4. Moves `com.amanitadesign` to `src-steam/` (C++ classpath only)
+1. Copies `FRESteamWorks.ane` into `extensions/` and unpacks it for ADL
+2. Extracts `library.swf` from that ANE
+3. Decompiles it with FFDec into a temporary folder (the ANE ActionScript is not part of the game SWF)
+4. Runs [ax4](https://github.com/Tutez64/ax4) with `edits/conversion/config.json`
+5. Moves `com.amanitadesign` to `src-steam/` (C++ classpath only)
 
 Useful options: `--prepare-only`, `--keep-tmp`, `--build-ax4`.
 Overrides: `--ax4` / `AX4_DIR`, `--decompiled` / `DECOMPILED_DIR`, `--ffdec` / `FFDEC_HOME`, `--air-sdk` / `AIR_SDK`, `--ane`.

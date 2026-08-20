@@ -150,6 +150,25 @@ function Find-Ane([string]$DecompiledAbs) {
     throw "FRESteamWorks.ane not found in $DecompiledAbs\extensions. Run the decompiled repo sync, or pass -Ane."
 }
 
+function Install-Ane([string]$AnePath) {
+    $packed = Join-Path $Root "extensions\FRESteamWorks.ane"
+    $unpacked = Join-Path $Root "extensions\adl\FRESteamWorks.Unpacked.ane"
+    New-Item -ItemType Directory -Path (Join-Path $Root "extensions\adl") -Force | Out-Null
+    if (Test-Path -LiteralPath $unpacked) { Remove-Item -LiteralPath $unpacked -Recurse -Force }
+    if (Test-Path -LiteralPath $AnePath -PathType Container) {
+        Copy-Item -LiteralPath $AnePath -Destination $unpacked -Recurse -Force
+        return
+    }
+    $srcFull = (Resolve-Path -LiteralPath $AnePath).Path
+    $destFull = $packed
+    if (Test-Path -LiteralPath $packed) { $destFull = (Resolve-Path -LiteralPath $packed).Path }
+    if ($srcFull -ne $destFull) {
+        Copy-Item -LiteralPath $AnePath -Destination $packed -Force
+    }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($AnePath, $unpacked)
+}
+
 function Extract-LibrarySwf([string]$AnePath, [string]$Dest) {
     if (Test-Path -LiteralPath $AnePath -PathType Container) {
         $lib = Join-Path $AnePath "library.swf"
@@ -225,6 +244,9 @@ Write-Host "Decompiled: $DecompiledAbs"
 Write-Host "FFDec:      $FfdecPath"
 Write-Host "ANE:        $AneAbs"
 Write-Host "airglobal:  $AirglobalAbs"
+
+Write-Host "Updating extensions/ ..."
+Install-Ane $AneAbs
 
 Write-Host "Extracting library.swf ..."
 Extract-LibrarySwf $AneAbs $LibrarySwf

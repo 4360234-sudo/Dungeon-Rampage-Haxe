@@ -222,6 +222,30 @@ find_ane() {
   die "FRESteamWorks.ane not found in $DECOMPILED_ABS/extensions. Run the decompiled repo sync, or pass --ane."
 }
 
+install_ane() {
+  local ane="$1"
+  local packed="$ROOT/extensions/FRESteamWorks.ane"
+  local unpacked="$ROOT/extensions/adl/FRESteamWorks.Unpacked.ane"
+  mkdir -p "$ROOT/extensions/adl"
+  rm -rf "$unpacked"
+  if [[ -d "$ane" ]]; then
+    cp -a "$ane" "$unpacked"
+    return 0
+  fi
+  local src_abs dest_abs
+  src_abs="$(readlink -f "$ane" 2>/dev/null || realpath "$ane" 2>/dev/null || echo "$ane")"
+  dest_abs="$(readlink -f "$packed" 2>/dev/null || realpath "$packed" 2>/dev/null || echo "$packed")"
+  if [[ "$src_abs" != "$dest_abs" ]]; then
+    cp -a "$ane" "$packed"
+  fi
+  mkdir -p "$unpacked"
+  if command -v unzip >/dev/null 2>&1; then
+    unzip -o -q "$ane" -d "$unpacked"
+  else
+    (cd "$unpacked" && jar xf "$ane")
+  fi
+}
+
 extract_library_swf() {
   local ane="$1"
   local dest="$2"
@@ -308,6 +332,9 @@ echo "Decompiled: $DECOMPILED_ABS"
 echo "FFDec:      $FFDEC_PATH"
 echo "ANE:        $ANE_ABS"
 echo "airglobal:  $AIRGLOBAL_ABS"
+
+echo "Updating extensions/ ..."
+install_ane "$ANE_ABS"
 
 echo "Extracting library.swf ..."
 extract_library_swf "$ANE_ABS" "$LIBRARY_SWF"

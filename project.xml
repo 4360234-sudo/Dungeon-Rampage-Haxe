@@ -11,6 +11,7 @@
 	<haxelib name="hxcpp" path="submodules/hxcpp" if="cpp" />
 	<haxelib name="lime" path="submodules/lime" if="cpp" />
 	<haxelib name="swf" path="submodules/swf" if="cpp" />
+	<define name="draft" />
 	<haxelib name="openfl" path="submodules/openfl" />
 	<haxelib name="format" if="cpp" />
 

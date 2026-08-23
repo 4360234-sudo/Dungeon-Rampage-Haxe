@@ -166,10 +166,12 @@ package brain.render
          var _loc2_:String = null;
          if(param1.currentLabels != null)
          {
+            _loc3_ = param1.soundTransform.volume;
             _loc4_ = 1;
             while(_loc4_ <= param1.totalFrames)
             {
                param1.gotoAndStop(_loc4_);
+               param1.soundTransform.volume = 0;
                if(param1.currentFrameLabel == "pause")
                {
                   mPauseFrames.push((_loc4_ : UInt));

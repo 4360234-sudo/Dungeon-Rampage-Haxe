@@ -212,6 +212,7 @@ public function  get_scopeString() : String
             this._slashCmds[param1] = new SlashCommand(param1,param2,param3,false,param4,param5);
             if(_loc7_ > 0)
             {
+               this._slashCmds.setPropertyIsEnumerable(param1,false);
             }
             _loc7_++;
          }

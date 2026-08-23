@@ -51,9 +51,4 @@ Needed for AIR target:
 - `PlayEffectTimelineAction` & `PlayEffectAttackTimelineAction`: replace the last three `= ""` by `= null ` in constructors
 - `DungeonBustersProject`: add `stage.align = "";`
 
-Needed for C++ target (these changes don't seem to make any difference in AIR):
-- `MovieClipCutsceneRenderer`: delete soundTransform lines 165;170
-- `MainPanel`: delete "Security.showSettings(...)" line 1160 (it doesn't do anything in AIR, it's only for Flash)
-- `CommandLine`: delete `setPropertyIsEnumerable` line 208 (not available in OpenFL, possible to implement but not urgent)
-
 Lastly, you can apply patches from ./patches

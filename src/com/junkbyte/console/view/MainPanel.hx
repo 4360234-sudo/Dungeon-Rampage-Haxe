@@ -14,6 +14,8 @@ package com.junkbyte.console.view
    import flash.geom.ColorTransform;
    import flash.geom.Rectangle;
    import flash.net.FileReference;
+   import flash.system.Security;
+   import flash.system.SecurityPanel;
    import flash.system.System;
    import flash.text.TextField;
    import flash.text.TextFieldAutoSize;
@@ -1168,6 +1170,7 @@ return param1;
          else if(t == "settings")
          {
             console.report("A new window should open in browser. If not, try searching for \'Flash Player Global Security Settings panel\' online :)",-1);
+            Security.showSettings(SecurityPanel.SETTINGS_MANAGER);
          }
          else if(t == "remote")
          {

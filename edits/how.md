@@ -49,6 +49,5 @@ These changes that can be done in either the AS3 or Haxe code:
 
 Needed for AIR target:
 - `PlayEffectTimelineAction` & `PlayEffectAttackTimelineAction`: replace the last three `= ""` by `= null ` in constructors
-- `DungeonBustersProject`: add `stage.align = "";`
 
 Lastly, you can apply patches from ./patches

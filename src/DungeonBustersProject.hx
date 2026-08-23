@@ -41,7 +41,6 @@
          #end
          stage.scaleMode = "showAll";
          stage.quality = "high";
-         stage.align = "";
          mDBFacade = new DBFacade();
          mDBFacade.init(this.stage);
          if(_loc1_ != null)

@@ -16,5 +16,6 @@
   "settings": {
     "checkNullIteratee": true
   },
-  "skipXmlLiterals": true
+  "skipXmlLiterals": true,
+  "formatter": true
 }

@@ -310,7 +310,8 @@ write_runtime_config() {
     printf '  "swc": [\n    "%s"\n  ],\n' "$(json_escape "$airglobal_rel")"
     printf '  "packagePartRenames": {\n    "floor": "dr_floor"\n  },\n'
     printf '  "settings": {\n    "checkNullIteratee": true\n  },\n'
-    printf '  "skipXmlLiterals": true\n'
+    printf '  "skipXmlLiterals": true,\n'
+    printf '  "formatter": true\n'
     printf '}\n'
   } > "$RUNTIME_CONFIG"
 }

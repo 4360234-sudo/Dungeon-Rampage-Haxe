@@ -11,8 +11,8 @@ function Show-Usage {
     @"
 Usage: refresh.cmd <command> [options]
 
-  start --buildid ID --reasons REASONS [--date YYYY-MM-DD] [--skip-convert]
-        [--] [convert options]
+  start [--buildid ID] --reasons REASONS [--date YYYY-MM-DD] [--skip-convert]
+        [--decompiled DIR] [--] [convert options]
                     Create converted/DATE-bID-reasons, run convert, commit stamp
   rebase            Replay edits/latest onto the current converted/ branch
   replay [sha...]   Cherry-pick commits onto the current converted/ branch
@@ -22,6 +22,7 @@ Usage: refresh.cmd <command> [options]
   import            Copy src/, src-steam/, and stamp from edits/latest onto master
 
 Reasons: dr, jpexs, ax4 (any subset; stored as dr > jpexs > ax4).
+BuildID defaults to Dungeon-Rampage-Decompiled/tools/official.buildid.
 Convert flags after -- go to convert.cmd.
 "@
 }
@@ -93,6 +94,37 @@ function Normalize-Reasons([string]$Raw) {
     $out -join '+'
 }
 
+function Find-Sibling([string]$Name) {
+    $candidate = Join-Path (Split-Path -Parent $Root) $Name
+    if (Test-Path -LiteralPath $candidate -PathType Container) {
+        return (Resolve-Path -LiteralPath $candidate).Path
+    }
+    return $null
+}
+
+function Find-DecompiledDir {
+    if ($env:DECOMPILED_DIR) {
+        if (-not (Test-Path -LiteralPath $env:DECOMPILED_DIR -PathType Container)) {
+            Die "Decompiled directory not found: $($env:DECOMPILED_DIR)"
+        }
+        return (Resolve-Path -LiteralPath $env:DECOMPILED_DIR).Path
+    }
+    $found = Find-Sibling "Dungeon-Rampage-Decompiled"
+    if (-not $found) { Die "Dungeon-Rampage-Decompiled not found. Pass --decompiled / DECOMPILED_DIR." }
+    return $found
+}
+
+function Read-DecompiledBuildId {
+    $dir = Find-DecompiledDir
+    $stamp = Join-Path $dir "tools\official.buildid"
+    if (-not (Test-Path -LiteralPath $stamp)) {
+        Die "no $stamp (run the decompiled repo sync, or pass --buildid)"
+    }
+    $buildId = ([System.IO.File]::ReadAllText($stamp)).Trim()
+    if ($buildId -notmatch '^[0-9]+$') { Die "invalid BuildID in $stamp" }
+    return $buildId
+}
+
 function Get-SiblingHead([string]$Name) {
     $dir = Join-Path (Split-Path -Parent $Root) $Name
     if (Test-Path -LiteralPath (Join-Path $dir ".git")) {
@@ -145,12 +177,16 @@ function Invoke-Start([string[]]$Argv) {
             "--buildid" { $buildId = $Argv[$i + 1]; $i += 2 }
             "--reasons" { $reasons = $Argv[$i + 1]; $i += 2 }
             "--date" { $stampDate = $Argv[$i + 1]; $i += 2 }
+            "--decompiled" { $env:DECOMPILED_DIR = $Argv[$i + 1]; $i += 2 }
             "--skip-convert" { $skipConvert = $true; $i += 1 }
             "--" { $i += 1; if ($i -lt $Argv.Count) { $convertArgs = $Argv[$i..($Argv.Count - 1)] }; $i = $Argv.Count }
             default { Die "unknown option: $($Argv[$i])" }
         }
     }
-    if (-not $buildId) { Die "start requires --buildid" }
+    if (-not $buildId) {
+        $buildId = Read-DecompiledBuildId
+        Write-Host "BuildID $buildId from decompiled tools/official.buildid"
+    }
     if ($buildId -notmatch '^[0-9]+$') { Die "buildid must be numeric" }
     if (-not $reasons) { Die "start requires --reasons" }
     $reasons = Normalize-Reasons $reasons

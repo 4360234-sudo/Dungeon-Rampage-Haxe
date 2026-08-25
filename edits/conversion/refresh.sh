@@ -11,8 +11,8 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") <command> [options]
 
-  start --buildid ID --reasons REASONS [--date YYYY-MM-DD] [--skip-convert]
-        [--] [convert options]
+  start [--buildid ID] --reasons REASONS [--date YYYY-MM-DD] [--skip-convert]
+        [--decompiled DIR] [--] [convert options]
                     Create converted/DATE-bID-reasons, run convert, commit stamp
   rebase            Replay edits/latest onto the current converted/ branch
   replay [sha...]   Cherry-pick commits onto the current converted/ branch
@@ -22,6 +22,7 @@ Usage: $(basename "$0") <command> [options]
   import            Copy src/, src-steam/, and stamp from edits/latest onto master
 
 Reasons: dr, jpexs, ax4 (any subset; stored as dr > jpexs > ax4).
+BuildID defaults to Dungeon-Rampage-Decompiled/tools/official.buildid.
 Convert flags after -- go to convert.cmd.
 EOF
 }
@@ -94,6 +95,35 @@ sibling_head() {
   fi
 }
 
+find_sibling() {
+  local dir="$ROOT/../$1"
+  if [[ -d "$dir" ]]; then
+    (cd "$dir" && pwd)
+    return 0
+  fi
+  return 1
+}
+
+find_decompiled_dir() {
+  if [[ -n "${DECOMPILED_DIR:-}" ]]; then
+    [[ -d "$DECOMPILED_DIR" ]] || die "Decompiled directory not found: $DECOMPILED_DIR"
+    (cd "$DECOMPILED_DIR" && pwd)
+    return 0
+  fi
+  find_sibling Dungeon-Rampage-Decompiled || die "Dungeon-Rampage-Decompiled not found. Pass --decompiled / DECOMPILED_DIR."
+}
+
+read_decompiled_buildid() {
+  local dir stamp
+  dir="$(find_decompiled_dir)"
+  stamp="$dir/tools/official.buildid"
+  [[ -f "$stamp" ]] || die "no $stamp (run the decompiled repo sync, or pass --buildid)"
+  local buildid
+  buildid="$(tr -d '[:space:]' < "$stamp")"
+  [[ "$buildid" =~ ^[0-9]+$ ]] || die "invalid BuildID in $stamp"
+  printf '%s\n' "$buildid"
+}
+
 write_stamp() {
   local suffix="$1" date="$2" buildid="$3" reasons="$4"
   mkdir -p "$(dirname "$ROOT/$STAMP_PATH")"
@@ -131,13 +161,17 @@ cmd_start() {
       --buildid) buildid="$2"; shift 2 ;;
       --reasons) reasons="$2"; shift 2 ;;
       --date) date="$2"; shift 2 ;;
+      --decompiled) export DECOMPILED_DIR="$2"; shift 2 ;;
       --skip-convert) skip_convert=1; shift ;;
       --) shift; convert_args+=("$@"); break ;;
       -h|--help) usage; exit 0 ;;
       *) die "unknown option: $1" ;;
     esac
   done
-  [[ -n "$buildid" ]] || die "start requires --buildid"
+  if [[ -z "$buildid" ]]; then
+    buildid="$(read_decompiled_buildid)"
+    echo "BuildID $buildid from decompiled tools/official.buildid"
+  fi
   [[ "$buildid" =~ ^[0-9]+$ ]] || die "buildid must be numeric"
   [[ -n "$reasons" ]] || die "start requires --reasons"
   reasons="$(normalize_reasons "$reasons")"

@@ -41,7 +41,7 @@ edits/YYYY-MM-DD-b<BuildID>-<reasons>
 
 ### Naming
 
-BuildID is the `buildid` key in `steamapps/appmanifest_3053950.acf` of the install that was decompiled.
+BuildID comes from `Dungeon-Rampage-Decompiled/tools/official.buildid`. `--buildid` overrides it.
 
 Reasons, in this order, joined with `+` (at least one is required):
 
@@ -79,7 +79,7 @@ The polyglot script `./edits/conversion/refresh.cmd` (Bash + PowerShell) drives 
 **Later conversion** (a `converted/latest` already exists):
 
 ```bash
-./edits/conversion/refresh.cmd start --buildid BUILDID --reasons dr+ax4
+./edits/conversion/refresh.cmd start --reasons dr+ax4
 # inspect src/, then:
 ./edits/conversion/refresh.cmd rebase
 # on conflict: fix, then ./edits/conversion/refresh.cmd continue

@@ -17,5 +17,6 @@
     "checkNullIteratee": true
   },
   "skipXmlLiterals": true,
-  "formatter": true
+  "formatter": true,
+  "hxoutClean": true
 }

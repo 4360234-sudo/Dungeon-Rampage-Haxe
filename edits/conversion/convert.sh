@@ -311,7 +311,8 @@ write_runtime_config() {
     printf '  "packagePartRenames": {\n    "floor": "dr_floor"\n  },\n'
     printf '  "settings": {\n    "checkNullIteratee": true\n  },\n'
     printf '  "skipXmlLiterals": true,\n'
-    printf '  "formatter": true\n'
+    printf '  "formatter": true,\n'
+    printf '  "hxoutClean": true\n'
     printf '}\n'
   } > "$RUNTIME_CONFIG"
 }

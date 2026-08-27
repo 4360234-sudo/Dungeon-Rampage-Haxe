@@ -2,7 +2,7 @@
 <module type="HAXE_MODULE" version="4">
   <component name="HaxeModuleSettingsStorage">
     <option name="buildConfig" value="3" />
-    <option name="flexSdkName" value="AIRSDK_51.2.2" />
+    <option name="flexSdkName" value="AIRSDK_51.3.3" />
     <option name="openFLPath" value="$MODULE_DIR$/project.xml" />
     <option name="openFLTarget" value="Linux 64" />
     <option name="outputFolder" value="$MODULE_DIR$/out/production/DungeonRampageHaxe" />
@@ -28,7 +28,18 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
-      <library name="Haxelib: lime:8.3.1 [dev]">
+      <library name="Haxelib: hxcpp:4.3.0 [dev]">
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/submodules/hxcpp" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/submodules/hxcpp" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library" scope="PROVIDED">
+      <library name="Haxelib: lime:8.4.0 [dev]">
         <CLASSES>
           <root url="file://$MODULE_DIR$/submodules/lime/src" />
         </CLASSES>
@@ -50,24 +61,13 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library" scope="PROVIDED">
-      <library name="Haxelib: openfl:9.5.1 [dev]">
+      <library name="Haxelib: openfl:9.5.2 [dev]">
         <CLASSES>
           <root url="file://$MODULE_DIR$/submodules/openfl/src" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
           <root url="file://$MODULE_DIR$/submodules/openfl/src" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" scope="PROVIDED">
-      <library name="Haxelib: hxcpp:4.3.0 [dev]">
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/submodules/hxcpp/src" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/submodules/hxcpp/src" />
         </SOURCES>
       </library>
     </orderEntry>

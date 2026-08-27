@@ -186,7 +186,16 @@ jobs:
       - name: Rebuild Lime helper tools
         shell: bash
         run: |
-          haxelib run lime rebuild cpp -debug
+          set -euo pipefail
+          # lime rebuild cpp builds 32-bit too unless -64; Ubuntu 24.04 has no i386 headers.
+          case "${{ inputs.platform }}" in
+            linux)
+              haxelib run lime rebuild cpp -debug -64
+              ;;
+            *)
+              haxelib run lime rebuild cpp -debug
+              ;;
+          esac
           haxelib run lime rebuild tools
           haxelib run lime rebuild hxcpp
           haxelib run lime rebuild swf

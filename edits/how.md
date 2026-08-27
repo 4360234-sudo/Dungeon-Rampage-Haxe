@@ -17,7 +17,7 @@ Run the **Convert from AS3** IntelliJ configuration (or `./edits/conversion/conv
 
 The script:
 
-1. Copies `FRESteamWorks.ane` into `extensions/` and unpacks it for ADL
+1. Copies `FRESteamWorks.ane` into `extensions/` and unpacks it for ADL, only if the ANE payloads changed
 2. Extracts `library.swf` from that ANE
 3. Decompiles it with FFDec into a temporary folder (the ANE ActionScript is not part of the game SWF)
 4. Runs [ax4](https://github.com/Tutez64/ax4) with `edits/conversion/config.json`

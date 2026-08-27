@@ -216,14 +216,87 @@ find_ane() {
   die "FRESteamWorks.ane not found in $DECOMPILED_ABS/extensions. Run the decompiled repo sync, or pass --ane."
 }
 
+normalize_copied() {
+  local root="$1"
+  if [[ -f "$root" ]]; then
+    chmod a-x "$root"
+    case "$root" in
+      *.as|*.hx|*.xml|*.json|*.txt|*.md) sed -i 's/\r$//' "$root" ;;
+    esac
+    return
+  fi
+  [[ -d "$root" ]] || return 0
+  find "$root" -type f -exec chmod a-x {} +
+  find "$root" -type f \( -name '*.as' -o -name '*.hx' -o -name '*.xml' -o -name '*.json' -o -name '*.txt' -o -name '*.md' \) \
+    -exec sed -i 's/\r$//' {} +
+}
+
+unpack_ane_to() {
+  local ane="$1"
+  local dest="$2"
+  mkdir -p "$dest"
+  if [[ -d "$ane" ]]; then
+    cp -a "$ane"/. "$dest"/
+    return 0
+  fi
+  if command -v unzip >/dev/null 2>&1; then
+    unzip -qq -o "$ane" -d "$dest"
+  else
+    (cd "$dest" && jar xf "$ane")
+  fi
+}
+
+# Same payload check as Dungeon-Rampage-Decompiled/tools/sync-from-official.sh
+ane_trees_match() {
+  local a="$1"
+  local b="$2"
+  local fa fb rel
+  fa="$(cd "$a" && find . -type f ! -name mimetype | sort)"
+  fb="$(cd "$b" && find . -type f ! -name mimetype | sort)"
+  [[ "$fa" == "$fb" ]] || return 1
+  while IFS= read -r rel; do
+    [[ -z "$rel" ]] && continue
+    cmp -s "$a/$rel" "$b/$rel" || return 1
+  done <<< "$fa"
+  return 0
+}
+
+ane_payloads_match() {
+  local src="$1"
+  local dest="$2"
+  [[ -e "$dest" ]] || return 1
+  if [[ -f "$src" && -f "$dest" ]] && cmp -s "$src" "$dest"; then
+    return 0
+  fi
+  local src_stage dest_stage
+  src_stage="$(mktemp -d "${TMPDIR:-/tmp}/drh-ane-src.XXXXXX")"
+  dest_stage="$(mktemp -d "${TMPDIR:-/tmp}/drh-ane-dst.XXXXXX")"
+  unpack_ane_to "$src" "$src_stage"
+  unpack_ane_to "$dest" "$dest_stage"
+  local ok=0
+  ane_trees_match "$src_stage" "$dest_stage" || ok=1
+  rm -rf "$src_stage" "$dest_stage"
+  return "$ok"
+}
+
 install_ane() {
   local ane="$1"
   local packed="$ROOT/extensions/FRESteamWorks.ane"
   local unpacked="$ROOT/extensions/adl/FRESteamWorks.Unpacked.ane"
+  if ane_payloads_match "$ane" "$packed"; then
+    echo "ANE payloads unchanged, keeping $packed"
+    if [[ ! -d "$unpacked" ]]; then
+      mkdir -p "$unpacked"
+      unpack_ane_to "$packed" "$unpacked"
+      normalize_copied "$unpacked"
+    fi
+    return 0
+  fi
   mkdir -p "$ROOT/extensions/adl"
   rm -rf "$unpacked"
   if [[ -d "$ane" ]]; then
     cp -a "$ane" "$unpacked"
+    normalize_copied "$unpacked"
     return 0
   fi
   local src_abs dest_abs
@@ -232,12 +305,10 @@ install_ane() {
   if [[ "$src_abs" != "$dest_abs" ]]; then
     cp -a "$ane" "$packed"
   fi
+  chmod a-x "$packed"
   mkdir -p "$unpacked"
-  if command -v unzip >/dev/null 2>&1; then
-    unzip -o -q "$ane" -d "$unpacked"
-  else
-    (cd "$unpacked" && jar xf "$ane")
-  fi
+  unpack_ane_to "$ane" "$unpacked"
+  normalize_copied "$unpacked"
 }
 
 extract_library_swf() {
@@ -316,12 +387,16 @@ write_runtime_config() {
         print
         next
       }
-      if ($0 ~ /"src"[[:space:]]*:/) { in_src = 1; src_n = 0; print; next }
-      if (in_src && $0 ~ /"[^"]*"/) {
-        src_n++
-        if (src_n == 1) sub(/"[^"]*"/, "\"" game "\"")
-        else if (src_n == 2) { sub(/"[^"]*"/, "\"" ane "\""); in_src = 0 }
-        print
+      if ($0 ~ /"src"[[:space:]]*:/) {
+        print "  \"src\": ["
+        print "    \"" game "\","
+        print "    \"" ane "\""
+        print "  ],"
+        skip_src = 1
+        next
+      }
+      if (skip_src) {
+        if ($0 ~ /]/) skip_src = 0
         next
       }
       if ($0 ~ /"unit"/) {
@@ -381,6 +456,9 @@ echo "Wrote $RUNTIME_CONFIG"
 
 if [[ "$PREPARE_ONLY" -eq 1 ]]; then
   echo "Prepare-only: stopping before ax4."
+  if [[ "$KEEP_TMP" -eq 0 ]]; then
+    rm -rf "$TMP_DIR"
+  fi
   exit 0
 fi
 
@@ -402,6 +480,7 @@ mkdir -p "$ROOT/src-steam/com"
 rm -rf "$ROOT/src-steam/com/amanitadesign"
 [[ -d "$ROOT/src/com/amanitadesign" ]] || die "conversion did not produce src/com/amanitadesign"
 mv "$ROOT/src/com/amanitadesign" "$ROOT/src-steam/com/"
+normalize_copied "$ROOT/src-steam/com/amanitadesign"
 
 if [[ "$KEEP_TMP" -eq 0 ]]; then
   rm -rf "$TMP_DIR"

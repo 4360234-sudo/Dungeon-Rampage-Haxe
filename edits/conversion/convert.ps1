@@ -150,13 +150,102 @@ function Find-Ane([string]$DecompiledAbs) {
     throw "FRESteamWorks.ane not found in $DecompiledAbs\extensions. Run the decompiled repo sync, or pass -Ane."
 }
 
+function Convert-CopiedFiles([string]$Path) {
+    $textExt = @('.as', '.hx', '.xml', '.json', '.txt', '.md')
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    $items = @()
+    if (Test-Path -LiteralPath $Path -PathType Leaf) {
+        $items = @(Get-Item -LiteralPath $Path)
+    }
+    elseif (Test-Path -LiteralPath $Path -PathType Container) {
+        $items = @(Get-ChildItem -LiteralPath $Path -Recurse -File -Force -ErrorAction SilentlyContinue)
+    }
+    else {
+        return
+    }
+    foreach ($file in $items) {
+        if ($textExt -notcontains $file.Extension.ToLowerInvariant()) { continue }
+        $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
+        if ($bytes -notcontains [byte]13) { continue }
+        $text = $utf8.GetString($bytes)
+        $converted = $text.Replace("`r`n", "`n").Replace("`r", "`n")
+        [System.IO.File]::WriteAllBytes($file.FullName, $utf8.GetBytes($converted))
+    }
+}
+
+function Get-FileSha256([string]$Path) {
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+}
+
+function Expand-AneTo([string]$AnePath, [string]$Dest) {
+    New-Item -ItemType Directory -Path $Dest -Force | Out-Null
+    if (Test-Path -LiteralPath $AnePath -PathType Container) {
+        Copy-Item -Path (Join-Path $AnePath '*') -Destination $Dest -Recurse -Force
+        return
+    }
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($AnePath, $Dest)
+}
+
+function Get-AneRelativeFiles([string]$Dir) {
+    Get-ChildItem -LiteralPath $Dir -Recurse -File -Force -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            $_.FullName.Substring($Dir.Length).TrimStart('\', '/').Replace('\', '/')
+        } |
+        Where-Object { $_ -ne 'mimetype' } |
+        Sort-Object
+}
+
+function Test-AneTreesMatch([string]$A, [string]$B) {
+    $fa = @(Get-AneRelativeFiles -Dir $A)
+    $fb = @(Get-AneRelativeFiles -Dir $B)
+    if (($fa -join '|') -ne ($fb -join '|')) {
+        return $false
+    }
+    foreach ($rel in $fa) {
+        $pa = Join-Path $A ($rel.Replace('/', '\'))
+        $pb = Join-Path $B ($rel.Replace('/', '\'))
+        if ((Get-FileSha256 $pa) -ne (Get-FileSha256 $pb)) {
+            return $false
+        }
+    }
+    return $true
+}
+
+function Test-AnePayloadsMatch([string]$Src, [string]$Dest) {
+    if (-not (Test-Path -LiteralPath $Dest)) { return $false }
+    if ((Test-Path -LiteralPath $Src -PathType Leaf) -and (Test-Path -LiteralPath $Dest -PathType Leaf)) {
+        if ((Get-FileSha256 $Src) -eq (Get-FileSha256 $Dest)) { return $true }
+    }
+    $srcStage = Join-Path ([System.IO.Path]::GetTempPath()) ("drh-ane-src-" + [guid]::NewGuid().ToString("n"))
+    $destStage = Join-Path ([System.IO.Path]::GetTempPath()) ("drh-ane-dst-" + [guid]::NewGuid().ToString("n"))
+    try {
+        Expand-AneTo $Src $srcStage
+        Expand-AneTo $Dest $destStage
+        return (Test-AneTreesMatch $srcStage $destStage)
+    }
+    finally {
+        if (Test-Path -LiteralPath $srcStage) { Remove-Item -LiteralPath $srcStage -Recurse -Force -ErrorAction SilentlyContinue }
+        if (Test-Path -LiteralPath $destStage) { Remove-Item -LiteralPath $destStage -Recurse -Force -ErrorAction SilentlyContinue }
+    }
+}
+
 function Install-Ane([string]$AnePath) {
     $packed = Join-Path $Root "extensions\FRESteamWorks.ane"
     $unpacked = Join-Path $Root "extensions\adl\FRESteamWorks.Unpacked.ane"
+    if (Test-AnePayloadsMatch $AnePath $packed) {
+        Write-Host "ANE payloads unchanged, keeping $packed"
+        if (-not (Test-Path -LiteralPath $unpacked)) {
+            Expand-AneTo $packed $unpacked
+            Convert-CopiedFiles $unpacked
+        }
+        return
+    }
     New-Item -ItemType Directory -Path (Join-Path $Root "extensions\adl") -Force | Out-Null
     if (Test-Path -LiteralPath $unpacked) { Remove-Item -LiteralPath $unpacked -Recurse -Force }
     if (Test-Path -LiteralPath $AnePath -PathType Container) {
         Copy-Item -LiteralPath $AnePath -Destination $unpacked -Recurse -Force
+        Convert-CopiedFiles $unpacked
         return
     }
     $srcFull = (Resolve-Path -LiteralPath $AnePath).Path
@@ -165,8 +254,8 @@ function Install-Ane([string]$AnePath) {
     if ($srcFull -ne $destFull) {
         Copy-Item -LiteralPath $AnePath -Destination $packed -Force
     }
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    [System.IO.Compression.ZipFile]::ExtractToDirectory($AnePath, $unpacked)
+    Expand-AneTo $AnePath $unpacked
+    Convert-CopiedFiles $unpacked
 }
 
 function Extract-LibrarySwf([string]$AnePath, [string]$Dest) {
@@ -215,8 +304,7 @@ function Install-AsTree([string]$ExportDir, [string]$Dest) {
 function Write-RuntimeConfig([string]$DecompiledAbs, [string]$Ax4Abs) {
     $cfg = Get-Content -LiteralPath $Template -Raw | ConvertFrom-Json
     $gameSrcRel = Get-RelativePath (Join-Path $DecompiledAbs "src") $Root
-    $aneSrcRel = Get-RelativePath $AneSrc $Root
-    $cfg.src = @($gameSrcRel, $aneSrcRel)
+    $cfg.src = @($gameSrcRel, (Get-RelativePath $AneSrc $Root))
     $cfg.hxout = "src"
     $cfg.copy = @(@{ unit = (Get-RelativePath (Join-Path $Ax4Abs "compat") $Root); to = "compat" })
     $cfg.swc = @(Get-RelativePath $AirglobalTmp $Root)
@@ -268,6 +356,9 @@ Write-Host "Wrote $RuntimeConfig"
 
 if ($PrepareOnly) {
     Write-Host "Prepare-only: stopping before ax4."
+    if (-not $KeepTmp) {
+        Remove-Item -LiteralPath $TmpDir -Recurse -Force
+    }
     exit 0
 }
 
@@ -296,6 +387,7 @@ if (Test-Path -LiteralPath $steamOut) { Remove-Item -LiteralPath $steamOut -Recu
 $steamSrc = Join-Path $Root "src\com\amanitadesign"
 if (-not (Test-Path -LiteralPath $steamSrc)) { throw "conversion did not produce src\com\amanitadesign" }
 Move-Item -LiteralPath $steamSrc -Destination $steamOut
+Convert-CopiedFiles $steamOut
 
 if (-not $KeepTmp) {
     Remove-Item -LiteralPath $TmpDir -Recurse -Force

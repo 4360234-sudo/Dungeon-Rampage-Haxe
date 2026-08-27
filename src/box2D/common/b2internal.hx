@@ -1,5 +1,3 @@
-package box2D.common
-;
-    namespace b2internal ;
+package box2D.common;
 
-
+namespace b2internal;

@@ -1,41 +1,32 @@
-package brain.render
-;
-   import brain.utils.MemoryTracker;
-   import flash.display.DisplayObject;
-   
-    class SortOnAddLayer extends Layer
-   {
-      
-      var mNeedsSort:Bool = false;
-      
-      public function new(param1:Int = 0)
-      {
-         super(param1);
-         MemoryTracker.track(this,"SortOnAddLayer sortIndex=" + param1 + " - created in SortOnAddLayer()","brain");
-      }
-      
-      override public function addChild(param1:DisplayObject) : DisplayObject
-      {
-         super.addChild(param1);
-         mNeedsSort = true;
-         return param1;
-      }
-      
-      override public function addChildAt(param1:DisplayObject, param2:Int) : DisplayObject
-      {
-         super.addChildAt(param1,param2);
-         mNeedsSort = true;
-         return param1;
-      }
-      
-      override public function render() 
-      {
-         if(mNeedsSort)
-         {
-            this.sortLayer();
-            mNeedsSort = false;
-         }
-      }
-   }
+package brain.render;
 
+import brain.utils.MemoryTracker;
+import flash.display.DisplayObject;
 
+class SortOnAddLayer extends Layer {
+	var mNeedsSort:Bool = false;
+
+	public function new(sortIndex:Int = 0) {
+		super(sortIndex);
+		MemoryTracker.track(this, "SortOnAddLayer sortIndex=" + sortIndex + " - created in SortOnAddLayer()", "brain");
+	}
+
+	override public function addChild(child:DisplayObject):DisplayObject {
+		super.addChild(child);
+		mNeedsSort = true;
+		return child;
+	}
+
+	override public function addChildAt(child:DisplayObject, index:Int):DisplayObject {
+		super.addChildAt(child, index);
+		mNeedsSort = true;
+		return child;
+	}
+
+	override public function render() {
+		if (mNeedsSort) {
+			this.sortLayer();
+			mNeedsSort = false;
+		}
+	}
+}

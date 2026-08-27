@@ -1,11 +1,7 @@
-package collision
-;
-    interface IContactResolver
-   {
-      
-      function enterContact(param1:UInt) : Void;
-      
-      function exitContact(param1:UInt) : Void;
-   }
+package collision;
 
+interface IContactResolver {
+	function enterContact(actorId:UInt):Void;
 
+	function exitContact(actorId:UInt):Void;
+}

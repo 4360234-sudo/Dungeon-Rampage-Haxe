@@ -1,13 +1,9 @@
-package networkCode
-;
-    interface DcNetworkInterface
-   {
-      
-      function recvById(param1:DcNetworkPacket, param2:UInt) : Void;
-      
-      function generate(param1:DcNetworkPacket) : Void;
-      
-      function destroy() : Void;
-   }
+package networkCode;
 
+interface DcNetworkInterface {
+	function recvById(packet:DcNetworkPacket, fieldid:UInt):Void;
 
+	function generate(packet:DcNetworkPacket):Void;
+
+	function destroy():Void;
+}

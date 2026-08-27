@@ -1,212 +1,183 @@
-package brain.gameObject
-;
-   import brain.clock.GameClock;
-   import brain.facade.Facade;
-   import brain.render.MovieClipRenderController;
-   import brain.sceneGraph.SceneGraphComponent;
-   import brain.utils.MemoryTracker;
-   import brain.workLoop.LogicalWorkComponent;
-   import brain.workLoop.Task;
-   import flash.display.DisplayObject;
-   import flash.display.DisplayObjectContainer;
-   import flash.display.Sprite;
-   import flash.geom.Vector3D;
-   
-    class View
-   {
-      
-      var mFacade:Facade;
-      
-      var mRoot:Sprite;
-      
-      var mSceneGraphComponent:SceneGraphComponent;
-      
-      var mMovieClipRenderer:MovieClipRenderController;
-      
-      var mWorkComponent:LogicalWorkComponent;
-      
-      var mFadeResetTask:Task;
-      
-      var mFading:Bool = false;
-      
-      public function new(param1:Facade)
-      {
-         
-         mFacade = param1;
-         var _loc2_= "View";
-         mSceneGraphComponent = new SceneGraphComponent(mFacade,_loc2_);
-         mWorkComponent = new LogicalWorkComponent(mFacade,_loc2_);
-         mRoot = new Sprite();
-         mFading = false;
-         MemoryTracker.track(this,_loc2_ + " - created in View()","brain");
-      }
-      
-      static function recursiveFindChildrenOfClass(param1:Array<ASAny>, param2:DisplayObject, param3:Array<ASAny>) 
-      {
-         var _loc5_= 0;
-         var _loc6_= ASCompat.getQualifiedClassName(param2);
-         if(param3.indexOf(_loc6_) != -1)
-         {
-            param1.push(param2);
-         }
-         var _loc4_= ASCompat.reinterpretAs(param2 , DisplayObjectContainer);
-         if(_loc4_ != null)
-         {
-            _loc5_ = 0;
-            while(_loc5_ < _loc4_.numChildren)
-            {
-               recursiveFindChildrenOfClass(param1,_loc4_.getChildAt(_loc5_),param3);
-               _loc5_++;
-            }
-         }
-      }
-      
-      public static function findChildrenOfClass(param1:DisplayObjectContainer, param2:Array<ASAny>) : Array<ASAny>
-      {
-         var _loc3_:Array<ASAny> = [];
-         recursiveFindChildrenOfClass(_loc3_,param1,param2);
-         return _loc3_;
-      }
-      
-      public function init() 
-      {
-      }
-      
-      public function unFade() 
-      {
-         mRoot.alpha = 1;
-         mFadeResetTask.destroy();
-         mFadeResetTask = null;
-         mFading = false;
-      }
-      
-      public function updateFade(param1:GameClock) 
-      {
-         var _loc2_= Math.NaN;
-         var _loc3_= param1.tickLength / GameClock.ANIMATION_FRAME_DURATION;
-         if(mFading)
-         {
-            mRoot.alpha *= Math.pow(0.85,_loc3_);
-            if(mRoot.alpha <= 0.3)
-            {
-               mFading = false;
-               mRoot.alpha = 0.3;
-            }
-         }
-         else
-         {
-            _loc2_ = 1 - mRoot.alpha;
-            mRoot.alpha = 1 - Math.pow(_loc2_,Math.pow(2,_loc3_));
-            if(mRoot.alpha > 0.975)
-            {
-               unFade();
-            }
-         }
-      }
-      
-      public function doFade() 
-      {
-         mFading = true;
-         if(mFadeResetTask == null)
-         {
-            mFadeResetTask = mWorkComponent.doEveryFrame(updateFade);
-         }
-      }
-      
-      @:isVar public var movieClipRenderer(get,never):MovieClipRenderController;
-public function  get_movieClipRenderer() : MovieClipRenderController
-      {
-         return mMovieClipRenderer;
-      }
-      
-            
-      @:isVar public var position(get,set):Vector3D;
-public function  get_position() : Vector3D
-      {
-         return new Vector3D(mRoot.x,mRoot.y);
-      }
-function  set_position(param1:Vector3D) :Vector3D      {
-         mRoot.x = param1.x;
-         mRoot.y = param1.y;
-return param1;
-      }
-      
-            
-      @:isVar public var rotation(get,set):Float;
-public function  get_rotation() : Float
-      {
-         return mRoot.rotation;
-      }
-function  set_rotation(param1:Float) :Float      {
-         return mRoot.rotation = param1;
-      }
+package brain.gameObject;
 
+import brain.clock.GameClock;
+import brain.facade.Facade;
+import brain.render.MovieClipRenderController;
+import brain.sceneGraph.SceneGraphComponent;
+import brain.utils.MemoryTracker;
+import brain.workLoop.LogicalWorkComponent;
+import brain.workLoop.Task;
+import flash.display.DisplayObject;
+import flash.display.DisplayObjectContainer;
+import flash.display.Sprite;
+import flash.geom.Vector3D;
 
-      @:isVar public var rotationX(get,set):Float;
-public function  get_rotationX() : Float
-      {
-         return mRoot.rotationX;
-      }
-function  set_rotationX(param1:Float) :Float      {
-         return mRoot.rotationX = param1;
-      }
+class View {
+	var mFacade:Facade;
 
+	var mRoot:Sprite;
 
-      @:isVar public var rotationY(get,set):Float;
-public function  get_rotationY() : Float
-      {
-         return mRoot.rotationY;
-      }
-function  set_rotationY(param1:Float) :Float      {
-         return mRoot.rotationY = param1;
-      }
+	var mSceneGraphComponent:SceneGraphComponent;
 
+	var mMovieClipRenderer:MovieClipRenderController;
 
-      @:isVar public var rotationZ(get,set):Float;
-public function  get_rotationZ() : Float
-      {
-         return mRoot.rotationZ;
-      }
-function  set_rotationZ(param1:Float) :Float      {
-         return mRoot.rotationZ = param1;
-      }
+	var mWorkComponent:LogicalWorkComponent;
 
+	var mFadeResetTask:Task;
 
-      @:isVar public var root(get,never):Sprite;
-public function  get_root() : Sprite
-      {
-         return mRoot;
-      }
-      
-      public function destroy() 
-      {
-         if(mSceneGraphComponent != null)
-         {
-            mSceneGraphComponent.destroy();
-            mSceneGraphComponent = null;
-         }
-         if(mFadeResetTask != null)
-         {
-            mFadeResetTask.destroy();
-            mFadeResetTask = null;
-         }
-         if(mWorkComponent != null)
-         {
-            mWorkComponent.destroy();
-            mWorkComponent = null;
-         }
-         if(mRoot.parent != null)
-         {
-            mRoot.parent.removeChild(mRoot);
-         }
-         if(mMovieClipRenderer != null)
-         {
-            mMovieClipRenderer.destroy();
-            mMovieClipRenderer = null;
-         }
-         mRoot = null;
-         mFacade = null;
-      }
-   }
+	var mFading:Bool = false;
 
+	public function new(facade:Facade) {
+		mFacade = facade;
+		var _loc2_ = "View";
+		mSceneGraphComponent = new SceneGraphComponent(mFacade, _loc2_);
+		mWorkComponent = new LogicalWorkComponent(mFacade, _loc2_);
+		mRoot = new Sprite();
+		mFading = false;
+		MemoryTracker.track(this, _loc2_ + " - created in View()", "brain");
+	}
 
+	static function recursiveFindChildrenOfClass(foundArray:Array<ASAny>, node:DisplayObject, classNames:Array<ASAny>) {
+		var _loc5_ = 0;
+		var _loc6_ = ASCompat.getQualifiedClassName(node);
+		if (classNames.indexOf(_loc6_) != -1) {
+			foundArray.push(node);
+		}
+		var _loc4_ = ASCompat.reinterpretAs(node, DisplayObjectContainer);
+		if (_loc4_ != null) {
+			_loc5_ = 0;
+			while (_loc5_ < _loc4_.numChildren) {
+				recursiveFindChildrenOfClass(foundArray, _loc4_.getChildAt(_loc5_), classNames);
+				_loc5_++;
+			}
+		}
+	}
+
+	public static function findChildrenOfClass(searchNode:DisplayObjectContainer, classNames:Array<ASAny>):Array<ASAny> {
+		var _loc3_:Array<ASAny> = [];
+		recursiveFindChildrenOfClass(_loc3_, searchNode, classNames);
+		return _loc3_;
+	}
+
+	public function init() {}
+
+	public function unFade() {
+		mRoot.alpha = 1;
+		mFadeResetTask.destroy();
+		mFadeResetTask = null;
+		mFading = false;
+	}
+
+	public function updateFade(gameClock:GameClock) {
+		var _loc2_ = Math.NaN;
+		var _loc3_ = gameClock.tickLength / GameClock.ANIMATION_FRAME_DURATION;
+		if (mFading) {
+			mRoot.alpha *= Math.pow(0.85, _loc3_);
+			if (mRoot.alpha <= 0.3) {
+				mFading = false;
+				mRoot.alpha = 0.3;
+			}
+		} else {
+			_loc2_ = 1 - mRoot.alpha;
+			mRoot.alpha = 1 - Math.pow(_loc2_, Math.pow(2, _loc3_));
+			if (mRoot.alpha > 0.975) {
+				unFade();
+			}
+		}
+	}
+
+	public function doFade() {
+		mFading = true;
+		if (mFadeResetTask == null) {
+			mFadeResetTask = mWorkComponent.doEveryFrame(updateFade);
+		}
+	}
+
+	@:isVar public var movieClipRenderer(get, never):MovieClipRenderController;
+
+	public function get_movieClipRenderer():MovieClipRenderController {
+		return mMovieClipRenderer;
+	}
+
+	@:isVar public var position(get, set):Vector3D;
+
+	public function get_position():Vector3D {
+		return new Vector3D(mRoot.x, mRoot.y);
+	}
+
+	function set_position(pos:Vector3D):Vector3D {
+		mRoot.x = pos.x;
+		mRoot.y = pos.y;
+		return pos;
+	}
+
+	@:isVar public var rotation(get, set):Float;
+
+	public function get_rotation():Float {
+		return mRoot.rotation;
+	}
+
+	function set_rotation(rot:Float):Float {
+		return mRoot.rotation = rot;
+	}
+
+	@:isVar public var rotationX(get, set):Float;
+
+	public function get_rotationX():Float {
+		return mRoot.rotationX;
+	}
+
+	function set_rotationX(rot:Float):Float {
+		return mRoot.rotationX = rot;
+	}
+
+	@:isVar public var rotationY(get, set):Float;
+
+	public function get_rotationY():Float {
+		return mRoot.rotationY;
+	}
+
+	function set_rotationY(rot:Float):Float {
+		return mRoot.rotationY = rot;
+	}
+
+	@:isVar public var rotationZ(get, set):Float;
+
+	public function get_rotationZ():Float {
+		return mRoot.rotationZ;
+	}
+
+	function set_rotationZ(rot:Float):Float {
+		return mRoot.rotationZ = rot;
+	}
+
+	@:isVar public var root(get, never):Sprite;
+
+	public function get_root():Sprite {
+		return mRoot;
+	}
+
+	public function destroy() {
+		if (mSceneGraphComponent != null) {
+			mSceneGraphComponent.destroy();
+			mSceneGraphComponent = null;
+		}
+		if (mFadeResetTask != null) {
+			mFadeResetTask.destroy();
+			mFadeResetTask = null;
+		}
+		if (mWorkComponent != null) {
+			mWorkComponent.destroy();
+			mWorkComponent = null;
+		}
+		if (mRoot.parent != null) {
+			mRoot.parent.removeChild(mRoot);
+		}
+		if (mMovieClipRenderer != null) {
+			mMovieClipRenderer.destroy();
+			mMovieClipRenderer = null;
+		}
+		mRoot = null;
+		mFacade = null;
+	}
+}

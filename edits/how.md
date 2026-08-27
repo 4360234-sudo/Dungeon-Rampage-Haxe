@@ -35,7 +35,7 @@ converted/YYYY-MM-DD-b<BuildID>-<reasons>
 edits/YYYY-MM-DD-b<BuildID>-<reasons>
 ```
 
-Those branches contains only `src/`, `src-steam/`, and `edits/conversion/stamp`. Stay on `master` (or another full-tree branch) for compilation. `converted/X` is the raw, immutable ax4 output. `edits/X` is that output plus one commit per patch. `master` copies the resulting `src/`, `src-steam/`, and stamp.
+Those branches contain only `src/`, `src-steam/`, and `edits/conversion/stamp`. Stay on `master` (or another full-tree branch) for compilation. `converted/X` is the raw, immutable ax4 output. `edits/X` is that output plus one commit per logical change. `master` copies the resulting `src/`, `src-steam/`, and stamp.
 
 `converted/latest` and `edits/latest` point at the current pair.
 
@@ -128,6 +128,6 @@ Combined message: oldest title is the commit title; its body is first. Each late
 | `font:` | Wrong glyphs, still playable (`haxe edits/ffdec_fonts/export_swf_fonts.hxml` when SWFs change) |
 | `feat:` | Neither required to run nor for DR parity |
 
-`edits/patches/` and the overlays in `edits/src/` / `edits/src-steam/` are leftovers from applying diffs onto `master`; drop them once the first pair exists. Optional crash repros live in `tools/debug/`, off this stack.
+Optional crash repros live in `tools/debug/`, off this stack.
 
 Font export is Haxe (Lime XML + FFDec). `convert.cmd` / `refresh.cmd` are shell (CLIs and git).

@@ -1,17 +1,13 @@
-package org.as3commons.collections.framework
-;
-    interface IOrderedList extends IList extends  IInsertionOrder
-   {
-      
-      function addAt(param1:UInt, param2:ASAny) : Bool;
-      
-      function replaceAt(param1:UInt, param2:ASAny) : Bool;
-      
-      function addAllAt(param1:UInt, param2:Array<ASAny>) : Bool;
-      
-      function addLast(param1:ASAny) : Void;
-      
-      function addFirst(param1:ASAny) : Void;
-   }
+package org.as3commons.collections.framework;
 
+interface IOrderedList extends IList extends IInsertionOrder {
+	function addAt(index:UInt, item:ASAny):Bool;
 
+	function replaceAt(index:UInt, item:ASAny):Bool;
+
+	function addAllAt(index:UInt, items:Array<ASAny>):Bool;
+
+	function addLast(item:ASAny):Void;
+
+	function addFirst(item:ASAny):Void;
+}

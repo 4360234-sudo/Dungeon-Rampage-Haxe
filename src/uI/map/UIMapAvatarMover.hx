@@ -1,11 +1,7 @@
-package uI.map
-;
-    interface UIMapAvatarMover
-   {
-      
-      function moveTo(param1:Float, param2:Float) : Void;
-      
-      function destroy() : Void;
-   }
+package uI.map;
 
+interface UIMapAvatarMover {
+	function moveTo(x:Float, y:Float):Void;
 
+	function destroy():Void;
+}

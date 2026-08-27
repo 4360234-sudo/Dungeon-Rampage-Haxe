@@ -1,9 +1,5 @@
-package org.as3commons.collections.framework
-;
-    interface IComparator
-   {
-      
-      function compare(param1:ASAny, param2:ASAny) : Int;
-   }
+package org.as3commons.collections.framework;
 
-
+interface IComparator {
+	function compare(item1:ASAny, item2:ASAny):Int;
+}

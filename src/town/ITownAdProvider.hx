@@ -1,15 +1,11 @@
-package town
-;
-    interface ITownAdProvider
-   {
-      
-      function CheckForAds(param1:ASFunction) : Void;
-      
-      function ShowingAdButton() : Void;
-      
-      function ShowAdPlayer() : Void;
-      
-      function SetResetCallback(param1:ASFunction) : Void;
-   }
+package town;
 
+interface ITownAdProvider {
+	function CheckForAds(callback:ASFunction):Void;
 
+	function ShowingAdButton():Void;
+
+	function ShowAdPlayer():Void;
+
+	function SetResetCallback(callback:ASFunction):Void;
+}

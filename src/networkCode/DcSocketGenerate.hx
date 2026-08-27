@@ -1,11 +1,7 @@
-package networkCode
-;
-    interface DcSocketGenerate
-   {
-      
-      function ObjectFactoryOwner(param1:UInt, param2:UInt, param3:DcNetworkPacket) : Void;
-      
-      function ObjectFactoryVisible(param1:UInt, param2:UInt, param3:DcNetworkPacket) : Void;
-   }
+package networkCode;
 
+interface DcSocketGenerate {
+	function ObjectFactoryOwner(classid:UInt, do_id:UInt, game_packet:DcNetworkPacket):Void;
 
+	function ObjectFactoryVisible(classid:UInt, do_id:UInt, game_packet:DcNetworkPacket):Void;
+}

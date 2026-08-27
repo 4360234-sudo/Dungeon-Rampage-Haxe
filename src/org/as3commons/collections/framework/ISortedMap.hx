@@ -1,13 +1,9 @@
-package org.as3commons.collections.framework
-;
-    interface ISortedMap extends IMap extends  ISortOrder
-   {
-      
-      function higherKey(param1:ASAny) : ASAny;
-      
-      function lesserKey(param1:ASAny) : ASAny;
-      
-      function equalKeys(param1:ASAny) : Array<ASAny>;
-   }
+package org.as3commons.collections.framework;
 
+interface ISortedMap extends IMap extends ISortOrder {
+	function higherKey(item:ASAny):ASAny;
 
+	function lesserKey(item:ASAny):ASAny;
+
+	function equalKeys(item:ASAny):Array<ASAny>;
+}

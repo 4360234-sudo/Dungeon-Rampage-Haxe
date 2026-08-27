@@ -1,36 +1,27 @@
-package combat.attack
-;
-   import actor.player.HeroView;
-   import distributedObjects.HeroGameObjectOwner;
-   import facade.DBFacade;
-   
-    class TavernPlayerOwnerAttackController extends PlayerOwnerAttackController
-   {
-      
-      public function new(param1:HeroGameObjectOwner, param2:HeroView, param3:DBFacade)
-      {
-         super(param1,param2,param3);
-      }
-      
-      override function canQueueWeaponDown(param1:PotentialWeaponInputQueueStruct) : Bool
-      {
-         return true;
-      }
-      
-      override function canQueueWeaponUp(param1:PotentialWeaponInputQueueStruct) : Bool
-      {
-         return true;
-      }
-      
-      override function tryAttack() 
-      {
-         if(mNextWeaponCommand == null)
-         {
-            return;
-         }
-         mDistributedPlayerOwner.currentWeaponIndex = (mNextWeaponCommand.weaponIndex : Int);
-         mNextWeaponCommand = null;
-      }
-   }
+package combat.attack;
 
+import actor.player.HeroView;
+import distributedObjects.HeroGameObjectOwner;
+import facade.DBFacade;
 
+class TavernPlayerOwnerAttackController extends PlayerOwnerAttackController {
+	public function new(distributedPlayerOwner:HeroGameObjectOwner, heroView:HeroView, dbFacade:DBFacade) {
+		super(distributedPlayerOwner, heroView, dbFacade);
+	}
+
+	override function canQueueWeaponDown(weaponQueue:PotentialWeaponInputQueueStruct):Bool {
+		return true;
+	}
+
+	override function canQueueWeaponUp(weaponQueue:PotentialWeaponInputQueueStruct):Bool {
+		return true;
+	}
+
+	override function tryAttack() {
+		if (mNextWeaponCommand == null) {
+			return;
+		}
+		mDistributedPlayerOwner.currentWeaponIndex = (mNextWeaponCommand.weaponIndex : Int);
+		mNextWeaponCommand = null;
+	}
+}

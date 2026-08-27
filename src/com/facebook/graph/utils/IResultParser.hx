@@ -1,9 +1,5 @@
-package com.facebook.graph.utils
-;
-    interface IResultParser
-   {
-      
-      function parse(param1:ASObject) : ASObject;
-   }
+package com.facebook.graph.utils;
 
-
+interface IResultParser {
+	function parse(data:ASObject):ASObject;
+}

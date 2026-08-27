@@ -1,18 +1,12 @@
-package gameMasterDictionary
-;
-    class GMBuffColorType
-   {
-      
-      public var Id:UInt = 0;
-      
-      public var ColorHex:UInt = 0;
-      
-      public function new(param1:ASObject)
-      {
-         
-         Id = (ASCompat.toInt(param1.Id) : UInt);
-         ColorHex = (ASCompat.toInt(param1.TextColor) : UInt);
-      }
-   }
+package gameMasterDictionary;
 
+class GMBuffColorType {
+	public var Id:UInt = 0;
 
+	public var ColorHex:UInt = 0;
+
+	public function new(jsonAsset:ASObject) {
+		Id = (ASCompat.toInt(jsonAsset.Id) : UInt);
+		ColorHex = (ASCompat.toInt(jsonAsset.TextColor) : UInt);
+	}
+}

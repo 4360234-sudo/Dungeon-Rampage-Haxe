@@ -4,6 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEMPLATE="$SCRIPT_DIR/config.json"
 TMP_DIR="$SCRIPT_DIR/.tmp"
 ANE_SRC="$TMP_DIR/ane-src"
 ANE_EXPORT="$TMP_DIR/ane-export"
@@ -98,13 +99,6 @@ relpath() {
     forward="${dest#"$common"/}"
   fi
   printf '%s%s\n' "$result" "$forward"
-}
-
-json_escape() {
-  local s="$1"
-  s="${s//\\/\\\\}"
-  s="${s//\"/\\\"}"
-  printf '%s' "$s"
 }
 
 find_sibling() {
@@ -296,25 +290,55 @@ install_as_tree() {
 }
 
 write_runtime_config() {
-  local game_src_rel ane_src_rel compat_rel airglobal_rel
-  game_src_rel="$(relpath "$DECOMPILED_ABS/src" "$ROOT")"
-  ane_src_rel="$(relpath "$ANE_SRC" "$ROOT")"
-  compat_rel="$(relpath "$AX4_ABS/compat" "$ROOT")"
-  airglobal_rel="$(relpath "$AIRGLOBAL_TMP" "$ROOT")"
-
-  {
-    printf '{\n'
-    printf '  "src": [\n    "%s",\n    "%s"\n  ],\n' "$(json_escape "$game_src_rel")" "$(json_escape "$ane_src_rel")"
-    printf '  "hxout": "src",\n'
-    printf '  "copy": [\n    {"unit": "%s", "to": "compat"}\n  ],\n' "$(json_escape "$compat_rel")"
-    printf '  "swc": [\n    "%s"\n  ],\n' "$(json_escape "$airglobal_rel")"
-    printf '  "packagePartRenames": {\n    "floor": "dr_floor"\n  },\n'
-    printf '  "settings": {\n    "checkNullIteratee": true\n  },\n'
-    printf '  "skipXmlLiterals": true,\n'
-    printf '  "formatter": true,\n'
-    printf '  "hxoutClean": true\n'
-    printf '}\n'
-  } > "$RUNTIME_CONFIG"
+  [[ -f "$TEMPLATE" ]] || die "missing $TEMPLATE"
+  # Same as convert.ps1: keep committed flags, rewrite only path fields.
+  export DRH_GAME_SRC DRH_ANE_SRC DRH_COMPAT DRH_AIRGLOBAL
+  DRH_GAME_SRC="$(relpath "$DECOMPILED_ABS/src" "$ROOT")"
+  DRH_ANE_SRC="$(relpath "$ANE_SRC" "$ROOT")"
+  DRH_COMPAT="$(relpath "$AX4_ABS/compat" "$ROOT")"
+  DRH_AIRGLOBAL="$(relpath "$AIRGLOBAL_TMP" "$ROOT")"
+  awk '
+    function esc(s, t) {
+      t = s
+      gsub(/\\/, "\\\\", t)
+      gsub(/"/, "\\\"", t)
+      return t
+    }
+    BEGIN {
+      game = esc(ENVIRON["DRH_GAME_SRC"])
+      ane = esc(ENVIRON["DRH_ANE_SRC"])
+      compat = esc(ENVIRON["DRH_COMPAT"])
+      air = esc(ENVIRON["DRH_AIRGLOBAL"])
+    }
+    {
+      if ($0 ~ /"hxout"/) {
+        sub(/:[[:space:]]*"[^"]*"/, ": \"src\"")
+        print
+        next
+      }
+      if ($0 ~ /"src"[[:space:]]*:/) { in_src = 1; src_n = 0; print; next }
+      if (in_src && $0 ~ /"[^"]*"/) {
+        src_n++
+        if (src_n == 1) sub(/"[^"]*"/, "\"" game "\"")
+        else if (src_n == 2) { sub(/"[^"]*"/, "\"" ane "\""); in_src = 0 }
+        print
+        next
+      }
+      if ($0 ~ /"unit"/) {
+        sub(/:[[:space:]]*"[^"]*"/, ": \"" compat "\"")
+        print
+        next
+      }
+      if ($0 ~ /"swc"[[:space:]]*:/) { in_swc = 1; print; next }
+      if (in_swc && $0 ~ /"[^"]*"/ && $0 !~ /"swc"/) {
+        sub(/"[^"]*"/, "\"" air "\"")
+        in_swc = 0
+        print
+        next
+      }
+      print
+    }
+  ' "$TEMPLATE" > "$RUNTIME_CONFIG"
 }
 
 AX4_ABS="$(find_ax4_dir)"

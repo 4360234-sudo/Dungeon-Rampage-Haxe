@@ -20,6 +20,7 @@ Usage: $(basename "$0") <command> [options]
   replay [sha...]   Cherry-pick commits onto that converted/ branch
                     (default: converted/latest..edits/latest)
   commit [-m MSG]   Append a src-only commit on edits/latest from the worktree
+                    (Squash-with: is recorded; rebase/squash fold it)
   squash            Fold Squash-with: trailers on the current edits/ pair
   continue          Resume rebase or cherry-pick after resolving conflicts
   abort             Abort rebase or cherry-pick
@@ -27,8 +28,9 @@ Usage: $(basename "$0") <command> [options]
 
 Stay on a full-tree branch (master). Do not check out converted/ or edits/.
 
-Squash-with: <sha> as its own line folds that commit into the referenced one
-(oldest message is the title + first body; later titles are kept in the body).
+Squash-with: <sha> as its own line marks a commit to fold into the referenced one
+on rebase/replay/squash (oldest message is the title + first body; later titles
+are kept in the body).
 
 Edits titles use air: cpp: bug: font: feat: (rebase sorts by that order).
 Reasons: dr, jpexs, ax4 (any subset; stored as dr > jpexs > ax4).
@@ -218,8 +220,24 @@ commit_sparse() {
   rm -f "$index"
 }
 
+parse_squash_with_msg() {
+  printf '%s\n' "$1" | grep -E '^Squash-with: [0-9a-fA-F]{7,40}$' | sed 's/^Squash-with: //' || true
+}
+
 parse_squash_with() {
-  git log -1 --format='%B' "$1" | grep -E '^Squash-with: [0-9a-fA-F]{7,40}$' | sed 's/^Squash-with: //' || true
+  parse_squash_with_msg "$(git log -1 --format='%B' "$1")"
+}
+
+assert_squash_targets_in_stack() {
+  local needles=() sha shas=()
+  mapfile -t needles < <(parse_squash_with_msg "$1")
+  [[ "${#needles[@]}" -gt 0 ]] || return 0
+  git_has_ref refs/heads/converted/latest || die "no converted/latest"
+  mapfile -t shas < <(git rev-list --reverse converted/latest..edits/latest)
+  [[ "${#shas[@]}" -gt 0 ]] || die "Squash-with: edits/latest has no commits beyond converted/latest"
+  for sha in "${needles[@]}"; do
+    resolve_in_set "$sha" "${shas[@]}" >/dev/null
+  done
 }
 
 resolve_in_set() {
@@ -561,6 +579,7 @@ cmd_commit() {
     rm -f "$tmp"
   fi
   [[ -n "$(printf '%s' "$msg" | tr -d '[:space:]')" ]] || die "empty commit message"
+  assert_squash_targets_in_stack "$msg"
   suffix="$(pair_suffix_from_stamp edits/latest)"
   parent="$(git rev-parse edits/latest)"
   commit="$(commit_sparse "$msg" "$parent")"
@@ -568,8 +587,7 @@ cmd_commit() {
   git branch -f edits/latest "$commit"
   echo "edits/$suffix $commit"
   if [[ -n "$(parse_squash_with "$commit")" ]]; then
-    echo "Squash-with trailer found; folding"
-    cmd_squash
+    echo "Squash-with trailer recorded; folded by rebase or squash"
   fi
 }
 

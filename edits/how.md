@@ -94,7 +94,7 @@ The polyglot script `./edits/conversion/refresh.cmd` (Bash + PowerShell) drives 
 
 `rebase` replays `edits/latest` onto the new `converted/` branch (folding `Squash-with:` trailers), names `edits/…` to match, updates both `latest` pointers, and restores `src/` in this worktree.
 
-`commit -m "…"` appends a src-only commit on `edits/latest` from the worktree. `squash` folds trailers on the current pair without a new conversion.
+`commit -m "…"` appends a src-only commit on `edits/latest` from the worktree. A `Squash-with:` trailer is recorded on that commit and folded later by `rebase` / `replay` / `squash`.
 
 `import` copies `src/`, `src-steam/`, and the stamp from `edits/latest` onto `master`.
 
@@ -110,7 +110,7 @@ A small official update without ax4 is also a `refresh commit` on the current `e
 
 ### Squash-with
 
-A line that is exactly `Squash-with: <sha>` (7–40 hex chars, nothing else on the line) folds that commit into the referenced one. The sha must be in the same `converted/latest..edits/latest` range (or the `replay` list).
+A line that is exactly `Squash-with: <sha>` (7–40 hex chars, nothing else on the line) marks the new commit to fold into the referenced one. `commit` checks that the sha is in `converted/latest..edits/latest`. The fold itself runs on `rebase` / `replay` / `squash` only.
 
 `rebase` / `replay` / `squash` apply the fold. Several commits may point at the same target; chains are one group. The group is emitted at the oldest member’s place (later members are skipped when their turn comes).
 

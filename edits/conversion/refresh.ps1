@@ -20,6 +20,7 @@ Usage: refresh.cmd <command> [options]
   replay [sha...]   Cherry-pick commits onto that converted/ branch
                     (default: converted/latest..edits/latest)
   commit [-m MSG]   Append a src-only commit on edits/latest from the worktree
+                    (Squash-with: is recorded; rebase/squash fold it)
   squash            Fold Squash-with: trailers on the current edits/ pair
   continue          Resume rebase or cherry-pick after resolving conflicts
   abort             Abort rebase or cherry-pick
@@ -27,8 +28,9 @@ Usage: refresh.cmd <command> [options]
 
 Stay on a full-tree branch (master). Do not check out converted/ or edits/.
 
-Squash-with: <sha> as its own line folds that commit into the referenced one
-(oldest message is the title + first body; later titles are kept in the body).
+Squash-with: <sha> as its own line marks a commit to fold into the referenced one
+on rebase/replay/squash (oldest message is the title + first body; later titles
+are kept in the body).
 
 Edits titles use air: cpp: bug: font: feat: (rebase sorts by that order).
 Reasons: dr, jpexs, ax4 (any subset; stored as dr > jpexs > ax4).
@@ -223,15 +225,31 @@ function Commit-Sparse([string]$Message, [string]$Parent = "", [string]$Worktree
     }
 }
 
-function Get-SquashWith([string]$Sha) {
-    $body = git log -1 --format='%B' $Sha
+function Get-SquashWithMsg([string]$Message) {
     $hits = @()
-    foreach ($line in ($body -split "`n")) {
+    foreach ($line in ($Message -split "`n")) {
         if ($line.TrimEnd() -match '^Squash-with: ([0-9a-fA-F]{7,40})$') {
             $hits += $Matches[1]
         }
     }
     $hits
+}
+
+function Get-SquashWith([string]$Sha) {
+    Get-SquashWithMsg ((git log -1 --format='%B' $Sha) -join "`n")
+}
+
+function Assert-SquashTargetsInStack([string]$Message) {
+    $needles = @(Get-SquashWithMsg $Message)
+    if ($needles.Count -eq 0) { return }
+    if (-not (Test-Ref "refs/heads/converted/latest")) { Die "no converted/latest" }
+    $shas = @(git rev-list --reverse "converted/latest..edits/latest")
+    if ($LASTEXITCODE -ne 0 -or $shas.Count -eq 0) {
+        Die "Squash-with: edits/latest has no commits beyond converted/latest"
+    }
+    foreach ($needle in $needles) {
+        [void](Resolve-InSet $needle $shas)
+    }
 }
 
 function Resolve-InSet([string]$Needle, [string[]]$Shas) {
@@ -519,6 +537,7 @@ function Invoke-CommitCmd([string[]]$Argv) {
     }
     if (-not $msg) { Die "commit requires -m MSG" }
     if (-not $msg.Trim()) { Die "empty commit message" }
+    Assert-SquashTargetsInStack $msg
     $suffix = Get-PairSuffixFromStamp "edits/latest"
     $parent = (git rev-parse edits/latest).Trim()
     $commit = Commit-Sparse $msg $parent
@@ -526,8 +545,7 @@ function Invoke-CommitCmd([string[]]$Argv) {
     Invoke-Git branch -f edits/latest $commit
     Write-Host "edits/$suffix $commit"
     if ((Get-SquashWith $commit).Count -gt 0) {
-        Write-Host "Squash-with trailer found; folding"
-        Invoke-Squash
+        Write-Host "Squash-with trailer recorded; folded by rebase or squash"
     }
 }
 

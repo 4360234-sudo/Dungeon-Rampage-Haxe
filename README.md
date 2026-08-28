@@ -117,6 +117,11 @@ cd ../..
 
 ### Build the game
 
+The first native (`cpp`) build exports SWF fonts with
+[JPEXS FFDec](https://github.com/Tutez64/jpexs-decompiler/tree/dev) (Java 8+).
+Set `FFDEC_HOME`, put `ffdec` on `PATH`, or keep `jpexs-decompiler` next to this
+repo. Later builds reuse `bin/obj/ffdec_fonts/`.
+
 From the repository root:
 
 ```bash

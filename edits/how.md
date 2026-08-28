@@ -125,9 +125,9 @@ Combined message: oldest title is the commit title; its body is first. Each late
 | `air:` | Required for the AIR target |
 | `cpp:` | Required for native |
 | `bug:` | Native often aborts where AIR continues |
-| `font:` | Wrong glyphs, still playable (`haxe edits/ffdec_fonts/export_swf_fonts.hxml` when SWFs change) |
+| `font:` | Wrong glyphs, still playable |
 | `feat:` | Neither required to run nor for DR parity |
 
 Optional crash repros live in `tools/debug/`, off this stack.
 
-Font export is Haxe (Lime XML + FFDec). `convert.cmd` / `refresh.cmd` are shell (CLIs and git).
+Font export is Haxe (Lime XML + FFDec), run by Lime `<prebuild>` on cpp. It writes `bin/obj/ffdec_fonts/` and syncs next to the exe; cache hits skip FFDec. `haxe edits/ffdec_fonts/export_swf_fonts.hxml -- --force` regenerates. `convert.cmd` / `refresh.cmd` are shell (CLIs and git).

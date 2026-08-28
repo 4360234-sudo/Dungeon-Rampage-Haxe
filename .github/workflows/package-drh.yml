@@ -36,6 +36,11 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: ffdec-fonts
+          path: bin/obj/ffdec_fonts
+
       - name: Configure target frame rate
         shell: python
         env:
@@ -260,6 +265,7 @@ jobs:
           test -f "$package_dir/steamwrap.ndll"
           test -f "$package_dir/libsteam_api.so"
           test -f "$package_dir/steam_appid.txt"
+          test -n "$(find "$package_dir/Resources/ffdec_fonts" -name '*.ttf' | head -n 1)"
 
           tar -C "bin/linux" -czf "$archive" "Dungeon Rampage Haxe"
 
@@ -286,6 +292,8 @@ jobs:
           if (!(Test-Path (Join-Path $packageDir "steamwrap.ndll"))) { throw "Missing steamwrap.ndll" }
           if (!(Test-Path (Join-Path $packageDir "steam_api64.dll"))) { throw "Missing steam_api64.dll" }
           if (!(Test-Path (Join-Path $packageDir "steam_appid.txt"))) { throw "Missing steam_appid.txt" }
+          $fonts = Get-ChildItem -Recurse -Filter *.ttf -ErrorAction SilentlyContinue (Join-Path $packageDir "Resources\ffdec_fonts")
+          if ($fonts.Count -lt 1) { throw "Missing exported SWF fonts" }
 
           Compress-Archive -Path $packageDir -DestinationPath $archive -Force
 
@@ -308,6 +316,7 @@ jobs:
           test -f "$macos_app/Contents/MacOS/steamwrap.ndll"
           test -f "$macos_app/Contents/MacOS/libsteam_api.dylib"
           test -f "$macos_app/Contents/MacOS/steam_appid.txt"
+          test -n "$(find "$macos_app/Contents/Resources/ffdec_fonts" -name '*.ttf' | head -n 1)"
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

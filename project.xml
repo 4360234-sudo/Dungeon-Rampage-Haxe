@@ -36,6 +36,7 @@
 	<assets path="DbConfiguration" embed="false" />
 
 	<prebuild command="haxe edits/ffdec_fonts/export_swf_fonts.hxml" if="cpp" />
+	<postbuild command="haxe edits/ffdec_fonts/export_swf_fonts.hxml" if="cpp" />
 	<include path="generated_swf_libraries.xml" if="cpp" />
 	<library path="src/_assets/assets.swf" preload="true" if="cpp" />
 	<haxeflag name="-swf-lib" value="src/_assets/assets.swf" if="air" />

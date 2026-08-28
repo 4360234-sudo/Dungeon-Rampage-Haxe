@@ -20,7 +20,7 @@ Usage: $(basename "$0") <command> [options]
   replay [sha...]   Cherry-pick commits onto that converted/ branch
                     (default: converted/latest..edits/latest)
   commit [-m MSG]   Append a src-only commit on edits/latest from the worktree
-                    (Squash-with: is recorded; rebase/squash fold it)
+                    (Squash-with:/Squash-as: recorded; rebase/squash fold)
   squash            Fold Squash-with: trailers on the current edits/ pair
   continue          Resume rebase or cherry-pick after resolving conflicts
   abort             Abort rebase or cherry-pick
@@ -29,8 +29,8 @@ Usage: $(basename "$0") <command> [options]
 Stay on a full-tree branch (master). Do not check out converted/ or edits/.
 
 Squash-with: <sha> as its own line marks a commit to fold into the referenced one
-on rebase/replay/squash (oldest message is the title + first body; later titles
-are kept in the body).
+on rebase/replay/squash. Squash-as: <message> is required with it (newest in
+the group wins; everything after that line is the body, kept as written).
 
 Edits titles use air: cpp: bug: font: feat: (rebase sorts by that order).
 Reasons: dr, jpexs, ax4 (any subset; stored as dr > jpexs > ax4).
@@ -228,8 +228,80 @@ parse_squash_with() {
   parse_squash_with_msg "$(git log -1 --format='%B' "$1")"
 }
 
+# Last Squash-as: in the message; every following line is the body, kept as written.
+parse_squash_as_msg() {
+  local line subject="" capturing=0
+  local -a body_lines=()
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    if [[ "$line" =~ ^Squash-as:\ (.+)$ ]]; then
+      subject="${BASH_REMATCH[1]}"
+      body_lines=()
+      capturing=1
+      continue
+    fi
+    [[ "$capturing" -eq 1 ]] || continue
+    if [[ "$line" =~ ^Squash-with:\ [0-9a-fA-F]{7,40}$ ]]; then
+      continue
+    fi
+    if [[ "$line" =~ ^Co-authored-by:\  ]]; then
+      continue
+    fi
+    body_lines+=("$line")
+  done < <(printf '%s\n' "$1")
+  [[ -n "$subject" ]] || return 0
+  printf '%s\n' "$subject"
+  if [[ "${#body_lines[@]}" -gt 0 ]]; then
+    while [[ "${#body_lines[@]}" -gt 0 && -z "${body_lines[0]}" ]]; do
+      body_lines=("${body_lines[@]:1}")
+    done
+    while [[ "${#body_lines[@]}" -gt 0 && -z "${body_lines[-1]}" ]]; do
+      unset 'body_lines[-1]'
+    done
+    if [[ "${#body_lines[@]}" -gt 0 ]]; then
+      printf '\n'
+      printf '%s\n' "${body_lines[@]}"
+    fi
+  fi
+}
+
+parse_squash_as() {
+  parse_squash_as_msg "$(git log -1 --format='%B' "$1")"
+}
+
+assert_squash_trailers() {
+  local line rest has_as=0
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    if [[ "$line" =~ ^Squash-as: ]]; then
+      has_as=1
+      rest="${line#Squash-as:}"
+      [[ "$rest" == ' '* ]] || die "Squash-as: requires a space after the colon"
+      if [[ ! "$rest" =~ [^[:space:]] ]]; then
+        die "empty Squash-as:"
+      fi
+    fi
+  done < <(printf '%s\n' "$1")
+  local has_with=0
+  [[ -n "$(parse_squash_with_msg "$1")" ]] && has_with=1
+  if [[ "$has_as" -eq 1 && "$has_with" -eq 0 ]]; then
+    die "Squash-as: requires Squash-with:"
+  fi
+  if [[ "$has_with" -eq 1 && "$has_as" -eq 0 ]]; then
+    die "Squash-with: requires Squash-as:"
+  fi
+}
+
+assert_stack_squash_pairs() {
+  local sha
+  for sha in "$@"; do
+    assert_squash_trailers "$(git log -1 --format='%B' "$sha")"
+  done
+}
+
 assert_squash_targets_in_stack() {
   local needles=() sha shas=()
+  assert_squash_trailers "$1"
   mapfile -t needles < <(parse_squash_with_msg "$1")
   [[ "${#needles[@]}" -gt 0 ]] || return 0
   git_has_ref refs/heads/converted/latest || die "no converted/latest"
@@ -271,19 +343,16 @@ uf_union() {
   UF_PARENT[$a]="$b"
 }
 
-strip_fold_trailers() {
-  grep -v -E '^Squash-with: [0-9a-fA-F]{7,40}$' | grep -v -E '^Co-authored-by: '
-}
-
 collect_coauthors() {
   grep -E '^Co-authored-by: ' || true
 }
 
 combine_messages() {
-  local sha first=1 subject body cleaned authors="" line
+  local sha body authors="" line as_msg
   local -A seen_author=()
-  for sha in "$@"; do
-    subject="$(git log -1 --format='%s' "$sha")"
+  local shas=("$@")
+  [[ "${#shas[@]}" -ge 1 ]] || return 0
+  for sha in "${shas[@]}"; do
     body="$(git log -1 --format='%b' "$sha")"
     while IFS= read -r line; do
       [[ -n "$line" ]] || continue
@@ -292,23 +361,19 @@ combine_messages() {
         authors+="$line"$'\n'
       fi
     done < <(printf '%s\n' "$body" | collect_coauthors)
-    cleaned="$(printf '%s\n' "$body" | strip_fold_trailers | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
-    if [[ "$first" -eq 1 ]]; then
-      printf '%s\n' "$subject"
-      if [[ -n "$cleaned" ]]; then
-        printf '\n%s\n' "$cleaned"
+  done
+  local idx
+  for (( idx=${#shas[@]}-1; idx>=0; idx-- )); do
+    as_msg="$(parse_squash_as "${shas[idx]}")"
+    if [[ -n "$as_msg" ]]; then
+      printf '%s\n' "$as_msg"
+      if [[ -n "$authors" ]]; then
+        printf '\n%s' "$authors"
       fi
-      first=0
-    else
-      printf '\n%s\n' "$subject"
-      if [[ -n "$cleaned" ]]; then
-        printf '\n%s\n' "$cleaned"
-      fi
+      return 0
     fi
   done
-  if [[ -n "$authors" ]]; then
-    printf '\n%s' "$authors"
-  fi
+  die "Squash-with: requires Squash-as:"
 }
 
 PREFIX_ORDER=(air cpp bug font feat)
@@ -551,6 +616,7 @@ replay_onto() {
   shift
   local shas=("$@")
   local wt groups=()
+  assert_stack_squash_pairs "${shas[@]}"
   save_suffix "$suffix"
   mapfile -t groups < <(fold_groups "${shas[@]}")
   wt="$(ensure_refresh_worktree "converted/$suffix")"

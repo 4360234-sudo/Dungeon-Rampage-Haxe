@@ -20,7 +20,7 @@ Usage: refresh.cmd <command> [options]
   replay [sha...]   Cherry-pick commits onto that converted/ branch
                     (default: converted/latest..edits/latest)
   commit [-m MSG]   Append a src-only commit on edits/latest from the worktree
-                    (Squash-with: is recorded; rebase/squash fold it)
+                    (Squash-with:/Squash-as: recorded; rebase/squash fold)
   squash            Fold Squash-with: trailers on the current edits/ pair
   continue          Resume rebase or cherry-pick after resolving conflicts
   abort             Abort rebase or cherry-pick
@@ -29,8 +29,8 @@ Usage: refresh.cmd <command> [options]
 Stay on a full-tree branch (master). Do not check out converted/ or edits/.
 
 Squash-with: <sha> as its own line marks a commit to fold into the referenced one
-on rebase/replay/squash (oldest message is the title + first body; later titles
-are kept in the body).
+on rebase/replay/squash. Squash-as: <message> is required with it (newest in
+the group wins; everything after that line is the body, kept as written).
 
 Edits titles use air: cpp: bug: font: feat: (rebase sorts by that order).
 Reasons: dr, jpexs, ax4 (any subset; stored as dr > jpexs > ax4).
@@ -239,7 +239,63 @@ function Get-SquashWith([string]$Sha) {
     Get-SquashWithMsg ((git log -1 --format='%B' $Sha) -join "`n")
 }
 
+function Get-SquashAsMsg([string]$Message) {
+    $subject = $null
+    $body = New-Object System.Collections.Generic.List[string]
+    $inAs = $false
+    foreach ($line in ($Message -split "`n")) {
+        $t = $line.TrimEnd("`r")
+        if ($t -match '^Squash-as: (.+)$') {
+            $subject = $Matches[1]
+            $body = New-Object System.Collections.Generic.List[string]
+            $inAs = $true
+            continue
+        }
+        if (-not $inAs) { continue }
+        if ($t -match '^Squash-with: [0-9a-fA-F]{7,40}$') { continue }
+        if ($t -match '^Co-authored-by: ') { continue }
+        $body.Add($t)
+    }
+    if (-not $subject) { return $null }
+    while ($body.Count -gt 0 -and $body[0] -eq "") { $body.RemoveAt(0) }
+    while ($body.Count -gt 0 -and $body[$body.Count - 1] -eq "") { $body.RemoveAt($body.Count - 1) }
+    $parts = New-Object System.Collections.Generic.List[string]
+    $parts.Add($subject)
+    if ($body.Count -gt 0) {
+        $parts.Add("")
+        foreach ($b in $body) { $parts.Add($b) }
+    }
+    ($parts -join "`n").TrimEnd()
+}
+
+function Get-SquashAs([string]$Sha) {
+    Get-SquashAsMsg ((git log -1 --format='%B' $Sha) -join "`n")
+}
+
+function Assert-SquashTrailers([string]$Message) {
+    $hasAs = $false
+    foreach ($line in ($Message -split "`n")) {
+        $t = $line.TrimEnd("`r")
+        if ($t -match '^Squash-as:') {
+            $hasAs = $true
+            if ($t -notmatch '^Squash-as: ') { Die "Squash-as: requires a space after the colon" }
+            $rest = $t.Substring("Squash-as:".Length)
+            if ($rest -notmatch '\S') { Die "empty Squash-as:" }
+        }
+    }
+    $hasWith = (@(Get-SquashWithMsg $Message).Count -gt 0)
+    if ($hasAs -and -not $hasWith) { Die "Squash-as: requires Squash-with:" }
+    if ($hasWith -and -not $hasAs) { Die "Squash-with: requires Squash-as:" }
+}
+
+function Assert-StackSquashPairs([string[]]$Shas) {
+    foreach ($sha in $Shas) {
+        Assert-SquashTrailers ((git log -1 --format='%B' $sha) -join "`n")
+    }
+}
+
 function Assert-SquashTargetsInStack([string]$Message) {
+    Assert-SquashTrailers $Message
     $needles = @(Get-SquashWithMsg $Message)
     if ($needles.Count -eq 0) { return }
     if (-not (Test-Ref "refs/heads/converted/latest")) { Die "no converted/latest" }
@@ -266,41 +322,31 @@ function Resolve-InSet([string]$Needle, [string[]]$Shas) {
 }
 
 function Combine-Messages([string[]]$Shas) {
+    if ($Shas.Count -eq 0) { return "" }
     $parts = New-Object System.Collections.Generic.List[string]
     $authors = New-Object System.Collections.Generic.List[string]
     $seen = @{}
-    $first = $true
     foreach ($sha in $Shas) {
-        $subject = (git log -1 --format='%s' $sha).TrimEnd()
         $body = git log -1 --format='%b' $sha
-        $clean = New-Object System.Collections.Generic.List[string]
         foreach ($line in ($body -split "`n")) {
             $t = $line.TrimEnd("`r")
-            if ($t -match '^Squash-with: [0-9a-fA-F]{7,40}$') { continue }
             if ($t -match '^Co-authored-by: ') {
                 if (-not $seen.ContainsKey($t)) { $seen[$t] = $true; $authors.Add($t) }
-                continue
             }
-            $clean.Add($t)
-        }
-        while ($clean.Count -gt 0 -and $clean[$clean.Count - 1] -eq "") { $clean.RemoveAt($clean.Count - 1) }
-        $cleaned = ($clean -join "`n").TrimEnd()
-        if ($first) {
-            $parts.Add($subject)
-            if ($cleaned) { $parts.Add(""); $parts.Add($cleaned) }
-            $first = $false
-        }
-        else {
-            $parts.Add("")
-            $parts.Add($subject)
-            if ($cleaned) { $parts.Add(""); $parts.Add($cleaned) }
         }
     }
-    if ($authors.Count -gt 0) {
-        $parts.Add("")
-        foreach ($a in $authors) { $parts.Add($a) }
+    for ($i = $Shas.Count - 1; $i -ge 0; $i--) {
+        $asMsg = Get-SquashAs $Shas[$i]
+        if ($asMsg) {
+            $parts.Add($asMsg)
+            if ($authors.Count -gt 0) {
+                $parts.Add("")
+                foreach ($a in $authors) { $parts.Add($a) }
+            }
+            return (($parts -join "`n").TrimEnd() + "`n")
+        }
     }
-    ($parts -join "`n").TrimEnd() + "`n"
+    Die "Squash-with: requires Squash-as:"
 }
 
 function Get-SortedByPrefix([string[]]$Shas) {
@@ -418,6 +464,7 @@ function Invoke-ApplyGroups([string]$Wt, [object[]]$Groups) {
 }
 
 function Invoke-ReplayOnto([string]$Suffix, [string[]]$Shas) {
+    Assert-StackSquashPairs $Shas
     Save-Suffix $Suffix
     $groups = @(Get-FoldGroups $Shas)
     $wt = Ensure-RefreshWorktree "converted/$Suffix"

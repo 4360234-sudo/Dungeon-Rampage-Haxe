@@ -108,13 +108,13 @@ A small official update without ax4 is also a `refresh commit` on the current `e
 
 `src/` that must survive the next rebase is committed on `edits/X`. Project files, submodules, `compat/`, extensions, and tools stay on `master`. Releases are tagged on `master`.
 
-### Squash-with
+### Squash-with / Squash-as
 
-A line that is exactly `Squash-with: <sha>` (7–40 hex chars, nothing else on the line) marks the new commit to fold into the referenced one. `commit` checks that the sha is in `converted/latest..edits/latest`. The fold itself runs on `rebase` / `replay` / `squash` only.
+A line that is exactly `Squash-with: <sha>` (7–40 hex chars, nothing else on the line) marks the new commit to fold into the referenced one. `Squash-as: <title>` is the folded commit’s title; every following line is the body, kept as written (`Squash-with:` and `Co-authored-by:` lines are skipped). The two trailers are required together. The newest `Squash-as:` in the group wins.
 
-`rebase` / `replay` / `squash` apply the fold. Several commits may point at the same target; chains are one group. The group is emitted at the oldest member’s place (later members are skipped when their turn comes).
+`commit` checks that the sha is in `converted/latest..edits/latest`. The fold itself runs on `rebase` / `replay` / `squash` only.
 
-Combined message: oldest title is the commit title; its body is first. Each later commit is appended as its title, then its body. `Squash-with:` lines are dropped; `Co-authored-by:` lines are collected at the end.
+Several commits may point at the same target; chains are one group. The group is emitted at the oldest member’s place (later members are skipped when their turn comes). `Co-authored-by:` lines from every member are collected at the end.
 
 ### Edits stack
 

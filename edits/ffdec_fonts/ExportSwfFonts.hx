@@ -1,5 +1,6 @@
 package;
 import haxe.crypto.Md5;
+import haxe.io.BytesBuffer;
 import haxe.io.Path;
 import sys.FileSystem;
 import sys.io.Process;
@@ -69,7 +70,7 @@ class ExportSwfFonts
             Sys.exit(1);
         }
 
-        Sys.println("Done. Exported font folders for " + count + " SWF(s), skipped " + skipped + (runtimeRoot == null ? " (no cpp bin/ to sync)" : "") + ".");
+        Sys.println("Done. Exported font folders for " + count + " SWF(s), skipped " + skipped + (runtimeRoot == null ? " (no cpp bin/ to sync)" : "; synced to " + runtimeRoot) + ".");
     }
 
     static function parseArgs(args:Array<String>) : {ffdec:String, force:Bool}
@@ -261,7 +262,7 @@ class ExportSwfFonts
         {
             if(FileSystem.exists(path))
             {
-                hashes.push(hashFile(path));
+                hashes.push(hashTextFile(path));
             }
         }
         return Md5.encode(hashes.join(","));
@@ -270,6 +271,25 @@ class ExportSwfFonts
     static function hashFile(path:String) : String
     {
         return Md5.make(File.getBytes(path)).toHex();
+    }
+
+    // Strip CR so Windows checkouts match Linux stamps.
+    static function hashTextFile(path:String) : String
+    {
+        var bytes = File.getBytes(path);
+        var out = new BytesBuffer();
+        var i = 0;
+        var len = bytes.length;
+        while(i < len)
+        {
+            var b = bytes.get(i);
+            if(b != 13)
+            {
+                out.addByte(b);
+            }
+            i++;
+        }
+        return Md5.make(out.getBytes()).toHex();
     }
 
     static function stampPath(stampRoot:String, id:String) : String
@@ -396,6 +416,13 @@ class ExportSwfFonts
         }
     }
 
+    static function isSuffixedMacApp(name:String) : Bool
+    {
+        return StringTools.endsWith(name,"-x86_64.app")
+            || StringTools.endsWith(name,"-arm64.app")
+            || StringTools.endsWith(name,"-aarch64.app");
+    }
+
     static function getRuntimeFontRoot(projectRoot:String) : String
     {
         var host = Sys.systemName();
@@ -412,9 +439,11 @@ class ExportSwfFonts
         }
         if(host == "Mac")
         {
+            // Lime writes the unsuffixed .app; arch builds rename it afterwards.
+            // Do not sync into *-x86_64.app / *-arm64.app or the second arch misses fonts.
             for(name in FileSystem.readDirectory(binRoot))
             {
-                if(!StringTools.endsWith(name,".app"))
+                if(!StringTools.endsWith(name,".app") || isSuffixedMacApp(name))
                 {
                     continue;
                 }

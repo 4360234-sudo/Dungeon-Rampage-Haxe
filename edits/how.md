@@ -130,4 +130,4 @@ Several commits may point at the same target; chains are one group. The group is
 
 Optional crash repros live in `tools/debug/`, off this stack.
 
-Font export is Haxe (Lime XML + FFDec), run by Lime `<prebuild>` on cpp. It writes `bin/obj/ffdec_fonts/` and syncs next to the exe; cache hits skip FFDec. `haxe edits/ffdec_fonts/export_swf_fonts.hxml -- --force` regenerates. `convert.cmd` / `refresh.cmd` are shell (CLIs and git).
+Font export is Haxe (Lime XML + FFDec), run by Lime `<prebuild>` / `<postbuild>` on cpp. It writes `bin/obj/ffdec_fonts/` and syncs next to the exe (the unsuffixed `.app` on macOS); cache hits skip FFDec. `haxe edits/ffdec_fonts/export_swf_fonts.hxml -- --force` regenerates. `convert.cmd` / `refresh.cmd` are shell (CLIs and git).

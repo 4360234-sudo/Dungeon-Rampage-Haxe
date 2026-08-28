@@ -1,4 +1,5 @@
 package;
+import haxe.crypto.Md5;
 import haxe.io.Path;
 import sys.FileSystem;
 import sys.io.Process;
@@ -22,13 +23,15 @@ class ExportSwfFonts
 
         ensureDirectory(cacheRoot);
         ensureDirectory(stampRoot);
-        adoptExistingFonts(projectRoot,cacheRoot,stampRoot,libraries,options.force);
+        var exporterHash = hashFiles(exporterFiles);
+        var ffdecHash = ffdec != null && FileSystem.exists(ffdec.path) ? hashFile(ffdec.path) : "";
+        adoptExistingFonts(projectRoot,cacheRoot,stampRoot,libraries,options.force,exporterHash,ffdecHash);
 
         var stale = 0;
         for(library in libraries)
         {
             var source = Path.normalize(Path.join([projectRoot,library.swfPath]));
-            if(FileSystem.exists(source) && (options.force || !isUpToDate(source,stampPath(stampRoot,library.id),exporterFiles,ffdec)))
+            if(FileSystem.exists(source) && (options.force || !isUpToDate(source,stampPath(stampRoot,library.id),exporterHash,ffdecHash,ffdec != null)))
             {
                 stale++;
             }
@@ -46,7 +49,7 @@ class ExportSwfFonts
 
         for(library in libraries)
         {
-            var result = exportSwf(ffdec,projectRoot,cacheRoot,stampRoot,exporterFiles,library,exported,options.force);
+            var result = exportSwf(ffdec,projectRoot,cacheRoot,stampRoot,exporterHash,ffdecHash,library,exported,options.force);
             if(result == true) count++;
             else if(result == false) failed++;
             else skipped++;
@@ -156,7 +159,7 @@ class ExportSwfFonts
         }
     }
 
-    static function exportSwf(ffdec:FfdecTool, projectRoot:String, cacheRoot:String, stampRoot:String, exporterFiles:Array<String>, library:{swfPath:String, id:String}, exported:Map<String,Bool>, force:Bool) : Null<Bool>
+    static function exportSwf(ffdec:FfdecTool, projectRoot:String, cacheRoot:String, stampRoot:String, exporterHash:String, ffdecHash:String, library:{swfPath:String, id:String}, exported:Map<String,Bool>, force:Bool) : Null<Bool>
     {
         var source = Path.normalize(Path.join([projectRoot,library.swfPath]));
         if(!FileSystem.exists(source))
@@ -171,7 +174,7 @@ class ExportSwfFonts
         }
         exported.set(key,true);
 
-        if(!force && isUpToDate(source,stampPath(stampRoot,library.id),exporterFiles,ffdec))
+        if(!force && isUpToDate(source,stampPath(stampRoot,library.id),exporterHash,ffdecHash,ffdec != null))
         {
             return null;
         }
@@ -185,7 +188,7 @@ class ExportSwfFonts
         {
             removeDeviceFonts(outDir);
             deleteDirectoryIfEmpty(outDir);
-            File.saveContent(stampPath(stampRoot,library.id),library.swfPath + "\n");
+            writeStamp(stampPath(stampRoot,library.id),source,exporterHash,ffdecHash);
             return true;
         }
 
@@ -193,29 +196,80 @@ class ExportSwfFonts
         return false;
     }
 
-    static function isUpToDate(source:String, stamp:String, exporterFiles:Array<String>, ffdec:FfdecTool) : Bool
+    static function isUpToDate(source:String, stamp:String, exporterHash:String, ffdecHash:String, checkFfdec:Bool) : Bool
     {
         if(!FileSystem.exists(stamp))
         {
             return false;
         }
-        var stampTime = FileSystem.stat(stamp).mtime.getTime();
-        if(FileSystem.stat(source).mtime.getTime() > stampTime)
+        var expected = stampPayload(source,exporterHash,ffdecHash);
+        var actual = parseStamp(File.getContent(stamp));
+        if(actual == null || actual.swf != expected.swf || actual.exporter != expected.exporter)
         {
             return false;
         }
-        for(file in exporterFiles)
+        return !checkFfdec || actual.ffdec == expected.ffdec;
+    }
+
+    static function writeStamp(stamp:String, source:String, exporterHash:String, ffdecHash:String) : Void
+    {
+        var payload = stampPayload(source,exporterHash,ffdecHash);
+        File.saveContent(stamp,"swf=" + payload.swf + "\nexporter=" + payload.exporter + "\nffdec=" + payload.ffdec + "\n");
+    }
+
+    static function stampPayload(source:String, exporterHash:String, ffdecHash:String) : {swf:String, exporter:String, ffdec:String}
+    {
+        return {swf:hashFile(source), exporter:exporterHash, ffdec:ffdecHash};
+    }
+
+    static function parseStamp(content:String) : Null<{swf:String, exporter:String, ffdec:String}>
+    {
+        var swf = "";
+        var exporter = "";
+        var ffdec = "";
+        var sawFingerprint = false;
+        for(line in content.split("\n"))
         {
-            if(FileSystem.exists(file) && FileSystem.stat(file).mtime.getTime() > stampTime)
+            var trimmed = StringTools.trim(line);
+            if(StringTools.startsWith(trimmed,"swf="))
             {
-                return false;
+                swf = trimmed.substr(4);
+                sawFingerprint = true;
+            }
+            else if(StringTools.startsWith(trimmed,"exporter="))
+            {
+                exporter = trimmed.substr(9);
+                sawFingerprint = true;
+            }
+            else if(StringTools.startsWith(trimmed,"ffdec="))
+            {
+                ffdec = trimmed.substr(6);
+                sawFingerprint = true;
             }
         }
-        if(ffdec != null && FileSystem.exists(ffdec.path) && FileSystem.stat(ffdec.path).mtime.getTime() > stampTime)
+        if(!sawFingerprint)
         {
-            return false;
+            return null;
         }
-        return true;
+        return {swf:swf, exporter:exporter, ffdec:ffdec};
+    }
+
+    static function hashFiles(paths:Array<String>) : String
+    {
+        var hashes = [];
+        for(path in paths)
+        {
+            if(FileSystem.exists(path))
+            {
+                hashes.push(hashFile(path));
+            }
+        }
+        return Md5.encode(hashes.join(","));
+    }
+
+    static function hashFile(path:String) : String
+    {
+        return Md5.make(File.getBytes(path)).toHex();
     }
 
     static function stampPath(stampRoot:String, id:String) : String
@@ -223,7 +277,7 @@ class ExportSwfFonts
         return Path.join([stampRoot,id]);
     }
 
-    static function adoptExistingFonts(projectRoot:String, cacheRoot:String, stampRoot:String, libraries:Array<{swfPath:String, id:String}>, force:Bool) : Void
+    static function adoptExistingFonts(projectRoot:String, cacheRoot:String, stampRoot:String, libraries:Array<{swfPath:String, id:String}>, force:Bool, exporterHash:String, ffdecHash:String) : Void
     {
         if(force || hasStamps(stampRoot))
         {
@@ -245,7 +299,7 @@ class ExportSwfFonts
             {
                 continue;
             }
-            File.saveContent(stampPath(stampRoot,library.id),library.swfPath + "\n");
+            writeStamp(stampPath(stampRoot,library.id),source,exporterHash,ffdecHash);
         }
         Sys.println("Adopted existing fonts into " + cacheRoot + ".");
     }

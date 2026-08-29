@@ -110,7 +110,7 @@ A small official update without ax4 is also a `refresh commit` on the current `e
 
 ### Squash-with / Squash-as
 
-A line that is exactly `Squash-with: <sha>` (7–40 hex chars, nothing else on the line) marks the new commit to fold into the referenced one. `Squash-as: <title>` is the folded commit’s title; every following line is the body, kept as written (`Squash-with:` and `Co-authored-by:` lines are skipped). The two trailers are required together. The newest `Squash-as:` in the group wins.
+A line that is exactly `Squash-with: <sha>` (7–40 hex chars, nothing else on the line) marks the new commit to fold into the referenced one. `Squash-as: <title>` is the folded commit’s title; every following line is the body, kept as written (`Squash-with:` and `Co-authored-by:` lines are skipped). The two trailers are required together. The newest `Squash-as:` in the group wins. `Squash-as: original` keeps the message the rest of the group would have produced: the newest non-`original` `Squash-as:`, or the oldest commit if none (a polish that does not change the folded message).
 
 `commit` checks that the sha is in `converted/latest..edits/latest`. The fold itself runs on `rebase` / `replay` / `squash` only.
 

@@ -31,6 +31,8 @@ Stay on a full-tree branch (master). Do not check out converted/ or edits/.
 Squash-with: <sha> as its own line marks a commit to fold into the referenced one
 on rebase/replay/squash. Squash-as: <message> is required with it (newest in
 the group wins; everything after that line is the body, kept as written).
+Squash-as: original keeps the message the rest of the group would have produced
+(newest non-original Squash-as:, else the oldest commit).
 
 Edits titles use air: cpp: bug: font: feat: (rebase sorts by that order).
 Reasons: dr, jpexs, ax4 (any subset; stored as dr > jpexs > ax4).
@@ -347,8 +349,45 @@ collect_coauthors() {
   grep -E '^Co-authored-by: ' || true
 }
 
+# Oldest commit subject + body, without squash trailers or Co-authored-by.
+format_commit_message() {
+  local subject body line
+  local -a body_lines=()
+  subject="$(git log -1 --format='%s' "$1")"
+  body="$(git log -1 --format='%b' "$1")"
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line%$'\r'}"
+    if [[ "$line" =~ ^Squash-with:\ [0-9a-fA-F]{7,40}$ ]]; then
+      continue
+    fi
+    if [[ "$line" =~ ^Squash-as:\  ]]; then
+      continue
+    fi
+    if [[ "$line" =~ ^Co-authored-by:\  ]]; then
+      continue
+    fi
+    body_lines+=("$line")
+  done < <(printf '%s\n' "$body")
+  while [[ "${#body_lines[@]}" -gt 0 && -z "${body_lines[0]}" ]]; do
+    body_lines=("${body_lines[@]:1}")
+  done
+  while [[ "${#body_lines[@]}" -gt 0 && -z "${body_lines[-1]}" ]]; do
+    unset 'body_lines[-1]'
+  done
+  printf '%s\n' "$subject"
+  if [[ "${#body_lines[@]}" -gt 0 ]]; then
+    printf '\n'
+    printf '%s\n' "${body_lines[@]}"
+  fi
+}
+
+squash_as_is_original() {
+  local first="${1%%$'\n'*}"
+  [[ "$first" == "original" ]]
+}
+
 combine_messages() {
-  local sha body authors="" line as_msg
+  local sha body authors="" line as_msg saw_original=0
   local -A seen_author=()
   local shas=("$@")
   [[ "${#shas[@]}" -ge 1 ]] || return 0
@@ -366,6 +405,10 @@ combine_messages() {
   for (( idx=${#shas[@]}-1; idx>=0; idx-- )); do
     as_msg="$(parse_squash_as "${shas[idx]}")"
     if [[ -n "$as_msg" ]]; then
+      if squash_as_is_original "$as_msg"; then
+        saw_original=1
+        continue
+      fi
       printf '%s\n' "$as_msg"
       if [[ -n "$authors" ]]; then
         printf '\n%s' "$authors"
@@ -373,6 +416,13 @@ combine_messages() {
       return 0
     fi
   done
+  if [[ "$saw_original" -eq 1 ]]; then
+    format_commit_message "${shas[0]}"
+    if [[ -n "$authors" ]]; then
+      printf '\n%s' "$authors"
+    fi
+    return 0
+  fi
   die "Squash-with: requires Squash-as:"
 }
 

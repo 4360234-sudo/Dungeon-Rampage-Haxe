@@ -31,6 +31,8 @@ Stay on a full-tree branch (master). Do not check out converted/ or edits/.
 Squash-with: <sha> as its own line marks a commit to fold into the referenced one
 on rebase/replay/squash. Squash-as: <message> is required with it (newest in
 the group wins; everything after that line is the body, kept as written).
+Squash-as: original keeps the message the rest of the group would have produced
+(newest non-original Squash-as:, else the oldest commit).
 
 Edits titles use air: cpp: bug: font: feat: (rebase sorts by that order).
 Reasons: dr, jpexs, ax4 (any subset; stored as dr > jpexs > ax4).
@@ -321,6 +323,34 @@ function Resolve-InSet([string]$Needle, [string[]]$Shas) {
     $full
 }
 
+function Format-CommitMessage([string]$Sha) {
+    $subject = (git log -1 --format='%s' $Sha).TrimEnd("`r")
+    $body = git log -1 --format='%b' $Sha
+    $lines = New-Object System.Collections.Generic.List[string]
+    foreach ($line in ($body -split "`n")) {
+        $t = $line.TrimEnd("`r")
+        if ($t -match '^Squash-with: [0-9a-fA-F]{7,40}$') { continue }
+        if ($t -match '^Squash-as: ') { continue }
+        if ($t -match '^Co-authored-by: ') { continue }
+        $lines.Add($t)
+    }
+    while ($lines.Count -gt 0 -and $lines[0] -eq "") { $lines.RemoveAt(0) }
+    while ($lines.Count -gt 0 -and $lines[$lines.Count - 1] -eq "") { $lines.RemoveAt($lines.Count - 1) }
+    $parts = New-Object System.Collections.Generic.List[string]
+    $parts.Add($subject)
+    if ($lines.Count -gt 0) {
+        $parts.Add("")
+        foreach ($b in $lines) { $parts.Add($b) }
+    }
+    ($parts -join "`n").TrimEnd()
+}
+
+function Test-SquashAsOriginal([string]$AsMsg) {
+    if (-not $AsMsg) { return $false }
+    $first = ($AsMsg -split "`n")[0].TrimEnd("`r")
+    return ($first -eq "original")
+}
+
 function Combine-Messages([string[]]$Shas) {
     if ($Shas.Count -eq 0) { return "" }
     $parts = New-Object System.Collections.Generic.List[string]
@@ -335,9 +365,14 @@ function Combine-Messages([string[]]$Shas) {
             }
         }
     }
+    $sawOriginal = $false
     for ($i = $Shas.Count - 1; $i -ge 0; $i--) {
         $asMsg = Get-SquashAs $Shas[$i]
         if ($asMsg) {
+            if (Test-SquashAsOriginal $asMsg) {
+                $sawOriginal = $true
+                continue
+            }
             $parts.Add($asMsg)
             if ($authors.Count -gt 0) {
                 $parts.Add("")
@@ -345,6 +380,14 @@ function Combine-Messages([string[]]$Shas) {
             }
             return (($parts -join "`n").TrimEnd() + "`n")
         }
+    }
+    if ($sawOriginal) {
+        $parts.Add((Format-CommitMessage $Shas[0]))
+        if ($authors.Count -gt 0) {
+            $parts.Add("")
+            foreach ($a in $authors) { $parts.Add($a) }
+        }
+        return (($parts -join "`n").TrimEnd() + "`n")
     }
     Die "Squash-with: requires Squash-as:"
 }

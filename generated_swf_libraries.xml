@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <project>
 	<library path="Resources/Art2D/cutscene/db_cutscene_intro_minotaur.swf" id="ax4_swf_resources_art2d_cutscene_db_cutscene_intro_minotaur_swf" preload="false" generate="false" />
 	<library path="Resources/Art2D/Doobers/db_items_doobers.swf" id="ax4_swf_resources_art2d_doobers_db_items_doobers_swf" preload="false" generate="true" />

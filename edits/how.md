@@ -130,4 +130,6 @@ Several commits may point at the same target; chains are one group. The group is
 
 Optional crash repros live in `tools/debug/`, off this stack.
 
-Font export is Haxe (Lime XML + FFDec), run by Lime `<prebuild>` / `<postbuild>` on cpp. It writes `bin/obj/ffdec_fonts/` and syncs next to the exe (the unsuffixed `.app` on macOS); cache hits skip FFDec. `haxe edits/ffdec_fonts/export_swf_fonts.hxml -- --force` regenerates. `convert.cmd` / `refresh.cmd` are shell (CLIs and git).
+Font export is Haxe (Lime XML + FFDec), run by Lime `<prebuild>` / `<postbuild>` on cpp. It writes `bin/obj/ffdec_fonts/` and syncs next to the exe (the unsuffixed `.app` on macOS); cache hits skip FFDec. `haxe edits/ffdec_fonts/export_swf_fonts.hxml -- --force` regenerates.
+
+SWF `<library>` entries for cpp come from `haxe edits/swf_libraries/generate.hxml`, which writes `generated_swf_libraries.xml` from `Resources/**/*.swf` and the preload/generate rule files. Lime reads that include at parse time, so the generator runs before a cpp build (Execute, CI, `build_macos_arches.sh`). The XML is committed; regenerate (and commit it) when SWFs or those rules change. `convert.cmd` / `refresh.cmd` are shell (CLIs and git).

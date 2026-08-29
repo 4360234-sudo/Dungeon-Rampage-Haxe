@@ -60,7 +60,7 @@ jobs:
       - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
         with:
           path: bin/obj/ffdec_fonts
-          key: ffdec-fonts-${{ steps.jpexs.outputs.sha }}-${{ hashFiles('edits/ffdec_fonts/**', 'generated_swf_libraries.xml', 'src/_assets/assets.swf', 'Resources/**/*.swf') }}
+          key: ffdec-fonts-${{ steps.jpexs.outputs.sha }}-${{ hashFiles('edits/ffdec_fonts/**', 'src/_assets/assets.swf', 'Resources/**/*.swf') }}
           restore-keys: |
             ffdec-fonts-${{ steps.jpexs.outputs.sha }}-
 

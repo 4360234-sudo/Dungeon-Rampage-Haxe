@@ -76,6 +76,10 @@ jobs:
         with:
           haxe-version: 4.3.7
 
+      - name: Generate SWF libraries
+        shell: bash
+        run: haxe edits/swf_libraries/generate.hxml
+
       - name: Configure macOS build environment
         if: runner.os == 'macOS'
         shell: bash

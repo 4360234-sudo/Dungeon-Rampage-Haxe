@@ -14,9 +14,8 @@ class ExportSwfFonts
         var projectRoot = findProjectRoot();
         var cacheRoot = Path.join([projectRoot,"bin","obj","ffdec_fonts"]);
         var stampRoot = Path.join([cacheRoot,".stamps"]);
-        var librariesPath = Path.join([projectRoot,"generated_swf_libraries.xml"]);
         var ffdec = resolveFfdec(options.ffdec,projectRoot);
-        var libraries = readLibraries(projectRoot,librariesPath);
+        var libraries = readLibraries(projectRoot);
         var exporterFiles = [
             Path.join([projectRoot,"edits","ffdec_fonts","ExportSwfFonts.hx"]),
             Path.join([projectRoot,"edits","ffdec_fonts","export_swf_fonts.hxml"])
@@ -103,7 +102,7 @@ class ExportSwfFonts
         var cwd = Sys.getCwd();
         while(cwd != null && cwd.length > 0)
         {
-            if(FileSystem.exists(Path.join([cwd,"project.xml"])) && FileSystem.exists(Path.join([cwd,"generated_swf_libraries.xml"])))
+            if(FileSystem.exists(Path.join([cwd,"project.xml"])))
             {
                 return cwd;
             }
@@ -117,13 +116,15 @@ class ExportSwfFonts
         return Sys.getCwd();
     }
 
-    static function readLibraries(projectRoot:String, librariesPath:String) : Array<{swfPath:String, id:String}>
+    static function readLibraries(projectRoot:String) : Array<{swfPath:String, id:String}>
     {
         var libraries = new Array<{swfPath:String, id:String}>();
         var seen = new Map<String,Bool>();
-        if(FileSystem.exists(librariesPath))
+        for(library in SwfLibraries.listResourceLibraries(projectRoot))
         {
-            addLibrariesFromXml(Xml.parse(File.getContent(librariesPath)),libraries,seen,false);
+            var key = Path.normalize(library.path) + "|" + library.id;
+            seen.set(key,true);
+            libraries.push({swfPath:library.path, id:library.id});
         }
         addLibrariesFromXml(Xml.parse(File.getContent(Path.join([projectRoot,"project.xml"]))),libraries,seen,true);
         return libraries;

@@ -1,3 +1,4 @@
 --class-path edits/ffdec_fonts
+--class-path edits/swf_libraries
 --main ExportSwfFonts
 --interp

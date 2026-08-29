@@ -117,6 +117,10 @@ cd ../..
 
 ### Build the game
 
+Lime reads `generated_swf_libraries.xml` when it parses `project.xml`, so
+regenerate it before a `cpp` build (it lists `Resources/**/*.swf` plus the
+preload/generate rules in `edits/swf_libraries/`).
+
 The first native (`cpp`) build exports SWF fonts with
 [JPEXS FFDec](https://github.com/Tutez64/jpexs-decompiler/tree/dev) (Java 8+).
 Set `FFDEC_HOME`, put `ffdec` on `PATH`, or keep `jpexs-decompiler` next to this
@@ -125,6 +129,7 @@ repo. Later builds reuse `bin/obj/ffdec_fonts/`.
 From the repository root:
 
 ```bash
+haxe edits/swf_libraries/generate.hxml
 haxelib run openfl build project.xml cpp
 ```
 

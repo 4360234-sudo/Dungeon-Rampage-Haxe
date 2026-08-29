@@ -92,6 +92,8 @@ if [[ ! -f "$PROJECT_FILE" ]]; then
   exit 1
 fi
 
+haxe edits/swf_libraries/generate.hxml
+
 resolve_openfl_cmd
 
 if [[ -z "$X86_APP" || -z "$ARM_APP" ]]; then

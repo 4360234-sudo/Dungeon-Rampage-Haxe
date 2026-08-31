@@ -230,6 +230,46 @@ function Test-AnePayloadsMatch([string]$Src, [string]$Dest) {
     }
 }
 
+function Get-RelativeDataFiles([string]$Dir) {
+    $root = (Resolve-Path -LiteralPath $Dir).Path.TrimEnd('\', '/')
+    Get-ChildItem -LiteralPath $Dir -Recurse -File -Force -ErrorAction SilentlyContinue |
+        ForEach-Object {
+            $_.FullName.Substring($root.Length).TrimStart('\', '/').Replace('\', '/')
+        } |
+        Sort-Object
+}
+
+function Test-TreesMatch([string]$A, [string]$B) {
+    $fa = @(Get-RelativeDataFiles $A)
+    $fb = @(Get-RelativeDataFiles $B)
+    if (($fa -join '|') -ne ($fb -join '|')) { return $false }
+    foreach ($rel in $fa) {
+        $pa = Join-Path $A ($rel.Replace('/', '\'))
+        $pb = Join-Path $B ($rel.Replace('/', '\'))
+        if ((Get-FileSha256 $pa) -ne (Get-FileSha256 $pb)) { return $false }
+    }
+    return $true
+}
+
+function Install-OfficialTree([string]$From, [string]$To, [string]$Label) {
+    if (-not (Test-Path -LiteralPath $From -PathType Container)) {
+        throw "Decompiled $Label not found: $From"
+    }
+    if ((Test-Path -LiteralPath $To -PathType Container) -and (Test-TreesMatch $From $To)) {
+        Write-Host "$Label unchanged, keeping $To"
+        return
+    }
+    if (Test-Path -LiteralPath $To) { Remove-Item -LiteralPath $To -Recurse -Force }
+    Copy-Item -LiteralPath $From -Destination $To -Recurse -Force
+    Convert-CopiedFiles $To
+    Write-Host "Updated $Label"
+}
+
+function Install-GameData([string]$DecompiledAbs) {
+    Install-OfficialTree (Join-Path $DecompiledAbs "data\DbConfiguration") (Join-Path $Root "DbConfiguration") "DbConfiguration"
+    Install-OfficialTree (Join-Path $DecompiledAbs "data\Resources") (Join-Path $Root "Resources") "Resources"
+}
+
 function Install-Ane([string]$AnePath) {
     $packed = Join-Path $Root "extensions\FRESteamWorks.ane"
     $unpacked = Join-Path $Root "extensions\adl\FRESteamWorks.Unpacked.ane"
@@ -335,6 +375,9 @@ Write-Host "airglobal:  $AirglobalAbs"
 
 Write-Host "Updating extensions/ ..."
 Install-Ane $AneAbs
+
+Write-Host "Updating DbConfiguration/ and Resources/ ..."
+Install-GameData $DecompiledAbs
 
 Write-Host "Extracting library.swf ..."
 Extract-LibrarySwf $AneAbs $LibrarySwf

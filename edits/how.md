@@ -18,10 +18,11 @@ Run the **Convert from AS3** IntelliJ configuration (or `./edits/conversion/conv
 The script:
 
 1. Copies `FRESteamWorks.ane` into `extensions/` and unpacks it for ADL, only if the ANE payloads changed
-2. Extracts `library.swf` from that ANE
-3. Decompiles it with FFDec into a temporary folder (the ANE ActionScript is not part of the game SWF)
-4. Runs [ax4](https://github.com/Tutez64/ax4) with `edits/conversion/config.json`
-5. Moves `com.amanitadesign` to `src-steam/` (C++ classpath only)
+2. Replaces `DbConfiguration/` and `Resources/` with the decompiled `data/` copies
+3. Extracts `library.swf` from that ANE
+4. Decompiles it with FFDec into a temporary folder (the ANE ActionScript is not part of the game SWF)
+5. Runs [ax4](https://github.com/Tutez64/ax4) with `edits/conversion/config.json`
+6. Moves `com.amanitadesign` to `src-steam/` (C++ classpath only)
 
 Useful options: `--prepare-only`, `--keep-tmp`, `--build-ax4`.
 Overrides: `--ax4` / `AX4_DIR`, `--decompiled` / `DECOMPILED_DIR`, `--ffdec` / `FFDEC_HOME`, `--air-sdk` / `AIR_SDK`, `--ane`.
@@ -106,7 +107,7 @@ The polyglot script `./edits/conversion/refresh.cmd` (Bash + PowerShell) drives 
 
 A small official update without ax4 is also a `refresh commit` on the current `edits/X` (debt until the next real convert; the branch name still has the previous BuildID).
 
-`src/` that must survive the next rebase is committed on `edits/X`. Project files, submodules, `compat/`, extensions, and tools stay on `master`. Releases are tagged on `master`.
+`src/` that must survive the next rebase is committed on `edits/X`. Project files, submodules, `compat/`, extensions, `DbConfiguration/`, `Resources/`, and tools stay on `master`. Releases are tagged on `master`.
 
 ### Squash-with / Squash-as
 

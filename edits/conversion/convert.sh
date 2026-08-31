@@ -279,6 +279,40 @@ ane_payloads_match() {
   return "$ok"
 }
 
+trees_match() {
+  local a="$1"
+  local b="$2"
+  local fa fb rel
+  fa="$(cd "$a" && find . -type f | sort)"
+  fb="$(cd "$b" && find . -type f | sort)"
+  [[ "$fa" == "$fb" ]] || return 1
+  while IFS= read -r rel; do
+    [[ -z "$rel" ]] && continue
+    cmp -s "$a/$rel" "$b/$rel" || return 1
+  done <<< "$fa"
+  return 0
+}
+
+install_official_tree() {
+  local from="$1"
+  local to="$2"
+  local label="$3"
+  [[ -d "$from" ]] || die "Decompiled $label not found: $from"
+  if [[ -d "$to" ]] && trees_match "$from" "$to"; then
+    echo "$label unchanged, keeping $to"
+    return 0
+  fi
+  rm -rf "$to"
+  cp -a "$from" "$to"
+  normalize_copied "$to"
+  echo "Updated $label"
+}
+
+install_game_data() {
+  install_official_tree "$DECOMPILED_ABS/data/DbConfiguration" "$ROOT/DbConfiguration" "DbConfiguration"
+  install_official_tree "$DECOMPILED_ABS/data/Resources" "$ROOT/Resources" "Resources"
+}
+
 install_ane() {
   local ane="$1"
   local packed="$ROOT/extensions/FRESteamWorks.ane"
@@ -436,6 +470,9 @@ echo "airglobal:  $AIRGLOBAL_ABS"
 
 echo "Updating extensions/ ..."
 install_ane "$ANE_ABS"
+
+echo "Updating DbConfiguration/ and Resources/ ..."
+install_game_data
 
 echo "Extracting library.swf ..."
 extract_library_swf "$ANE_ABS" "$LIBRARY_SWF"

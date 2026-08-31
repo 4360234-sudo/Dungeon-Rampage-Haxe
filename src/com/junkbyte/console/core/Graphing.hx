@@ -244,9 +244,9 @@ class Graphing extends ConsoleCore {
 		var _loc11_ = (0 : UInt);
 		var _loc12_:ByteArray = null;
 		var _loc13_ = (0 : UInt);
-		final __ax4_iter_117 = this._groups;
-		if (checkNullIteratee(__ax4_iter_117))
-			for (_tmp_ in __ax4_iter_117) {
+		final __ax4_iter_118 = this._groups;
+		if (checkNullIteratee(__ax4_iter_118))
+			for (_tmp_ in __ax4_iter_118) {
 				_loc4_ = ASCompat.dynamicAs(_tmp_, com.junkbyte.console.vos.GraphGroup);
 				_loc5_ = true;
 				if (_loc4_.freq > 1) {
@@ -298,9 +298,9 @@ class Graphing extends ConsoleCore {
 	function updateExternalGraphGroup(group:GraphGroup) {
 		var i:GraphInterest = null;
 		var v = Math.NaN;
-		final __ax4_iter_118 = group.interests;
-		if (checkNullIteratee(__ax4_iter_118))
-			for (_tmp_ in __ax4_iter_118) {
+		final __ax4_iter_119 = group.interests;
+		if (checkNullIteratee(__ax4_iter_119))
+			for (_tmp_ in __ax4_iter_119) {
 				i = ASCompat.dynamicAs(_tmp_, com.junkbyte.console.vos.GraphInterest);
 				try {
 					v = i.getCurrentValue();

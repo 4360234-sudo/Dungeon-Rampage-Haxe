@@ -236,9 +236,9 @@ class GMOffer {
 		}
 		var _loc4_ = GameClock.getWebServerTime();
 		var _loc1_:GMOffer;
-		final __ax4_iter_47 = this.SaleOffers;
-		if (checkNullIteratee(__ax4_iter_47))
-			for (_tmp_ in __ax4_iter_47) {
+		final __ax4_iter_48 = this.SaleOffers;
+		if (checkNullIteratee(__ax4_iter_48))
+			for (_tmp_ in __ax4_iter_48) {
 				_loc1_ = _tmp_;
 				if (!(_loc1_.SaleStartDate != null && _loc1_.SaleEndDate != null)) {
 					return _loc1_;

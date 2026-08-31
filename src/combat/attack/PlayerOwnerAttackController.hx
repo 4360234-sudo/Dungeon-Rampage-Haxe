@@ -85,9 +85,9 @@ class PlayerOwnerAttackController {
 		mWeaponControllers = new Vector<WeaponController>();
 		var _loc2_ = (0 : UInt);
 		var _loc1_:WeaponGameObject;
-		final __ax4_iter_41 = mDistributedPlayerOwner.weapons;
-		if (checkNullIteratee(__ax4_iter_41))
-			for (_tmp_ in __ax4_iter_41) {
+		final __ax4_iter_42 = mDistributedPlayerOwner.weapons;
+		if (checkNullIteratee(__ax4_iter_42))
+			for (_tmp_ in __ax4_iter_42) {
 				_loc1_ = _tmp_;
 				if (_loc1_ != null) {
 					_loc3_ = determineWeaponController(_loc1_);
@@ -104,9 +104,9 @@ class PlayerOwnerAttackController {
 		mConsumableControllers = new Vector<ConsumableWeaponController>();
 		var _loc2_ = (0 : UInt);
 		var _loc3_:ConsumableWeaponGameObject;
-		final __ax4_iter_42 = mDistributedPlayerOwner.consumables;
-		if (checkNullIteratee(__ax4_iter_42))
-			for (_tmp_ in __ax4_iter_42) {
+		final __ax4_iter_43 = mDistributedPlayerOwner.consumables;
+		if (checkNullIteratee(__ax4_iter_43))
+			for (_tmp_ in __ax4_iter_43) {
 				_loc3_ = _tmp_;
 				if (_loc3_ != null) {
 					_loc1_ = new ConsumableWeaponController(mDBFacade, _loc3_, mDistributedPlayerOwner);
@@ -498,9 +498,9 @@ class PlayerOwnerAttackController {
 	public function clearInput() {
 		stopAttacking();
 		var _loc1_:WeaponController;
-		final __ax4_iter_43 = weaponControllers;
-		if (checkNullIteratee(__ax4_iter_43))
-			for (_tmp_ in __ax4_iter_43) {
+		final __ax4_iter_44 = weaponControllers;
+		if (checkNullIteratee(__ax4_iter_44))
+			for (_tmp_ in __ax4_iter_44) {
 				_loc1_ = _tmp_;
 				if (_loc1_ != null) {
 					_loc1_.reset();

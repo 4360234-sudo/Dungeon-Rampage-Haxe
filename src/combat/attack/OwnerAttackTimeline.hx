@@ -27,8 +27,8 @@ class OwnerAttackTimeline extends AttackTimeline {
 	}
 
 	override function parseAction(actionObj:ASObject):AttackTimelineAction {
-		var __ax4_iter_38:Vector<WeaponController> = null;
-		var __ax4_iter_39:Vector<WeaponController>;
+		var __ax4_iter_39:Vector<WeaponController> = null;
+		var __ax4_iter_40:Vector<WeaponController>;
 		var _loc3_:WeaponController = null;
 		var _loc4_ = ASCompat.asString(actionObj.type);
 		var _loc2_:AttackTimelineAction = null;
@@ -63,9 +63,9 @@ class OwnerAttackTimeline extends AttackTimeline {
 				_loc2_ = InputTypeTimelineAction.buildFromJson(mHeroGameObjectOwner, mActorView, mDBFacade, actionObj);
 
 			case "startCooldown":
-				final __ax4_iter_38 = mHeroGameObjectOwner.weaponControllers;
-				if (checkNullIteratee(__ax4_iter_38))
-					for (_tmp_ in __ax4_iter_38) {
+				final __ax4_iter_39 = mHeroGameObjectOwner.weaponControllers;
+				if (checkNullIteratee(__ax4_iter_39))
+					for (_tmp_ in __ax4_iter_39) {
 						_loc3_ = _tmp_;
 						if (_loc3_.weapon == mWeapon) {
 							mWeaponController = _loc3_;
@@ -76,9 +76,9 @@ class OwnerAttackTimeline extends AttackTimeline {
 
 			case "queueAttack":
 				if (mHeroGameObjectOwner != null && mHeroGameObjectOwner.weaponControllers != null) {
-					__ax4_iter_39 = mHeroGameObjectOwner.weaponControllers;
-					if (checkNullIteratee(__ax4_iter_39))
-						for (_tmp_ in __ax4_iter_39) {
+					__ax4_iter_40 = mHeroGameObjectOwner.weaponControllers;
+					if (checkNullIteratee(__ax4_iter_40))
+						for (_tmp_ in __ax4_iter_40) {
 							_loc3_ = _tmp_;
 							if (_loc3_.weapon == mWeapon) {
 								mWeaponController = _loc3_;

@@ -196,7 +196,7 @@ class ItemInfoCard extends UIObject {
 
 	override public function destroy() {
 		var _loc1_:UIModifier;
-		var __ax4_iter_12:Vector<UIModifier>;
+		var __ax4_iter_13:Vector<UIModifier>;
 		mTapTooltip.destroy();
 		mTapIcon.destroy();
 		mHoldTooltip.destroy();
@@ -207,9 +207,9 @@ class ItemInfoCard extends UIObject {
 		mHoldIcon = null;
 		mWeaponDescTooltip.destroy();
 		if (mModifiersList.length > 0) {
-			__ax4_iter_12 = mModifiersList;
-			if (checkNullIteratee(__ax4_iter_12))
-				for (_tmp_ in __ax4_iter_12) {
+			__ax4_iter_13 = mModifiersList;
+			if (checkNullIteratee(__ax4_iter_13))
+				for (_tmp_ in __ax4_iter_13) {
 					_loc1_ = _tmp_;
 					_loc1_.destroy();
 				}
@@ -615,11 +615,11 @@ class ItemInfoCard extends UIObject {
 
 	function clearModifiers() {
 		var _loc1_:UIModifier;
-		var __ax4_iter_13:Vector<UIModifier>;
+		var __ax4_iter_14:Vector<UIModifier>;
 		if (mModifiersList.length > 0) {
-			__ax4_iter_13 = mModifiersList;
-			if (checkNullIteratee(__ax4_iter_13))
-				for (_tmp_ in __ax4_iter_13) {
+			__ax4_iter_14 = mModifiersList;
+			if (checkNullIteratee(__ax4_iter_14))
+				for (_tmp_ in __ax4_iter_14) {
 					_loc1_ = _tmp_;
 					_loc1_.destroy();
 				}

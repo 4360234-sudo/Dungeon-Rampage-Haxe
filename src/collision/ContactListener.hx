@@ -81,9 +81,9 @@ class ContactListener extends B2ContactListener {
 
 	public function processCollisions() {
 		var _loc1_:CollisionHelper;
-		final __ax4_iter_230 = mContactList;
-		if (checkNullIteratee(__ax4_iter_230))
-			for (_tmp_ in __ax4_iter_230) {
+		final __ax4_iter_231 = mContactList;
+		if (checkNullIteratee(__ax4_iter_231))
+			for (_tmp_ in __ax4_iter_231) {
 				_loc1_ = _tmp_;
 				_loc1_.functionToExecute(_loc1_.actorId);
 			}

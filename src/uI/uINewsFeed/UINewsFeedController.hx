@@ -138,9 +138,9 @@ class UINewsFeedController {
 
 	function lerpAllfeedsUp() {
 		var _loc1_:UINewsFeed;
-		final __ax4_iter_67 = mVisibleFeeds;
-		if (checkNullIteratee(__ax4_iter_67))
-			for (_tmp_ in __ax4_iter_67) {
+		final __ax4_iter_68 = mVisibleFeeds;
+		if (checkNullIteratee(__ax4_iter_68))
+			for (_tmp_ in __ax4_iter_68) {
 				_loc1_ = _tmp_;
 				if (_loc1_ != null) {
 					TweenMax.to(_loc1_.root, 0.16666666666666666, {"y": _loc1_.root.y - 75});
@@ -150,9 +150,9 @@ class UINewsFeedController {
 
 	function flushFeeds() {
 		var _loc1_:UINewsFeed;
-		final __ax4_iter_68 = mQueuedFeeds;
-		if (checkNullIteratee(__ax4_iter_68))
-			for (_tmp_ in __ax4_iter_68) {
+		final __ax4_iter_69 = mQueuedFeeds;
+		if (checkNullIteratee(__ax4_iter_69))
+			for (_tmp_ in __ax4_iter_69) {
 				_loc1_ = _tmp_;
 				if (_loc1_ != null) {
 					_loc1_.destroy();
@@ -160,9 +160,9 @@ class UINewsFeedController {
 				_loc1_ = null;
 			}
 		mQueuedFeeds.splice(0, (mQueuedFeeds.length : UInt));
-		final __ax4_iter_69 = mVisibleFeeds;
-		if (checkNullIteratee(__ax4_iter_69))
-			for (_tmp_ in __ax4_iter_69) {
+		final __ax4_iter_70 = mVisibleFeeds;
+		if (checkNullIteratee(__ax4_iter_70))
+			for (_tmp_ in __ax4_iter_70) {
 				_loc1_ = _tmp_;
 				if (_loc1_ != null) {
 					_loc1_.destroy();

@@ -255,9 +255,9 @@ class ActorRenderer extends Sprite {
 
 	function preloadStandardSpriteSheetAssets() {
 		var _loc1_:String;
-		final __ax4_iter_23 = mStandardAnimList;
-		if (checkNullIteratee(__ax4_iter_23))
-			for (_tmp_ in __ax4_iter_23) {
+		final __ax4_iter_24 = mStandardAnimList;
+		if (checkNullIteratee(__ax4_iter_24))
+			for (_tmp_ in __ax4_iter_24) {
 				_loc1_ = _tmp_;
 				loadSpriteSheetAsset(_loc1_);
 			}

@@ -69,9 +69,9 @@ class II_UIRewardReportPopup extends DBUIPopup {
 		}
 		mRewardData = rewardData;
 		var _loc14_:InfiniteRewardData;
-		final __ax4_iter_31 = mRewardData;
-		if (checkNullIteratee(__ax4_iter_31))
-			for (_tmp_ in __ax4_iter_31) {
+		final __ax4_iter_32 = mRewardData;
+		if (checkNullIteratee(__ax4_iter_32))
+			for (_tmp_ in __ax4_iter_32) {
 				_loc14_ = _tmp_;
 				if (_loc14_.status == 3) {
 					mNewDooberId = (_loc14_.dooberId : Int);
@@ -101,7 +101,7 @@ class II_UIRewardReportPopup extends DBUIPopup {
 	}
 
 	function init() {
-		var __ax4_iter_33:Vector<InfiniteRewardData>;
+		var __ax4_iter_34:Vector<InfiniteRewardData>;
 		var _loc5_:InfiniteRewardData = null;
 		var _loc1_ = false;
 		var _loc11_:GMDoober = null;
@@ -118,9 +118,9 @@ class II_UIRewardReportPopup extends DBUIPopup {
 		var _loc14_ = 0;
 		_loc14_ = mTotalGold;
 		var _loc4_ = 0;
-		final __ax4_iter_32 = mRewardData;
-		if (checkNullIteratee(__ax4_iter_32))
-			for (_tmp_ in __ax4_iter_32) {
+		final __ax4_iter_33 = mRewardData;
+		if (checkNullIteratee(__ax4_iter_33))
+			for (_tmp_ in __ax4_iter_33) {
 				_loc5_ = _tmp_;
 				if (_loc4_ < mRewardSlots.length) {
 					_loc1_ = false;
@@ -193,9 +193,9 @@ class II_UIRewardReportPopup extends DBUIPopup {
 			mRewardSlotLabels.push(ASCompat.dynamicAs((mPopup : ASAny).label_loot_03, flash.text.TextField));
 			mRewardSlotLabels.push(ASCompat.dynamicAs((mPopup : ASAny).label_loot_04, flash.text.TextField));
 			_loc4_ = 0;
-			__ax4_iter_33 = mRewardData;
-			if (checkNullIteratee(__ax4_iter_33))
-				for (_tmp_ in __ax4_iter_33) {
+			__ax4_iter_34 = mRewardData;
+			if (checkNullIteratee(__ax4_iter_34))
+				for (_tmp_ in __ax4_iter_34) {
 					_loc5_ = _tmp_;
 					if (ASCompat.toNumberField(_loc5_, "status") == 1
 						&& ASCompat.toNumberField(_loc5_, "floorNumber") == mCurrentFloorNum) {

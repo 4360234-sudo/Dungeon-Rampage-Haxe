@@ -46,9 +46,9 @@ class MatchMaker extends GameObject implements IMatchMaker {
 	function setInfiniteDungeonDetails() {
 		var _loc1_:InfiniteMapNodeDetail = null;
 		mInfiniteDungeonDetails = new Map();
-		final __ax4_iter_218 = mInfiniteMapNodeDetails;
-		if (checkNullIteratee(__ax4_iter_218))
-			for (_tmp_ in __ax4_iter_218) {
+		final __ax4_iter_219 = mInfiniteMapNodeDetails;
+		if (checkNullIteratee(__ax4_iter_219))
+			for (_tmp_ in __ax4_iter_219) {
 				_loc1_ = _tmp_;
 				if (_loc1_ != null) {
 					mInfiniteDungeonDetails.add(_loc1_.nodeId, _loc1_);

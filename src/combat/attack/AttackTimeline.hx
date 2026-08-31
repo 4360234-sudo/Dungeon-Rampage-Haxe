@@ -140,9 +140,9 @@ class AttackTimeline extends ScriptTimeline {
 		var _loc4_:LinkedList = null;
 		var _loc5_ = 0;
 		var _loc3_:CombatResult;
-		final __ax4_iter_40 = attackChoreography.combatResults;
-		if (checkNullIteratee(__ax4_iter_40))
-			for (_tmp_ in __ax4_iter_40) {
+		final __ax4_iter_41 = attackChoreography.combatResults;
+		if (checkNullIteratee(__ax4_iter_41))
+			for (_tmp_ in __ax4_iter_41) {
 				_loc3_ = _tmp_;
 				_loc5_ = (_loc3_.when : Int);
 				_loc2_ = new CombatResultAttackTimelineAction(mActorGameObject, mActorView, mDBFacade, _loc3_, mDistributedDungeonFloor);

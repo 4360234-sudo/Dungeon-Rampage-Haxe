@@ -122,9 +122,9 @@ class Astar {
 	public function get_answerPath():Vector<UInt> {
 		var _loc2_ = new Vector<UInt>();
 		var _loc1_:UInt;
-		final __ax4_iter_77 = mAnswerPath;
-		if (checkNullIteratee(__ax4_iter_77))
-			for (_tmp_ in __ax4_iter_77) {
+		final __ax4_iter_78 = mAnswerPath;
+		if (checkNullIteratee(__ax4_iter_78))
+			for (_tmp_ in __ax4_iter_78) {
 				_loc1_ = _tmp_;
 				_loc2_.push(_loc1_);
 			}
@@ -206,7 +206,7 @@ class Astar {
 
 	public function Search(startPos:Vector3D, endPos:Vector3D) {
 		var _loc9_:UInt;
-		var __ax4_iter_78:Vector<UInt>;
+		var __ax4_iter_79:Vector<UInt>;
 		var _loc7_:B2Transform = null;
 		mClosestGrid = null;
 		mAnswerPath.splice(0, (mAnswerPath.length : UInt));
@@ -233,9 +233,9 @@ class Astar {
 			_loc7_ = new B2Transform();
 			_loc7_.position = NavCollider.convertToB2Vec2(_loc3_);
 			mDistributedDungeonFloor.debugVisualizer.makeAGridCircle(_loc7_, new B2Color(1, 0, 0));
-			__ax4_iter_78 = mAnswerPath;
-			if (checkNullIteratee(__ax4_iter_78))
-				for (_tmp_ in __ax4_iter_78) {
+			__ax4_iter_79 = mAnswerPath;
+			if (checkNullIteratee(__ax4_iter_79))
+				for (_tmp_ in __ax4_iter_79) {
 					_loc9_ = _tmp_;
 					if (!(_loc9_ == _loc8_ || _loc9_ == _loc5_)) {
 						_loc7_ = new B2Transform();
@@ -248,7 +248,7 @@ class Astar {
 
 	public function AstarWorker(startGridIdx:UInt, goalGridIdx:UInt):Bool {
 		var _loc8_:UInt;
-		var __ax4_iter_79:Array<ASAny>;
+		var __ax4_iter_80:Array<ASAny>;
 		var _loc9_:AstarGridNode = null;
 		var _loc3_:AstarGridNode = null;
 		var _loc5_ = false;
@@ -278,9 +278,9 @@ class Astar {
 			}
 			mOpenList.pop();
 			_loc9_.visited = (mUniquePassKey : Int);
-			__ax4_iter_79 = _loc9_.Neighbors;
-			if (checkNullIteratee(__ax4_iter_79))
-				for (_tmp_ in __ax4_iter_79) {
+			__ax4_iter_80 = _loc9_.Neighbors;
+			if (checkNullIteratee(__ax4_iter_80))
+				for (_tmp_ in __ax4_iter_80) {
 					_loc8_ = (ASCompat.toInt(_tmp_) : UInt);
 					_loc3_ = Nodes[(_loc8_ : Int)];
 					if (_loc3_ != null) {

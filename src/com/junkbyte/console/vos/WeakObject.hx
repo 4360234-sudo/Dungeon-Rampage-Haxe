@@ -51,13 +51,13 @@ class WeakObject extends ASProxyBase {
 	}
 
 	@:ns("http://www.adobe.com/2006/actionscript/flash/proxy") override public function nextNameIndex(index:Int):Int {
-		var __ax4_iter_45:ASObject;
+		var __ax4_iter_46:ASObject;
 		var _loc2_:String = /*undefined*/ null;
 		if (index == 0) {
 			this._item = new Array<ASAny>();
-			__ax4_iter_45 = this._dir;
-			if (checkNullIteratee(__ax4_iter_45))
-				for (_tmp_ in __ax4_iter_45.___keys()) {
+			__ax4_iter_46 = this._dir;
+			if (checkNullIteratee(__ax4_iter_46))
+				for (_tmp_ in __ax4_iter_46.___keys()) {
 					_loc2_ = _tmp_;
 					this._item.push(_loc2_);
 				}

@@ -284,8 +284,8 @@ class GameMaster {
 	}
 
 	public function buildDictionary(splitTests:ASObject) {
-		var __ax4_iter_48:Vector<GMModifier>;
-		var __ax4_iter_49:Vector<GMLegendaryModifier>;
+		var __ax4_iter_49:Vector<GMModifier>;
+		var __ax4_iter_50:Vector<GMLegendaryModifier>;
 		var superStatArray:Array<ASAny>;
 		var heroArray:Array<ASAny>;
 		var levelingArray:Array<ASAny>;
@@ -516,17 +516,17 @@ class GameMaster {
 			WeaponItems[Std.int(idx)] = gmWeapon;
 			weaponItemById.add(gmWeapon.Id, gmWeapon);
 			weaponItemByConstant.add(gmWeapon.Constant, gmWeapon);
-			__ax4_iter_48 = Modifiers;
-			if (checkNullIteratee(__ax4_iter_48))
-				for (_tmp_ in __ax4_iter_48) {
+			__ax4_iter_49 = Modifiers;
+			if (checkNullIteratee(__ax4_iter_49))
+				for (_tmp_ in __ax4_iter_49) {
 					gmMod = _tmp_;
 					if (ASCompat.toBool(weaponItemArray[Std.int(idx)][gmMod.MODIFIER_TYPE])) {
 						gmWeapon.PotentialModifiers.push(gmMod);
 					}
 				}
-			__ax4_iter_49 = LegendaryModifiers;
-			if (checkNullIteratee(__ax4_iter_49))
-				for (_tmp_ in __ax4_iter_49) {
+			__ax4_iter_50 = LegendaryModifiers;
+			if (checkNullIteratee(__ax4_iter_50))
+				for (_tmp_ in __ax4_iter_50) {
 					gmLegendaryMod = _tmp_;
 					gmWeapon.PotentialLegendaryModifiers.push(gmLegendaryMod);
 				}
@@ -684,9 +684,9 @@ class GameMaster {
 		}
 		wantCoinAltOffers = true;
 		wantCashRanger = true;
-		final __ax4_iter_50 = Offers;
-		if (checkNullIteratee(__ax4_iter_50))
-			for (_tmp_ in __ax4_iter_50) {
+		final __ax4_iter_51 = Offers;
+		if (checkNullIteratee(__ax4_iter_51))
+			for (_tmp_ in __ax4_iter_51) {
 				gmOffer = _tmp_;
 				if (gmOffer.SaleTargetOfferId != 0) {
 					fullPriceOffer = ASCompat.dynamicAs(offerById.itemFor(gmOffer.SaleTargetOfferId), gameMasterDictionary.GMOffer);
@@ -890,9 +890,9 @@ class GameMaster {
 	public function storeHasSaleNow():Bool {
 		var _loc1_:GMOffer = null;
 		var _loc2_:GMOffer;
-		final __ax4_iter_51 = Offers;
-		if (checkNullIteratee(__ax4_iter_51))
-			for (_tmp_ in __ax4_iter_51) {
+		final __ax4_iter_52 = Offers;
+		if (checkNullIteratee(__ax4_iter_52))
+			for (_tmp_ in __ax4_iter_52) {
 				_loc2_ = _tmp_;
 				_loc1_ = _loc2_.isOnSaleNow;
 				if (_loc1_ != null && _loc1_.isSale) {
@@ -904,9 +904,9 @@ class GameMaster {
 
 	public function storeHasNewOffers():Bool {
 		var _loc1_:GMOffer;
-		final __ax4_iter_52 = Offers;
-		if (checkNullIteratee(__ax4_iter_52))
-			for (_tmp_ in __ax4_iter_52) {
+		final __ax4_iter_53 = Offers;
+		if (checkNullIteratee(__ax4_iter_53))
+			for (_tmp_ in __ax4_iter_53) {
 				_loc1_ = _tmp_;
 				if (_loc1_.isNew) {
 					return true;
@@ -918,9 +918,9 @@ class GameMaster {
 	function addChildrenToParentNodes() {
 		var _loc2_:GMMapNode = null;
 		var _loc1_:GMMapNode;
-		final __ax4_iter_53 = MapNodes;
-		if (checkNullIteratee(__ax4_iter_53))
-			for (_tmp_ in __ax4_iter_53) {
+		final __ax4_iter_54 = MapNodes;
+		if (checkNullIteratee(__ax4_iter_54))
+			for (_tmp_ in __ax4_iter_54) {
 				_loc1_ = _tmp_;
 				if (ASCompat.stringAsBool(_loc1_.PrefixupParentNode)) {
 					_loc2_ = ASCompat.dynamicAs(mapNodeByConstant.itemFor(_loc1_.PrefixupParentNode), gameMasterDictionary.GMMapNode);

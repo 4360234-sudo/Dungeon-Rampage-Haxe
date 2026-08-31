@@ -211,9 +211,9 @@ class II_UIMapBattlePopup extends UIMapBattlePopup {
 		}
 		var _loc5_ = 0;
 		var _loc6_:Int;
-		final __ax4_iter_34 = _loc11_.RewardFloors;
-		if (checkNullIteratee(__ax4_iter_34))
-			for (_tmp_ in __ax4_iter_34) {
+		final __ax4_iter_35 = _loc11_.RewardFloors;
+		if (checkNullIteratee(__ax4_iter_35))
+			for (_tmp_ in __ax4_iter_35) {
 				_loc6_ = (_tmp_ : Int);
 				_loc1_ = 0;
 				if (_loc2_ > _loc6_) {
@@ -328,7 +328,7 @@ class II_UIMapBattlePopup extends UIMapBattlePopup {
 	}
 
 	override public function destroy() {
-		var __ax4_iter_35:Vector<II_UIChampionsboardSlot>;
+		var __ax4_iter_36:Vector<II_UIChampionsboardSlot>;
 		var _loc1_:II_UIChampionsboardSlot = null;
 		mScrollPane.destroy();
 		mSlider.destroy();
@@ -339,9 +339,9 @@ class II_UIMapBattlePopup extends UIMapBattlePopup {
 		mSliderUpButton = null;
 		mSliderDownButton = null;
 		if (mChampionsboardFriendSlots != null) {
-			__ax4_iter_35 = mChampionsboardFriendSlots;
-			if (checkNullIteratee(__ax4_iter_35))
-				for (_tmp_ in __ax4_iter_35) {
+			__ax4_iter_36 = mChampionsboardFriendSlots;
+			if (checkNullIteratee(__ax4_iter_36))
+				for (_tmp_ in __ax4_iter_36) {
 					_loc1_ = _tmp_;
 					_loc1_.destroy();
 				}

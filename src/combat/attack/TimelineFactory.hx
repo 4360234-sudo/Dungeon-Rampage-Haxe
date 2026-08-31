@@ -28,9 +28,9 @@ class TimelineFactory {
 		var _loc5_ = 0;
 		mSecurityValue = 0;
 		var _loc4_:ASObject;
-		final __ax4_iter_44:Array<ASAny> = jsonAsset.json.attacks;
-		if (checkNullIteratee(__ax4_iter_44))
-			for (_tmp_ in __ax4_iter_44) {
+		final __ax4_iter_45:Array<ASAny> = jsonAsset.json.attacks;
+		if (checkNullIteratee(__ax4_iter_45))
+			for (_tmp_ in __ax4_iter_45) {
 				_loc4_ = _tmp_;
 				_loc3_ = _loc4_.attackName;
 				mTimelines.add(_loc3_, _loc4_);

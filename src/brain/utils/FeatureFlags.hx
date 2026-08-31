@@ -70,7 +70,7 @@ class FeatureFlags {
 
 	public function loadFeatureFlagValuesFromCli(arguments:Array<ASAny>) {
 		var _loc2_:FeatureFlag;
-		var __ax4_iter_56:ASDictionary<ASAny, ASAny>;
+		var __ax4_iter_57:ASDictionary<ASAny, ASAny>;
 		var _loc6_ = 0;
 		var _loc5_:String = null;
 		var _loc8_:FeatureFlag = null;
@@ -82,9 +82,9 @@ class FeatureFlags {
 			_loc5_ = arguments[_loc6_];
 			if (_loc5_.indexOf("--") == 0) {
 				_loc8_ = null;
-				__ax4_iter_56 = mFeatureFlags;
-				if (checkNullIteratee(__ax4_iter_56))
-					for (_tmp_ in __ax4_iter_56) {
+				__ax4_iter_57 = mFeatureFlags;
+				if (checkNullIteratee(__ax4_iter_57))
+					for (_tmp_ in __ax4_iter_57) {
 						_loc2_ = ASCompat.dynamicAs(_tmp_, brain.utils.FeatureFlag);
 						if (_loc2_.commandLineFlag == _loc5_) {
 							_loc8_ = _loc2_;
@@ -112,9 +112,9 @@ class FeatureFlags {
 		var _loc4_:ASObject = null;
 		var _loc3_ = false;
 		var _loc2_:FeatureFlag;
-		final __ax4_iter_57 = mFeatureFlags;
-		if (checkNullIteratee(__ax4_iter_57))
-			for (_tmp_ in __ax4_iter_57) {
+		final __ax4_iter_58 = mFeatureFlags;
+		if (checkNullIteratee(__ax4_iter_58))
+			for (_tmp_ in __ax4_iter_58) {
 				_loc2_ = ASCompat.dynamicAs(_tmp_, brain.utils.FeatureFlag);
 				_loc4_ = configManager.getConfigObject(_loc2_.configFileAttributeName, null);
 				if (_loc4_ != null) {
@@ -126,9 +126,9 @@ class FeatureFlags {
 
 	public function logFeatureFlagNamesAndValues() {
 		var _loc1_:ASObject;
-		final __ax4_iter_58 = mFeatureFlags;
-		if (checkNullIteratee(__ax4_iter_58))
-			for (_tmp_ in __ax4_iter_58) {
+		final __ax4_iter_59 = mFeatureFlags;
+		if (checkNullIteratee(__ax4_iter_59))
+			for (_tmp_ in __ax4_iter_59) {
 				_loc1_ = _tmp_;
 				Logger.log("Flag Name: " + Std.string(_loc1_.name) + " Flag Value:" + getFlagValue(_loc1_.name));
 			}

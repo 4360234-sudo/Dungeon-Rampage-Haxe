@@ -58,9 +58,9 @@ class Core extends Sprite {
 
 	public function launchMethods() {
 		var _loc1_:String = null;
-		final __ax4_iter_80 = methodStorage;
-		if (checkNullIteratee(__ax4_iter_80))
-			for (_tmp_ in 0...__ax4_iter_80.length) {
+		final __ax4_iter_81 = methodStorage;
+		if (checkNullIteratee(__ax4_iter_81))
+			for (_tmp_ in 0...__ax4_iter_81.length) {
 				_loc1_ = Std.string(_tmp_);
 				if ((methodStorage : ASAny)[ASCompat.toInt(_loc1_)].obj != null) {
 					(methodStorage : ASAny)[ASCompat.toInt(_loc1_)].tempMethod((methodStorage : ASAny)[ASCompat.toInt(_loc1_)].obj);

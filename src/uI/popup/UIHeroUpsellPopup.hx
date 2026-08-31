@@ -101,7 +101,7 @@ class UIHeroUpsellPopup extends DBUIPopup {
 	}
 
 	override function setupUI(swfAsset:SwfAsset, titleText:String, content:ASAny, allowClose:Bool, closeCallback:ASFunction) {
-		var __ax4_iter_55:Array<ASAny>;
+		var __ax4_iter_56:Array<ASAny>;
 		var i:UInt;
 		var character:String;
 		var screenshot:String;
@@ -169,13 +169,13 @@ class UIHeroUpsellPopup extends DBUIPopup {
 		ASCompat.setProperty((mPopup : ASAny).attack_label, "text", Locale.getString("HERO_UPSELL_ATTACK"));
 		ASCompat.setProperty((mPopup : ASAny).defense_label, "text", Locale.getString("HERO_UPSELL_DEFENSE"));
 		ASCompat.setProperty((mPopup : ASAny).speed_label, "text", Locale.getString("HERO_UPSELL_SPEED"));
-		final __ax4_iter_54 = SCREENSHOTS;
-		if (checkNullIteratee(__ax4_iter_54))
-			for (_tmp_ in __ax4_iter_54.keys()) {
+		final __ax4_iter_55 = SCREENSHOTS;
+		if (checkNullIteratee(__ax4_iter_55))
+			for (_tmp_ in __ax4_iter_55.keys()) {
 				character = _tmp_;
-				__ax4_iter_55 = SCREENSHOTS[character];
-				if (checkNullIteratee(__ax4_iter_55))
-					for (_tmp_ in __ax4_iter_55) {
+				__ax4_iter_56 = SCREENSHOTS[character];
+				if (checkNullIteratee(__ax4_iter_56))
+					for (_tmp_ in __ax4_iter_56) {
 						screenshot = _tmp_;
 						ASCompat.setProperty((mPopup : ASAny)[screenshot], "visible", character == mGMHero.Constant);
 					}

@@ -90,7 +90,7 @@ class JSONEncoder {
 	}
 
 	function objectToString(o:ASObject):String {
-		var __ax4_iter_30:compat.XMLList;
+		var __ax4_iter_31:compat.XMLList;
 		var value:ASObject = null;
 		var key:String = null;
 		var v:compat.XML = null;
@@ -109,11 +109,11 @@ class JSONEncoder {
 					}
 				}
 		} else {
-			__ax4_iter_30 = ASCompat.filterXmlList(classInfo.descendants("*"), function(__xml:compat.XML):Bool {
+			__ax4_iter_31 = ASCompat.filterXmlList(classInfo.descendants("*"), function(__xml:compat.XML):Bool {
 				return __xml.name() == "variable" || __xml.name() == "accessor" && __xml.attribute("access").charAt(0) == "r";
 			});
-			if (checkNullIteratee(__ax4_iter_30))
-				for (_tmp_ in __ax4_iter_30) {
+			if (checkNullIteratee(__ax4_iter_31))
+				for (_tmp_ in __ax4_iter_31) {
 					v = _tmp_;
 					if (!(v.child("metadata") != null && ASCompat.filterXmlList(v.child("metadata"), function(__xml:compat.XML):Bool {
 						return __xml.attribute("name") == "Transient";

@@ -147,9 +147,9 @@ class UIFriends extends UIFMState {
 		mSelectedDRFriends.splice(0, (mSelectedDRFriends.length : UInt));
 		mSelectedFBFriends.splice(0, (mSelectedFBFriends.length : UInt));
 		mSelectedKGFriends.splice(0, (mSelectedKGFriends.length : UInt));
-		final __ax4_iter_194 = mFriendPopulater.getSelectedToggles();
-		if (checkNullIteratee(__ax4_iter_194))
-			for (_tmp_ in __ax4_iter_194) {
+		final __ax4_iter_195 = mFriendPopulater.getSelectedToggles();
+		if (checkNullIteratee(__ax4_iter_195))
+			for (_tmp_ in __ax4_iter_195) {
 				idx = (ASCompat.toInt(_tmp_) : UInt);
 				if (mListOfFriends[(idx : Int)].isDRFriend) {
 					mSelectedDRFriends.push(mListOfFriends[(idx : Int)].id);
@@ -194,9 +194,9 @@ class UIFriends extends UIFMState {
 			return;
 		}
 		newFriendsFound = false;
-		final __ax4_iter_195 = mFriendPopulater.getSelectedToggles();
-		if (checkNullIteratee(__ax4_iter_195))
-			for (_tmp_ in __ax4_iter_195) {
+		final __ax4_iter_196 = mFriendPopulater.getSelectedToggles();
+		if (checkNullIteratee(__ax4_iter_196))
+			for (_tmp_ in __ax4_iter_196) {
 				idx = (ASCompat.toInt(_tmp_) : UInt);
 				if (mDBFacade.dbAccountInfo.giftExcludeIds.indexOf(mListOfFriends[(idx : Int)].excludeId) < 0) {
 					newFriendsFound = true;
@@ -235,9 +235,9 @@ class UIFriends extends UIFMState {
 		var _loc3_:Array<ASAny> = [];
 		var _loc4_:Array<ASAny> = [];
 		var _loc5_:UInt;
-		final __ax4_iter_196 = mFriendPopulater.getSelectedToggles();
-		if (checkNullIteratee(__ax4_iter_196))
-			for (_tmp_ in __ax4_iter_196) {
+		final __ax4_iter_197 = mFriendPopulater.getSelectedToggles();
+		if (checkNullIteratee(__ax4_iter_197))
+			for (_tmp_ in __ax4_iter_197) {
 				_loc5_ = (ASCompat.toInt(_tmp_) : UInt);
 				if (mDBFacade.dbAccountInfo.giftExcludeIds.indexOf(mListOfFriends[(_loc5_ : Int)].excludeId) >= 0) {
 					trace("  giftExcludeIds");
@@ -262,9 +262,9 @@ class UIFriends extends UIFMState {
 	function drGiftFlow(offerName:String, offerId:UInt) {
 		var _loc3_:Array<ASAny> = [];
 		var _loc4_:UInt;
-		final __ax4_iter_197 = mFriendPopulater.getSelectedToggles();
-		if (checkNullIteratee(__ax4_iter_197))
-			for (_tmp_ in __ax4_iter_197) {
+		final __ax4_iter_198 = mFriendPopulater.getSelectedToggles();
+		if (checkNullIteratee(__ax4_iter_198))
+			for (_tmp_ in __ax4_iter_198) {
 				_loc4_ = (ASCompat.toInt(_tmp_) : UInt);
 				if (mDBFacade.dbAccountInfo.giftExcludeIds.indexOf(mListOfFriends[(_loc4_ : Int)].excludeId) < 0) {
 					_loc3_.push(_loc4_);
@@ -279,9 +279,9 @@ class UIFriends extends UIFMState {
 		var _loc4_:Array<ASAny> = [];
 		var _loc3_:Array<ASAny> = [];
 		var _loc5_:UInt;
-		final __ax4_iter_198 = mFriendPopulater.getSelectedToggles();
-		if (checkNullIteratee(__ax4_iter_198))
-			for (_tmp_ in __ax4_iter_198) {
+		final __ax4_iter_199 = mFriendPopulater.getSelectedToggles();
+		if (checkNullIteratee(__ax4_iter_199))
+			for (_tmp_ in __ax4_iter_199) {
 				_loc5_ = (ASCompat.toInt(_tmp_) : UInt);
 				if (mDBFacade.dbAccountInfo.giftExcludeIds.indexOf(mListOfFriends[(_loc5_ : Int)].excludeId) < 0) {
 					if (mListOfFriends[(_loc5_ : Int)].isDRFriend) {

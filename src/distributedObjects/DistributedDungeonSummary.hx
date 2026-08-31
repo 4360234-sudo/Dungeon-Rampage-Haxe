@@ -450,9 +450,9 @@ class DistributedDungeonSummary extends GameObject implements IDistributedDungeo
 	function setUILootSlotsTwoTreasuresVisible(isVisible:Bool) {
 		var _loc3_ = 0;
 		var _loc2_:Array<ASAny>;
-		final __ax4_iter_219 = mUILootSlotsTwoTreasures;
-		if (checkNullIteratee(__ax4_iter_219))
-			for (_tmp_ in __ax4_iter_219) {
+		final __ax4_iter_220 = mUILootSlotsTwoTreasures;
+		if (checkNullIteratee(__ax4_iter_220))
+			for (_tmp_ in __ax4_iter_220) {
 				_loc2_ = ASCompat.dynamicAs(_tmp_, Array);
 				_loc3_ = 0;
 				while (_loc3_ < _loc2_.length) {
@@ -465,9 +465,9 @@ class DistributedDungeonSummary extends GameObject implements IDistributedDungeo
 	function setUILootSlotsFourTreasuresVisible(isVisible:Bool) {
 		var _loc3_ = 0;
 		var _loc2_:Array<ASAny>;
-		final __ax4_iter_220 = mUILootSlotsFourTreasures;
-		if (checkNullIteratee(__ax4_iter_220))
-			for (_tmp_ in __ax4_iter_220) {
+		final __ax4_iter_221 = mUILootSlotsFourTreasures;
+		if (checkNullIteratee(__ax4_iter_221))
+			for (_tmp_ in __ax4_iter_221) {
 				_loc2_ = ASCompat.dynamicAs(_tmp_, Array);
 				_loc3_ = 0;
 				while (_loc3_ < _loc2_.length) {
@@ -1397,9 +1397,9 @@ class DistributedDungeonSummary extends GameObject implements IDistributedDungeo
 		var mcr:MovieClipRenderer;
 		var loot:Array<ASAny>;
 		var yScale:Float;
-		final __ax4_iter_221 = mChestRenderers;
-		if (checkNullIteratee(__ax4_iter_221))
-			for (_tmp_ in __ax4_iter_221) {
+		final __ax4_iter_222 = mChestRenderers;
+		if (checkNullIteratee(__ax4_iter_222))
+			for (_tmp_ in __ax4_iter_222) {
 				mcr = _tmp_;
 				mcr.destroy();
 			}
@@ -2971,9 +2971,9 @@ class DistributedDungeonSummary extends GameObject implements IDistributedDungeo
 			mCountDownTextGold.destroy();
 		}
 		var _loc3_:UIObject;
-		final __ax4_iter_222 = mTeamBonusUI;
-		if (checkNullIteratee(__ax4_iter_222))
-			for (_tmp_ in __ax4_iter_222.iterator()) {
+		final __ax4_iter_223 = mTeamBonusUI;
+		if (checkNullIteratee(__ax4_iter_223))
+			for (_tmp_ in __ax4_iter_223.iterator()) {
 				_loc3_ = ASCompat.dynamicAs(_tmp_, brain.uI.UIObject);
 				_loc3_.destroy();
 			}

@@ -431,9 +431,9 @@ class ActorGameObject extends FloorObject {
 		mCurrentWeapon = null;
 		mWeaponDetails = null;
 		var _loc1_:WeaponGameObject;
-		final __ax4_iter_19 = mWeapons;
-		if (checkNullIteratee(__ax4_iter_19))
-			for (_tmp_ in __ax4_iter_19) {
+		final __ax4_iter_20 = mWeapons;
+		if (checkNullIteratee(__ax4_iter_20))
+			for (_tmp_ in __ax4_iter_20) {
 				_loc1_ = _tmp_;
 				if (_loc1_ != null) {
 					_loc1_.destroy();
@@ -576,9 +576,9 @@ class ActorGameObject extends FloorObject {
 
 	function getWeaponForId(weaponType:UInt):WeaponGameObject {
 		var _loc2_:WeaponGameObject;
-		final __ax4_iter_20 = mWeapons;
-		if (checkNullIteratee(__ax4_iter_20))
-			for (_tmp_ in __ax4_iter_20) {
+		final __ax4_iter_21 = mWeapons;
+		if (checkNullIteratee(__ax4_iter_21))
+			for (_tmp_ in __ax4_iter_21) {
 				_loc2_ = _tmp_;
 				if (_loc2_ != null && _loc2_.weaponType == weaponType) {
 					return _loc2_;
@@ -659,9 +659,9 @@ class ActorGameObject extends FloorObject {
 
 	function setupWeapons() {
 		var _loc1_:WeaponGameObject;
-		final __ax4_iter_21 = mWeapons;
-		if (checkNullIteratee(__ax4_iter_21))
-			for (_tmp_ in __ax4_iter_21) {
+		final __ax4_iter_22 = mWeapons;
+		if (checkNullIteratee(__ax4_iter_22))
+			for (_tmp_ in __ax4_iter_22) {
 				_loc1_ = _tmp_;
 				if (_loc1_ != null) {
 					_loc1_.destroy();
@@ -670,9 +670,9 @@ class ActorGameObject extends FloorObject {
 		var _loc2_:Float = 0;
 		mWeapons = new Vector<WeaponGameObject>();
 		var _loc3_:WeaponDetails;
-		final __ax4_iter_22 = mWeaponDetails;
-		if (checkNullIteratee(__ax4_iter_22))
-			for (_tmp_ in __ax4_iter_22) {
+		final __ax4_iter_23 = mWeaponDetails;
+		if (checkNullIteratee(__ax4_iter_23))
+			for (_tmp_ in __ax4_iter_23) {
 				_loc3_ = _tmp_;
 				if (_loc3_.type != 0) {
 					_loc1_ = new WeaponGameObject(_loc3_, this, mActorView, mDBFacade, mDistributedDungeonFloor, _loc2_);

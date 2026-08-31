@@ -11,9 +11,9 @@ class ObjectPool {
 		var _loc2_:ASAny = /*undefined*/ null;
 		var _loc1_ = "";
 		var _loc3_:String;
-		final __ax4_iter_63 = mPool;
-		if (checkNullIteratee(__ax4_iter_63))
-			for (_tmp_ in __ax4_iter_63.keys()) {
+		final __ax4_iter_64 = mPool;
+		if (checkNullIteratee(__ax4_iter_64))
+			for (_tmp_ in __ax4_iter_64.keys()) {
 				_loc3_ = _tmp_;
 				_loc2_ = mPool[_loc3_];
 				_loc1_ += Std.string(_loc2_.length) + "\t: " + _loc3_ + "\n";
@@ -69,9 +69,9 @@ class ObjectPool {
 	public function clear() {
 		var _loc2_:IPoolable;
 		var _loc1_:Vector<IPoolable>;
-		final __ax4_iter_64 = mPool;
-		if (checkNullIteratee(__ax4_iter_64))
-			for (_tmp_ in __ax4_iter_64) {
+		final __ax4_iter_65 = mPool;
+		if (checkNullIteratee(__ax4_iter_65))
+			for (_tmp_ in __ax4_iter_65) {
 				_loc1_ = (_tmp_ : Vector<IPoolable>);
 				if (checkNullIteratee(_loc1_))
 					for (_tmp_ in _loc1_) {

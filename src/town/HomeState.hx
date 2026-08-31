@@ -1,6 +1,5 @@
 package town;
 
-import account.AvatarInfo;
 import account.StoreServicesController;
 import brain.assetRepository.AssetLoadingComponent;
 import brain.clock.GameClock;
@@ -41,7 +40,6 @@ import flash.events.KeyboardEvent;
 import flash.geom.Point;
 import flash.net.URLRequest;
 import org.as3commons.collections.Set;
-import org.as3commons.collections.framework.IMapIterator;
 
 class HomeState extends TownSubState {
 	public static inline final NAME = "HomeState";
@@ -388,9 +386,9 @@ class HomeState extends TownSubState {
 		}
 		var _loc3_ = new Vector<GMOffer>();
 		var _loc5_:UInt;
-		final __ax4_iter_138 = StoreServicesController.HERO_OFFERS;
-		if (checkNullIteratee(__ax4_iter_138))
-			for (_tmp_ in __ax4_iter_138) {
+		final __ax4_iter_139 = StoreServicesController.HERO_OFFERS;
+		if (checkNullIteratee(__ax4_iter_139))
+			for (_tmp_ in __ax4_iter_139) {
 				_loc5_ = _tmp_;
 				_loc6_ = ASCompat.dynamicAs(mDBFacade.gameMaster.offerById.itemFor(_loc5_), gameMasterDictionary.GMOffer);
 				_loc4_ = (_loc6_.Details[0].HeroId : Int);
@@ -856,15 +854,8 @@ class HomeState extends TownSubState {
 	@:isVar var trainingNeedsAttention(get, never):Bool;
 
 	function get_trainingNeedsAttention():Bool {
-		var _loc1_:AvatarInfo = null;
-		var _loc2_ = ASCompat.reinterpretAs(mDBFacade.dbAccountInfo.inventoryInfo.avatars.iterator(), IMapIterator);
-		while (_loc2_.hasNext()) {
-			_loc1_ = ASCompat.dynamicAs(_loc2_.next(), account.AvatarInfo);
-			if (_loc1_.skillPointsAvailable > 0) {
-				return true;
-			}
-		}
-		return false;
+		var _loc1_ = mDBFacade.dbAccountInfo.activeAvatarInfo;
+		return _loc1_ != null && _loc1_.skillPointsAvailable > 0;
 	}
 
 	@:isVar var inventoryNeedsAttention(get, never):Bool;

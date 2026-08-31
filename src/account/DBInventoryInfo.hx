@@ -917,9 +917,9 @@ class DBInventoryInfo {
 			}
 		}
 		var _loc2_:ChestInfo;
-		final __ax4_iter_9 = mChests;
-		if (checkNullIteratee(__ax4_iter_9))
-			for (_tmp_ in __ax4_iter_9) {
+		final __ax4_iter_10 = mChests;
+		if (checkNullIteratee(__ax4_iter_10))
+			for (_tmp_ in __ax4_iter_10) {
 				_loc2_ = _tmp_;
 				if (_loc2_.isNew) {
 					return true;
@@ -949,9 +949,9 @@ class DBInventoryInfo {
 			_loc1_.isNew = false;
 		}
 		var _loc2_:ChestInfo;
-		final __ax4_iter_10 = mChests;
-		if (checkNullIteratee(__ax4_iter_10))
-			for (_tmp_ in __ax4_iter_10) {
+		final __ax4_iter_11 = mChests;
+		if (checkNullIteratee(__ax4_iter_11))
+			for (_tmp_ in __ax4_iter_11) {
 				_loc2_ = _tmp_;
 				_loc2_.isNew = false;
 			}
@@ -961,9 +961,9 @@ class DBInventoryInfo {
 		var skin:GMSkin;
 		var offer:GMOffer;
 		var result = new Vector<GMSkin>();
-		final __ax4_iter_11 = mDBFacade.gameMaster.Skins;
-		if (checkNullIteratee(__ax4_iter_11))
-			for (_tmp_ in __ax4_iter_11) {
+		final __ax4_iter_12 = mDBFacade.gameMaster.Skins;
+		if (checkNullIteratee(__ax4_iter_12))
+			for (_tmp_ in __ax4_iter_12) {
 				skin = _tmp_;
 				if (skin.ForHero == gmHero.Constant) {
 					offer = ASCompat.dynamicAs(offerBySkinId.itemFor(skin.Id), gameMasterDictionary.GMOffer);

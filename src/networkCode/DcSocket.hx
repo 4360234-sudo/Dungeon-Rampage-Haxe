@@ -61,7 +61,7 @@ class DcSocket extends Socket {
 	var mDisconnecttext:String = "NotSet";
 
 	public function new(facade:DBFacade, host:String, port:Int, validationToken:String, demographics:String, accountid:UInt) {
-		Logger.debug("Creating new Socket " + host + " " + port + " " + validationToken + " " + accountid);
+		Logger.debug("Creating new Socket " + host + " " + port + " " + accountid);
 		super();
 		mValidationToken = validationToken;
 		mDemographics = demographics;
@@ -418,9 +418,9 @@ class DcSocket extends Socket {
 		}
 		var _loc4_ = new Vector<DcNetworkClass>();
 		var _loc3_:String;
-		final __ax4_iter_158:ASObject = Doid_NetInterfaces;
-		if (checkNullIteratee(__ax4_iter_158))
-			for (_tmp_ in __ax4_iter_158.___keys()) {
+		final __ax4_iter_159:ASObject = Doid_NetInterfaces;
+		if (checkNullIteratee(__ax4_iter_159))
+			for (_tmp_ in __ax4_iter_159.___keys()) {
 				_loc3_ = _tmp_;
 				_loc1_ = Doid_NetInterfaces[_loc3_];
 				if (Std.isOfType(_loc1_, DcNetworkClass)) {

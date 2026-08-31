@@ -397,7 +397,7 @@ class DBFacade extends Facade {
 		mFacebookApplication = mDBConfigManager.getConfigString("FacebookApplication", "");
 		Logger.info("building engines 6");
 		this.validationToken = mDBConfigManager.getConfigString("API_ValidationToken", "");
-		Logger.info("building engines 7" + mValidationToken);
+		Logger.info("building engines 7");
 		if (mValidationToken == "") {
 			Logger.error("ValidationToken is empty.  Cannot continue without a valid ValidationToken.");
 		}
@@ -657,9 +657,9 @@ class DBFacade extends Facade {
 		var _loc2_:JsonAsset = null;
 		mTileLibraryMap.clear();
 		var _loc1_:ASObject;
-		final __ax4_iter_70 = mJsonAssets;
-		if (checkNullIteratee(__ax4_iter_70))
-			for (_tmp_ in __ax4_iter_70) {
+		final __ax4_iter_71 = mJsonAssets;
+		if (checkNullIteratee(__ax4_iter_71))
+			for (_tmp_ in __ax4_iter_71) {
 				_loc1_ = _tmp_;
 				_loc2_ = ASCompat.dynamicAs(_loc1_, JsonAsset);
 				_loc2_.destroy();
@@ -695,7 +695,7 @@ class DBFacade extends Facade {
 
 	function libraryFinishedLoading(libraryJson:JsonAsset) {
 		var _loc2_:ASObject;
-		var __ax4_iter_72:Array<ASAny>;
+		var __ax4_iter_73:Array<ASAny>;
 		Logger.info("libraryFinishedLoading");
 		this.loadingBarTick();
 		mLibraryJsonLoaded = true;
@@ -703,14 +703,14 @@ class DBFacade extends Facade {
 		var _loc4_ = 0;
 		mLibraryJson = ASCompat.dynamicAs(libraryJson.json, Array);
 		var _loc3_:ASObject;
-		final __ax4_iter_71:ASObject = libraryJson.json;
-		if (checkNullIteratee(__ax4_iter_71))
-			for (_tmp_ in iterateDynamicValues(__ax4_iter_71)) {
+		final __ax4_iter_72:ASObject = libraryJson.json;
+		if (checkNullIteratee(__ax4_iter_72))
+			for (_tmp_ in iterateDynamicValues(__ax4_iter_72)) {
 				_loc3_ = _tmp_;
 				_loc4_ = 0;
-				__ax4_iter_72 = _loc3_.navCollisions;
-				if (checkNullIteratee(__ax4_iter_72))
-					for (_tmp_ in __ax4_iter_72) {
+				__ax4_iter_73 = _loc3_.navCollisions;
+				if (checkNullIteratee(__ax4_iter_73))
+					for (_tmp_ in __ax4_iter_73) {
 						_loc2_ = _tmp_;
 						_loc4_ += GetSecurityValue(_loc2_);
 					}
@@ -757,9 +757,9 @@ class DBFacade extends Facade {
 		mGameMasterJsonLoaded = true;
 		var _loc3_ = false;
 		var _loc2_:ASObject;
-		final __ax4_iter_73:Array<ASAny> = mGameMasterJson.Hero;
-		if (checkNullIteratee(__ax4_iter_73))
-			for (_tmp_ in __ax4_iter_73) {
+		final __ax4_iter_74:Array<ASAny> = mGameMasterJson.Hero;
+		if (checkNullIteratee(__ax4_iter_74))
+			for (_tmp_ in __ax4_iter_74) {
 				_loc2_ = _tmp_;
 				if (ASCompat.toNumberField(_loc2_, "BaseMove") > 250) {
 					_loc3_ = true;
@@ -1176,9 +1176,9 @@ class DBFacade extends Facade {
 
 	public function getSplitTestNumber(key:String, defaultValue:Float):Float {
 		var _loc3_:ASObject;
-		final __ax4_iter_74:ASObject = this.splitTests;
-		if (checkNullIteratee(__ax4_iter_74))
-			for (_tmp_ in iterateDynamicValues(__ax4_iter_74)) {
+		final __ax4_iter_75:ASObject = this.splitTests;
+		if (checkNullIteratee(__ax4_iter_75))
+			for (_tmp_ in iterateDynamicValues(__ax4_iter_75)) {
 				_loc3_ = _tmp_;
 				if (_loc3_.name == key) {
 					return ASCompat.toNumber(_loc3_.value);
@@ -1190,9 +1190,9 @@ class DBFacade extends Facade {
 
 	public function getSplitTestBoolean(key:String, defaultValue:Bool):Bool {
 		var _loc3_:ASObject;
-		final __ax4_iter_75:ASObject = this.splitTests;
-		if (checkNullIteratee(__ax4_iter_75))
-			for (_tmp_ in iterateDynamicValues(__ax4_iter_75)) {
+		final __ax4_iter_76:ASObject = this.splitTests;
+		if (checkNullIteratee(__ax4_iter_76))
+			for (_tmp_ in iterateDynamicValues(__ax4_iter_76)) {
 				_loc3_ = _tmp_;
 				if (_loc3_.name == key) {
 					Logger.debug("splitTestValueFor " + key + ": " + Std.string(_loc3_.value));
@@ -1205,9 +1205,9 @@ class DBFacade extends Facade {
 
 	public function getSplitTestString(key:String, defaultValue:String):String {
 		var _loc3_:ASObject;
-		final __ax4_iter_76:ASObject = this.splitTests;
-		if (checkNullIteratee(__ax4_iter_76))
-			for (_tmp_ in iterateDynamicValues(__ax4_iter_76)) {
+		final __ax4_iter_77:ASObject = this.splitTests;
+		if (checkNullIteratee(__ax4_iter_77))
+			for (_tmp_ in iterateDynamicValues(__ax4_iter_77)) {
 				_loc3_ = _tmp_;
 				if (_loc3_.name == key) {
 					return _loc3_.value;

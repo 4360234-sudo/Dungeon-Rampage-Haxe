@@ -44,9 +44,9 @@ class SteamInputManager {
 	public function destroy() {
 		mConnectedSteamControllers.length = 0;
 		var _loc1_:ASObject;
-		final __ax4_iter_92 = mHandlesToSteamControllers;
-		if (checkNullIteratee(__ax4_iter_92))
-			for (_tmp_ in __ax4_iter_92.keys()) {
+		final __ax4_iter_93 = mHandlesToSteamControllers;
+		if (checkNullIteratee(__ax4_iter_93))
+			for (_tmp_ in __ax4_iter_93.keys()) {
 				_loc1_ = _tmp_;
 				mHandlesToSteamControllers.remove(_loc1_);
 			}
@@ -81,9 +81,9 @@ class SteamInputManager {
 		}
 		var _loc1_ = new ASDictionary<ASAny, ASAny>();
 		var _loc2_:SteamInputAction;
-		final __ax4_iter_93 = mMenuControlsActionSet.digitalActionHandles;
-		if (checkNullIteratee(__ax4_iter_93))
-			for (_tmp_ in __ax4_iter_93) {
+		final __ax4_iter_94 = mMenuControlsActionSet.digitalActionHandles;
+		if (checkNullIteratee(__ax4_iter_94))
+			for (_tmp_ in __ax4_iter_94) {
 				_loc2_ = _tmp_;
 				_loc3_ = getFilePathsOfControllerGlyphsAssignedToMenuControlsDigitalAction(_loc2_.actionName)[0];
 				_loc1_[_loc2_.actionName] = _loc3_;
@@ -122,9 +122,9 @@ class SteamInputManager {
 
 	public function flushInputs() {
 		var _loc1_:SteamController;
-		final __ax4_iter_94 = mConnectedSteamControllers;
-		if (checkNullIteratee(__ax4_iter_94))
-			for (_tmp_ in __ax4_iter_94) {
+		final __ax4_iter_95 = mConnectedSteamControllers;
+		if (checkNullIteratee(__ax4_iter_95))
+			for (_tmp_ in __ax4_iter_95) {
 				_loc1_ = _tmp_;
 				_loc1_.flushInput();
 			}
@@ -133,9 +133,9 @@ class SteamInputManager {
 	public function getAnalogAction(movementActionName:String):Vector3D {
 		var _loc2_:Vector3D = null;
 		var _loc3_:SteamController;
-		final __ax4_iter_95 = mConnectedSteamControllers;
-		if (checkNullIteratee(__ax4_iter_95))
-			for (_tmp_ in __ax4_iter_95) {
+		final __ax4_iter_96 = mConnectedSteamControllers;
+		if (checkNullIteratee(__ax4_iter_96))
+			for (_tmp_ in __ax4_iter_96) {
 				_loc3_ = _tmp_;
 				_loc2_ = ASCompat.dynamicAs(_loc3_.analogInputs[movementActionName], flash.geom.Vector3D);
 				if (_loc2_ != null) {
@@ -150,23 +150,23 @@ class SteamInputManager {
 
 	public function fireButtonEvents() {
 		var _loc1_:ASObject;
-		var __ax4_iter_97:ASDictionary<ASAny, ASAny>;
-		var _loc2_:ASObject;
 		var __ax4_iter_98:ASDictionary<ASAny, ASAny>;
+		var _loc2_:ASObject;
+		var __ax4_iter_99:ASDictionary<ASAny, ASAny>;
 		var _loc3_:SteamController;
-		final __ax4_iter_96 = mConnectedSteamControllers;
-		if (checkNullIteratee(__ax4_iter_96))
-			for (_tmp_ in __ax4_iter_96) {
+		final __ax4_iter_97 = mConnectedSteamControllers;
+		if (checkNullIteratee(__ax4_iter_97))
+			for (_tmp_ in __ax4_iter_97) {
 				_loc3_ = _tmp_;
-				__ax4_iter_97 = _loc3_.pressedDigitalButtons;
-				if (checkNullIteratee(__ax4_iter_97))
-					for (_tmp_ in __ax4_iter_97.keys()) {
+				__ax4_iter_98 = _loc3_.pressedDigitalButtons;
+				if (checkNullIteratee(__ax4_iter_98))
+					for (_tmp_ in __ax4_iter_98.keys()) {
 						_loc1_ = _tmp_;
 						mEventComponent.dispatchEvent(new OnSteamInputButtonPressedEvent(ASCompat.toString(_loc1_)));
 					}
-				__ax4_iter_98 = _loc3_.releasedDigitalButtons;
-				if (checkNullIteratee(__ax4_iter_98))
-					for (_tmp_ in __ax4_iter_98.keys()) {
+				__ax4_iter_99 = _loc3_.releasedDigitalButtons;
+				if (checkNullIteratee(__ax4_iter_99))
+					for (_tmp_ in __ax4_iter_99.keys()) {
 						_loc2_ = _tmp_;
 						mEventComponent.dispatchEvent(new OnSteamInputButtonReleasedEvent(ASCompat.toString(_loc2_)));
 					}
@@ -175,9 +175,9 @@ class SteamInputManager {
 
 	public function pressedAction(actionName:String):Bool {
 		var _loc2_:SteamController;
-		final __ax4_iter_99 = mConnectedSteamControllers;
-		if (checkNullIteratee(__ax4_iter_99))
-			for (_tmp_ in __ax4_iter_99) {
+		final __ax4_iter_100 = mConnectedSteamControllers;
+		if (checkNullIteratee(__ax4_iter_100))
+			for (_tmp_ in __ax4_iter_100) {
 				_loc2_ = _tmp_;
 				if (_loc2_.pressedDigitalButtons.exists(actionName)) {
 					return true;
@@ -188,9 +188,9 @@ class SteamInputManager {
 
 	public function releasedAction(actionName:String):Bool {
 		var _loc2_:SteamController;
-		final __ax4_iter_100 = mConnectedSteamControllers;
-		if (checkNullIteratee(__ax4_iter_100))
-			for (_tmp_ in __ax4_iter_100) {
+		final __ax4_iter_101 = mConnectedSteamControllers;
+		if (checkNullIteratee(__ax4_iter_101))
+			for (_tmp_ in __ax4_iter_101) {
 				_loc2_ = _tmp_;
 				if (_loc2_.releasedDigitalButtons.exists(actionName)) {
 					return true;
@@ -201,9 +201,9 @@ class SteamInputManager {
 
 	public function heldAction(actionName:String):Bool {
 		var _loc2_:SteamController;
-		final __ax4_iter_101 = mConnectedSteamControllers;
-		if (checkNullIteratee(__ax4_iter_101))
-			for (_tmp_ in __ax4_iter_101) {
+		final __ax4_iter_102 = mConnectedSteamControllers;
+		if (checkNullIteratee(__ax4_iter_102))
+			for (_tmp_ in __ax4_iter_102) {
 				_loc2_ = _tmp_;
 				if (_loc2_.heldDigitalButtons.exists(actionName)) {
 					return true;
@@ -222,21 +222,21 @@ class SteamInputManager {
 
 	public function getDigitalActionOriginsAssignedToMenuControlsAction(inActionName:String):Vector<String> {
 		var _loc2_:SteamController;
-		var __ax4_iter_103:Vector<SteamController>;
+		var __ax4_iter_104:Vector<SteamController>;
 		var _loc4_ = new Vector<String>();
 		if (mMenuControlsActionSet.digitalActionHandles == null || mConnectedSteamControllers == null) {
 			Logger.warn("SteamInputManager: digitalActionHandles or connectedSteamControllers is null. Unable to getDigitalActionOriginsAssignedToMenuControlsAction.");
 			return _loc4_;
 		}
 		var _loc3_:SteamInputAction;
-		final __ax4_iter_102 = mMenuControlsActionSet.digitalActionHandles;
-		if (checkNullIteratee(__ax4_iter_102))
-			for (_tmp_ in __ax4_iter_102) {
+		final __ax4_iter_103 = mMenuControlsActionSet.digitalActionHandles;
+		if (checkNullIteratee(__ax4_iter_103))
+			for (_tmp_ in __ax4_iter_103) {
 				_loc3_ = _tmp_;
 				if (_loc3_.actionName == inActionName) {
-					__ax4_iter_103 = mConnectedSteamControllers;
-					if (checkNullIteratee(__ax4_iter_103))
-						for (_tmp_ in __ax4_iter_103) {
+					__ax4_iter_104 = mConnectedSteamControllers;
+					if (checkNullIteratee(__ax4_iter_104))
+						for (_tmp_ in __ax4_iter_104) {
 							_loc2_ = _tmp_;
 							_loc4_.push(ASCompat.toString(mSteamworks.getDigitalActionOrigins(_loc2_.controllerHandle, mMenuControlsActionSet.actionSetHandle,
 								_loc3_.actionHandle)));
@@ -298,9 +298,9 @@ class SteamInputManager {
 
 	function resetControllerConnectedStates() {
 		var _loc1_:SteamController;
-		final __ax4_iter_104 = mConnectedSteamControllers;
-		if (checkNullIteratee(__ax4_iter_104))
-			for (_tmp_ in __ax4_iter_104) {
+		final __ax4_iter_105 = mConnectedSteamControllers;
+		if (checkNullIteratee(__ax4_iter_105))
+			for (_tmp_ in __ax4_iter_105) {
 				_loc1_ = _tmp_;
 				_loc1_.isConnected = false;
 			}
@@ -403,9 +403,9 @@ class SteamInputManager {
 
 	function updateControllers() {
 		var _loc1_:SteamController;
-		final __ax4_iter_105 = mConnectedSteamControllers;
-		if (checkNullIteratee(__ax4_iter_105))
-			for (_tmp_ in __ax4_iter_105) {
+		final __ax4_iter_106 = mConnectedSteamControllers;
+		if (checkNullIteratee(__ax4_iter_106))
+			for (_tmp_ in __ax4_iter_106) {
 				_loc1_ = _tmp_;
 				_loc1_.readInput(mSteamworks);
 			}

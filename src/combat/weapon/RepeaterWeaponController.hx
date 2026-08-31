@@ -70,7 +70,7 @@ class RepeaterWeaponController extends ScalingWeaponController {
 	override public function update(gameClock:GameClock) {
 		var attackId:UInt;
 		var gmAttack:GMAttack;
-		if (canCombo() && (mChargeAttack == null || mChargeAttack.ManaCost <= mHero.manaPoints)) {
+		if (canCombo() && (mChargeAttack == null || mChargeAttack.ManaCost * mWeaponModifierManaReduction <= mHero.manaPoints)) {
 			if (mChargeReleaseGMAttack != null && (mLastComboReached || mRepeatChargeAttackOnly)) {
 				attackId = mChargeReleaseGMAttack.Id;
 				mNextAttackComboIndex = 0;
@@ -89,7 +89,7 @@ class RepeaterWeaponController extends ScalingWeaponController {
 					mMaxSpeedReached = true;
 				}
 			}
-			if (gmAttack.ManaCost > mHero.manaPoints) {
+			if (gmAttack.ManaCost * mWeaponModifierManaReduction > mHero.manaPoints) {
 				if (mNotEnoughManaTask == null) {
 					mNotEnoughManaTask = mScalingLogicalWorkComponent.doLater(NOT_ENOUGH_MANA_ON_CHARGE_DELAY, function(param1:GameClock) {
 						notEnoughMana();

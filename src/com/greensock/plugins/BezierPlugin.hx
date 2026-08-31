@@ -89,9 +89,9 @@ class BezierPlugin extends TweenPlugin {
 
 	override public function killProps(lookup:ASObject) {
 		var _loc2_:String = null;
-		final __ax4_iter_26:ASObject = _beziers;
-		if (checkNullIteratee(__ax4_iter_26))
-			for (_tmp_ in __ax4_iter_26.___keys()) {
+		final __ax4_iter_27:ASObject = _beziers;
+		if (checkNullIteratee(__ax4_iter_27))
+			for (_tmp_ in __ax4_iter_27.___keys()) {
 				_loc2_ = _tmp_;
 				if (lookup.hasOwnProperty(_loc2_)) {
 					ASCompat.deleteProperty(_beziers, _loc2_);
@@ -101,7 +101,7 @@ class BezierPlugin extends TweenPlugin {
 	}
 
 	function init(tween:TweenLite, beziers:Array<ASAny>, through:Bool) {
-		var __ax4_iter_27:ASAny;
+		var __ax4_iter_28:ASAny;
 		var _loc6_ = 0;
 		var _loc7_:String = null;
 		var _loc8_:ASObject = null;
@@ -117,9 +117,9 @@ class BezierPlugin extends TweenPlugin {
 		var _loc5_:ASObject = {};
 		_loc6_ = 0;
 		while (_loc6_ < beziers.length) {
-			__ax4_iter_27 = beziers[_loc6_];
-			if (checkNullIteratee(__ax4_iter_27))
-				for (_tmp_ in __ax4_iter_27.___keys()) {
+			__ax4_iter_28 = beziers[_loc6_];
+			if (checkNullIteratee(__ax4_iter_28))
+				for (_tmp_ in __ax4_iter_28.___keys()) {
 					_loc7_ = _tmp_;
 					if (!ASCompat.hasProperty(_loc5_, _loc7_)) {
 						_loc5_[_loc7_] = [tween.target[_loc7_]];
@@ -160,8 +160,8 @@ class BezierPlugin extends TweenPlugin {
 	}
 
 	override public function set_changeFactor(n:Float):Float {
-		var __ax4_iter_28:ASObject;
 		var __ax4_iter_29:ASObject;
+		var __ax4_iter_30:ASObject;
 		var _loc2_ = 0;
 		var _loc3_:String = null;
 		var _loc4_:ASObject = null;
@@ -177,17 +177,17 @@ class BezierPlugin extends TweenPlugin {
 		var _loc14_ = false;
 		_changeFactor = n;
 		if (n == 1) {
-			__ax4_iter_28 = _beziers;
-			if (checkNullIteratee(__ax4_iter_28))
-				for (_tmp_ in __ax4_iter_28.___keys()) {
+			__ax4_iter_29 = _beziers;
+			if (checkNullIteratee(__ax4_iter_29))
+				for (_tmp_ in __ax4_iter_29.___keys()) {
 					_loc3_ = _tmp_;
 					_loc2_ = ASCompat.toInt(ASCompat.toNumberField(_beziers[_loc3_], "length") - 1);
 					_target[_loc3_] = ASCompat.dynGetIndex(ASCompat.dynGetIndex(_beziers[_loc3_], _loc2_), 2);
 				}
 		} else {
-			__ax4_iter_29 = _beziers;
-			if (checkNullIteratee(__ax4_iter_29))
-				for (_tmp_ in __ax4_iter_29.___keys()) {
+			__ax4_iter_30 = _beziers;
+			if (checkNullIteratee(__ax4_iter_30))
+				for (_tmp_ in __ax4_iter_30.___keys()) {
 					_loc3_ = _tmp_;
 					_loc6_ = ASCompat.toInt(_beziers[_loc3_].length);
 					if (n < 0) {

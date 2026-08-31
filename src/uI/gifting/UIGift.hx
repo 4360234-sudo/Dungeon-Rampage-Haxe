@@ -215,9 +215,9 @@ class UIGift {
 		}
 		mSendGiftButton = null;
 		var _loc1_:UIGiftMessage;
-		final __ax4_iter_18 = mGiftsVector;
-		if (checkNullIteratee(__ax4_iter_18))
-			for (_tmp_ in __ax4_iter_18) {
+		final __ax4_iter_19 = mGiftsVector;
+		if (checkNullIteratee(__ax4_iter_19))
+			for (_tmp_ in __ax4_iter_19) {
 				_loc1_ = _tmp_;
 				_loc1_.destroy();
 				_loc1_ = null;

@@ -112,7 +112,7 @@ class CreditsTownSubState extends TownSubState {
 
 	function applyHeaderFormatting() {
 		var _loc6_:String;
-		var __ax4_iter_139:Vector<String>;
+		var __ax4_iter_140:Vector<String>;
 		var _loc5_ = 0;
 		var _loc3_:String = null;
 		var _loc8_ = 0;
@@ -130,9 +130,9 @@ class CreditsTownSubState extends TownSubState {
 			if (_loc3_.indexOf("Kickstarters Backers!") != -1) {
 				_loc4_ = _loc5_;
 			}
-			__ax4_iter_139 = Headers;
-			if (checkNullIteratee(__ax4_iter_139))
-				for (_tmp_ in __ax4_iter_139) {
+			__ax4_iter_140 = Headers;
+			if (checkNullIteratee(__ax4_iter_140))
+				for (_tmp_ in __ax4_iter_140) {
 					_loc6_ = _tmp_;
 					if (_loc3_.indexOf(_loc6_) != -1) {
 						mHeaderLines.push(_loc5_);

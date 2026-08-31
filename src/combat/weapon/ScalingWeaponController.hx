@@ -56,6 +56,8 @@ class ScalingWeaponController extends WeaponController {
 
 	var mTutorialMessageSent:Bool = false;
 
+	var mWeaponModifierManaReduction:Float = 1;
+
 	public function new(dbFacade:DBFacade, controlledWeapon:WeaponGameObject, hero:HeroGameObjectOwner) {
 		super(dbFacade, controlledWeapon, hero);
 		buildControllerAttacks();
@@ -82,8 +84,17 @@ class ScalingWeaponController extends WeaponController {
 		mDistanceScalingForHeroMax = mWeapon.weaponData.ScalingHeroMaxDistance;
 		mDistanceScalingForProjectilesMin = mWeapon.weaponData.ScalingProjectileMinDistance;
 		mDistanceScalingForProjectilesMax = mWeapon.weaponData.ScalingProjectileMaxDistance;
-		var _loc1_ = mWeapon.weaponData.ChargeAttack;
-		mChargeReleaseGMAttack = ASCompat.dynamicAs(mDBFacade.gameMaster.attackByConstant.itemFor(_loc1_), gameMasterDictionary.GMAttack);
+		var _loc2_ = mWeapon.weaponData.ChargeAttack;
+		mChargeReleaseGMAttack = ASCompat.dynamicAs(mDBFacade.gameMaster.attackByConstant.itemFor(_loc2_), gameMasterDictionary.GMAttack);
+		var _loc1_:GMModifier;
+		final __ax4_iter_0 = mWeapon.modifierList;
+		if (checkNullIteratee(__ax4_iter_0))
+			for (_tmp_ in __ax4_iter_0) {
+				_loc1_ = _tmp_;
+				if (_loc1_.MODIFIER_TYPE == "MANA_COST") {
+					mWeaponModifierManaReduction = _loc1_.MP_COST;
+				}
+			}
 		setTotalTime();
 	}
 
@@ -110,7 +121,7 @@ class ScalingWeaponController extends WeaponController {
 			mWeaponDownActive = true;
 			mScalingLogicalWorkComponent.clear();
 			if (mTotalTime > 0) {
-				if (mChargeReleaseGMAttack != null && mChargeReleaseGMAttack.ManaCost > mHero.manaPoints) {
+				if (mChargeReleaseGMAttack != null && mChargeReleaseGMAttack.ManaCost * mWeaponModifierManaReduction > mHero.manaPoints) {
 					if (mNotEnoughManaTask == null) {
 						mNotEnoughManaTask = mScalingLogicalWorkComponent.doLater(NOT_ENOUGH_MANA_ON_CHARGE_DELAY, function(param1:GameClock) {
 							notEnoughMana();
@@ -129,7 +140,7 @@ class ScalingWeaponController extends WeaponController {
 
 	override public function onWeaponUp(autoAim:Bool = true) {
 		var _loc12_:GMModifier;
-		var __ax4_iter_0:Vector<GMModifier>;
+		var __ax4_iter_1:Vector<GMModifier>;
 		var _loc6_ = Math.NaN;
 		var _loc3_ = 0;
 		var _loc10_:AttackTimeline = null;
@@ -179,9 +190,9 @@ class ScalingWeaponController extends WeaponController {
 				}
 				_loc2_ = 0;
 				_loc9_ = false;
-				__ax4_iter_0 = mWeapon.modifierList;
-				if (checkNullIteratee(__ax4_iter_0))
-					for (_tmp_ in __ax4_iter_0) {
+				__ax4_iter_1 = mWeapon.modifierList;
+				if (checkNullIteratee(__ax4_iter_1))
+					for (_tmp_ in __ax4_iter_1) {
 						_loc12_ = _tmp_;
 						if (_loc12_.MAX_PROJECTILES > 0) {
 							_loc7_ += _loc6_ * _loc12_.MAX_PROJECTILES;

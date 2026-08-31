@@ -16,9 +16,9 @@ class KeyboardEventSpoofer {
 
 	public function update(steamInputManager:SteamInputManager) {
 		var _loc2_:String;
-		final __ax4_iter_89 = mKeyboardEventsSpoofMap.actionNames;
-		if (checkNullIteratee(__ax4_iter_89))
-			for (_tmp_ in __ax4_iter_89) {
+		final __ax4_iter_90 = mKeyboardEventsSpoofMap.actionNames;
+		if (checkNullIteratee(__ax4_iter_90))
+			for (_tmp_ in __ax4_iter_90) {
 				_loc2_ = _tmp_;
 				if (steamInputManager.releasedAction(_loc2_)) {
 					handleReleasedAction(_loc2_);

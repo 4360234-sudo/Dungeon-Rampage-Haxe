@@ -29,6 +29,8 @@ class UIMapBattlePopup extends DBUIPopup {
 
 	static inline final POPUP_CLASS_NAME_CONSUMABLES = "battle_popup_consumables";
 
+	static var sPersistedPrivateToggle:Bool = false;
+
 	static inline final DELAY_AMOUNT_FOR_TRANSITIONING_BACK_TO_MAP_MENU_FROM_TAVERN = (0 : UInt);
 
 	static final BATTLE_POPUP_POSITION:Point = new Point(250, 0);
@@ -59,7 +61,7 @@ class UIMapBattlePopup extends DBUIPopup {
 
 	var mPrivateButton:UIButton;
 
-	public var IsPrivate:Bool = false;
+	public var IsPrivate:Bool = sPersistedPrivateToggle;
 
 	var mTeamBonusUI:UIObject;
 
@@ -87,6 +89,7 @@ class UIMapBattlePopup extends DBUIPopup {
 
 	function togglePrivate() {
 		IsPrivate = !IsPrivate;
+		sPersistedPrivateToggle = IsPrivate;
 		mPrivateButton.selected = IsPrivate;
 	}
 
@@ -252,31 +255,36 @@ class UIMapBattlePopup extends DBUIPopup {
 	}
 
 	public function setDungeonDetails() {
-		var _loc2_:GMColiseumTier = null;
-		var _loc1_:String = null;
+		var _loc4_:GMColiseumTier = null;
+		var _loc2_:String = null;
 		if (mCurrentDungeon == null || mPopup == null) {
 			return;
 		}
 		if (mDBFacade != null && mDBFacade.gameMaster != null && mDBFacade.gameMaster.coliseumTierByConstant != null) {
-			_loc2_ = ASCompat.dynamicAs(mDBFacade.gameMaster.coliseumTierByConstant.itemFor(mCurrentDungeon.TierRank), gameMasterDictionary.GMColiseumTier);
+			_loc4_ = ASCompat.dynamicAs(mDBFacade.gameMaster.coliseumTierByConstant.itemFor(mCurrentDungeon.TierRank), gameMasterDictionary.GMColiseumTier);
 		}
-		if (_loc2_ != null && ASCompat.toBool((mPopup : ASAny).dungeonXp_label)) {
+		if (_loc4_ != null && ASCompat.toBool((mPopup : ASAny).dungeonXp_label)) {
 			ASCompat.setProperty((mPopup : ASAny).dungeonXp_label, "text",
 				Std.string(mCurrentDungeon.CompletionXPBonus) + Locale.getString("WORLD_MAP_BONUS_XP"));
 		}
 		ASCompat.setProperty((mPopup : ASAny).button_battle.battle_text.battle_text, "text", Locale.getString("WORLD_MAP_UNLOCK"));
 		setTitle(GameMasterLocale.getGameMasterSubString("DUNGEON_NAME", mCurrentDungeon.Constant).toUpperCase());
-		if (_loc2_.TotalFloors > 0 && mCurrentDungeon.NodeType != "BOSS") {
-			_loc1_ = _loc2_.TotalFloors > 1 ? Locale.getString("FLOORS").toUpperCase() : Locale.getString("FLOOR").toUpperCase();
-			if (_loc2_.TotalFloors >= 50) {
-				setDifficulty("INFINITE " + _loc1_);
+		if (_loc4_.TotalFloors > 0 && mCurrentDungeon.NodeType != "BOSS") {
+			_loc2_ = _loc4_.TotalFloors > 1 ? Locale.getString("FLOORS").toUpperCase() : Locale.getString("FLOOR").toUpperCase();
+			if (_loc4_.TotalFloors >= 50) {
+				setDifficulty("INFINITE " + _loc2_);
 			} else {
-				setDifficulty(Std.string(_loc2_.TotalFloors) + " " + _loc1_);
+				setDifficulty(Std.string(_loc4_.TotalFloors) + " " + _loc2_);
 			}
 		} else {
 			setDifficulty(GameMasterLocale.getGameMasterSubString("DUNGEON_DIFFICULTY_NAME", mCurrentDungeon.Constant));
 		}
-		ASCompat.setProperty((mPopup : ASAny).activity_label, "text", mDBFacade.playerActivityCount.getActivityString((mCurrentDungeon.Id : Int)));
+		var _loc1_ = mDBFacade.playerActivityCount.getActivityString((mCurrentDungeon.Id : Int));
+		ASCompat.setProperty((mPopup : ASAny).activity_label, "text", _loc1_);
+		var _loc3_ = mDBFacade.playerActivityCount.getPopulationGlow(_loc1_);
+		if (_loc3_ != null) {
+			ASCompat.setProperty((mPopup : ASAny).activity_label, "filters", [_loc3_]);
+		}
 	}
 
 	@:isVar public var keyCostClip(get, never):MovieClip;

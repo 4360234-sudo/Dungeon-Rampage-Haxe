@@ -71,9 +71,9 @@ class Logger {
 
 	public static function listSlashCommands() {
 		var _loc1_:String;
-		final __ax4_iter_121 = mListSlashCommands;
-		if (checkNullIteratee(__ax4_iter_121))
-			for (_tmp_ in __ax4_iter_121) {
+		final __ax4_iter_122 = mListSlashCommands;
+		if (checkNullIteratee(__ax4_iter_122))
+			for (_tmp_ in __ax4_iter_122) {
 				_loc1_ = _tmp_;
 				log(_loc1_);
 			}

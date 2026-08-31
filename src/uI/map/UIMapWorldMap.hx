@@ -864,7 +864,7 @@ class UIMapWorldMap {
 
 	public function deinit() {
 		var _loc1_:UIButton;
-		var __ax4_iter_165:Array<ASAny>;
+		var __ax4_iter_166:Array<ASAny>;
 		mTownStateMachine = null;
 		mDidDrag = false;
 		mShowedDragMessage = false;
@@ -935,9 +935,9 @@ class UIMapWorldMap {
 			mMapAvatar = null;
 		}
 		if (mOpenNodeButtons != null) {
-			__ax4_iter_165 = mOpenNodeButtons.toArray();
-			if (checkNullIteratee(__ax4_iter_165))
-				for (_tmp_ in __ax4_iter_165) {
+			__ax4_iter_166 = mOpenNodeButtons.toArray();
+			if (checkNullIteratee(__ax4_iter_166))
+				for (_tmp_ in __ax4_iter_166) {
 					_loc1_ = ASCompat.dynamicAs(_tmp_, brain.uI.UIButton);
 					_loc1_.enabled = false;
 					_loc1_.destroy();
@@ -1022,21 +1022,21 @@ class UIMapWorldMap {
 
 	function clearAvatarList() {
 		var _loc2_:DisplayObject;
-		var __ax4_iter_166:Array<ASAny>;
-		var _loc1_:DisplayObject;
 		var __ax4_iter_167:Array<ASAny>;
+		var _loc1_:DisplayObject;
+		var __ax4_iter_168:Array<ASAny>;
 		if (mAvatarList != null) {
-			__ax4_iter_166 = mAvatarList;
-			if (checkNullIteratee(__ax4_iter_166))
-				for (_tmp_ in __ax4_iter_166) {
+			__ax4_iter_167 = mAvatarList;
+			if (checkNullIteratee(__ax4_iter_167))
+				for (_tmp_ in __ax4_iter_167) {
 					_loc2_ = ASCompat.dynamicAs(_tmp_, flash.display.DisplayObject);
 					(mRootMovieClip : ASAny).worldmap.removeChild(_loc2_);
 				}
 		}
 		if (mAvatarDropShadowList != null) {
-			__ax4_iter_167 = mAvatarDropShadowList;
-			if (checkNullIteratee(__ax4_iter_167))
-				for (_tmp_ in __ax4_iter_167) {
+			__ax4_iter_168 = mAvatarDropShadowList;
+			if (checkNullIteratee(__ax4_iter_168))
+				for (_tmp_ in __ax4_iter_168) {
 					_loc1_ = ASCompat.dynamicAs(_tmp_, flash.display.DisplayObject);
 					(mRootMovieClip : ASAny).worldmap.removeChild(_loc1_);
 				}
@@ -1376,9 +1376,9 @@ class UIMapWorldMap {
 
 	function hasLockedNextNode(node:GMMapNode):Bool {
 		var _loc2_:GMMapNode;
-		final __ax4_iter_168 = node.ChildNodes;
-		if (checkNullIteratee(__ax4_iter_168))
-			for (_tmp_ in __ax4_iter_168) {
+		final __ax4_iter_169 = node.ChildNodes;
+		if (checkNullIteratee(__ax4_iter_169))
+			for (_tmp_ in __ax4_iter_169) {
 				_loc2_ = ASCompat.dynamicAs(_tmp_, gameMasterDictionary.GMMapNode);
 				if (_loc2_ != null) {
 					if (mapNodeLocked(_loc2_)) {
@@ -1392,9 +1392,9 @@ class UIMapWorldMap {
 	function hasUnlockedChild(node:GMMapNode):Bool {
 		var _loc2_:GMMapNode = null;
 		var _loc3_:String;
-		final __ax4_iter_169 = node.RevealNodes;
-		if (checkNullIteratee(__ax4_iter_169))
-			for (_tmp_ in __ax4_iter_169) {
+		final __ax4_iter_170 = node.RevealNodes;
+		if (checkNullIteratee(__ax4_iter_170))
+			for (_tmp_ in __ax4_iter_170) {
 				_loc3_ = _tmp_;
 				if (ASCompat.stringAsBool(_loc3_)) {
 					_loc2_ = ASCompat.dynamicAs(mDBFacade.gameMaster.mapNodeByConstant.itemFor(_loc3_), gameMasterDictionary.GMMapNode);
@@ -1408,9 +1408,9 @@ class UIMapWorldMap {
 
 	function isChildNode(node:GMMapNode, childConstant:String):Bool {
 		var _loc3_:GMMapNode;
-		final __ax4_iter_170 = node.ChildNodes;
-		if (checkNullIteratee(__ax4_iter_170))
-			for (_tmp_ in __ax4_iter_170) {
+		final __ax4_iter_171 = node.ChildNodes;
+		if (checkNullIteratee(__ax4_iter_171))
+			for (_tmp_ in __ax4_iter_171) {
 				_loc3_ = ASCompat.dynamicAs(_tmp_, gameMasterDictionary.GMMapNode);
 				if (_loc3_ != null && _loc3_.Constant == childConstant) {
 					return true;
@@ -1457,9 +1457,9 @@ class UIMapWorldMap {
 		var _loc7_:Float = 0.15;
 		var _loc4_ = hasUnlockedChild(node);
 		var _loc8_:String;
-		final __ax4_iter_171 = node.RevealNodes;
-		if (checkNullIteratee(__ax4_iter_171))
-			for (_tmp_ in __ax4_iter_171) {
+		final __ax4_iter_172 = node.RevealNodes;
+		if (checkNullIteratee(__ax4_iter_172))
+			for (_tmp_ in __ax4_iter_172) {
 				_loc8_ = _tmp_;
 				if (ASCompat.stringAsBool(_loc8_)) {
 					_loc3_ = ASCompat.dynamicAs(mDBFacade.gameMaster.mapNodeByConstant.itemFor(_loc8_), gameMasterDictionary.GMMapNode);
@@ -1591,6 +1591,7 @@ class UIMapWorldMap {
 					}
 				}
 				mCurrentNode = _loc5_;
+				setPopulationGlowState(_loc2_, _loc5_);
 				if (_loc2_ != null) {
 					if (ASCompat.toBool((_loc2_ : ASAny).text_popup)
 						&& ASCompat.toBool((_loc2_ : ASAny).text_popup.title_label)
@@ -1667,6 +1668,17 @@ class UIMapWorldMap {
 				}
 			}
 			_loc6_++;
+		}
+	}
+
+	function setPopulationGlowState(node:MovieClip, mMapNode:GMMapNode) {
+		if (node == null || mMapNode == null) {
+			return;
+		}
+		var _loc4_ = ASCompat.asString(mDBFacade.playerActivityCount.publicDungeonActivityLevel[Std.string(mMapNode.Id)]);
+		var _loc3_ = mDBFacade.playerActivityCount.getPopulationGlow(_loc4_);
+		if (_loc3_ != null) {
+			node.filters = cast([_loc3_]);
 		}
 	}
 
@@ -1835,14 +1847,14 @@ class UIMapWorldMap {
 
 	function stopFriendFader() {
 		var _loc1_:DisplayObject;
-		var __ax4_iter_172:Array<ASAny>;
+		var __ax4_iter_173:Array<ASAny>;
 		if (mFriendFadeTask != null) {
 			mFriendFadeTask.destroy();
 			mFriendFadeTask = null;
 			if (mAvatarList != null) {
-				__ax4_iter_172 = mAvatarList;
-				if (checkNullIteratee(__ax4_iter_172))
-					for (_tmp_ in __ax4_iter_172) {
+				__ax4_iter_173 = mAvatarList;
+				if (checkNullIteratee(__ax4_iter_173))
+					for (_tmp_ in __ax4_iter_173) {
 						_loc1_ = ASCompat.dynamicAs(_tmp_, flash.display.DisplayObject);
 						_loc1_.alpha = 1;
 						ASCompat.setProperty((cast(_loc1_, MovieClip) : ASAny).join, "alpha", 1);
@@ -1853,13 +1865,13 @@ class UIMapWorldMap {
 
 	function hideFriendsOnHover(clock:GameClock) {
 		var _loc4_:DisplayObject;
-		var __ax4_iter_173:Array<ASAny>;
+		var __ax4_iter_174:Array<ASAny>;
 		var _loc2_ = Math.NaN;
 		var _loc3_ = Math.NaN;
 		if (mAvatarList != null) {
-			__ax4_iter_173 = mAvatarList;
-			if (checkNullIteratee(__ax4_iter_173))
-				for (_tmp_ in __ax4_iter_173) {
+			__ax4_iter_174 = mAvatarList;
+			if (checkNullIteratee(__ax4_iter_174))
+				for (_tmp_ in __ax4_iter_174) {
 					_loc4_ = ASCompat.dynamicAs(_tmp_, flash.display.DisplayObject);
 					_loc2_ = Math.abs(ASCompat.toNumber(_loc4_.x - ASCompat.toNumberField((mRootMovieClip : ASAny).worldmap, "mouseX")));
 					_loc3_ = Math.abs(ASCompat.toNumber(_loc4_.y - ASCompat.toNumberField((mRootMovieClip : ASAny).worldmap, "mouseY")));

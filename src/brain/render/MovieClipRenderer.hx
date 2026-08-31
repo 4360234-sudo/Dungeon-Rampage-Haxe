@@ -322,9 +322,9 @@ class MovieClipRenderer {
 	function determineFrames(mc:MovieClip) {
 		var _loc2_ = -1;
 		var _loc3_:FrameLabel;
-		final __ax4_iter_147 = mc.currentLabels;
-		if (checkNullIteratee(__ax4_iter_147))
-			for (_tmp_ in __ax4_iter_147) {
+		final __ax4_iter_148 = mc.currentLabels;
+		if (checkNullIteratee(__ax4_iter_148))
+			for (_tmp_ in __ax4_iter_148) {
 				_loc3_ = _tmp_;
 				if (_loc3_.name == "loop") {
 					_loc2_ = _loc3_.frame;

@@ -107,9 +107,9 @@ class MemoryTracker {
 	static public function get_trackedCount():Int {
 		var _loc1_ = 0;
 		var _loc2_:ASObject;
-		final __ax4_iter_59 = m_tracking;
-		if (checkNullIteratee(__ax4_iter_59))
-			for (_tmp_ in __ax4_iter_59.keys()) {
+		final __ax4_iter_60 = m_tracking;
+		if (checkNullIteratee(__ax4_iter_60))
+			for (_tmp_ in __ax4_iter_60.keys()) {
 				_loc2_ = _tmp_;
 				_loc1_++;
 			}
@@ -122,9 +122,9 @@ class MemoryTracker {
 		var _loc3_:ASObject = null;
 		var _loc1_ = 0;
 		var _loc2_:ASObject;
-		final __ax4_iter_60 = m_tracking;
-		if (checkNullIteratee(__ax4_iter_60))
-			for (_tmp_ in __ax4_iter_60.keys()) {
+		final __ax4_iter_61 = m_tracking;
+		if (checkNullIteratee(__ax4_iter_61))
+			for (_tmp_ in __ax4_iter_61.keys()) {
 				_loc2_ = _tmp_;
 				_loc3_ = m_tracking[_loc2_];
 				if (ASCompat.toNumberField(_loc3_, "generation") >= m_checkpointGeneration) {
@@ -136,9 +136,9 @@ class MemoryTracker {
 
 	static function _forEachTracked(fn:ASFunction) {
 		var _loc2_:ASObject;
-		final __ax4_iter_61 = m_tracking;
-		if (checkNullIteratee(__ax4_iter_61))
-			for (_tmp_ in __ax4_iter_61.keys()) {
+		final __ax4_iter_62 = m_tracking;
+		if (checkNullIteratee(__ax4_iter_62))
+			for (_tmp_ in __ax4_iter_62.keys()) {
 				_loc2_ = _tmp_;
 				fn(_loc2_, m_tracking[_loc2_]);
 			}

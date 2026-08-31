@@ -22,16 +22,16 @@ class PropView extends FloorView {
 		mBody = clip;
 		mRoot.addChild(mBody);
 		var _loc2_:DisplayObject;
-		final __ax4_iter_140 = FloorView.findNavCollisions(mBody);
-		if (checkNullIteratee(__ax4_iter_140))
-			for (_tmp_ in __ax4_iter_140) {
+		final __ax4_iter_141 = FloorView.findNavCollisions(mBody);
+		if (checkNullIteratee(__ax4_iter_141))
+			for (_tmp_ in __ax4_iter_141) {
 				_loc2_ = ASCompat.dynamicAs(_tmp_, flash.display.DisplayObject);
 				_loc2_.parent.removeChild(_loc2_);
 			}
 		var _loc3_:DisplayObject;
-		final __ax4_iter_141 = FloorView.findCombatCollisions(mBody);
-		if (checkNullIteratee(__ax4_iter_141))
-			for (_tmp_ in __ax4_iter_141) {
+		final __ax4_iter_142 = FloorView.findCombatCollisions(mBody);
+		if (checkNullIteratee(__ax4_iter_142))
+			for (_tmp_ in __ax4_iter_142) {
 				_loc3_ = ASCompat.dynamicAs(_tmp_, flash.display.DisplayObject);
 				_loc3_.parent.removeChild(_loc3_);
 			}

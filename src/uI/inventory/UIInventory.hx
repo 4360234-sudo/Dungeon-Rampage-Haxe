@@ -616,9 +616,9 @@ class UIInventory {
 		var _loc10_:InventoryBaseInfo = null;
 		var _loc5_:IMapIterator = null;
 		mCategorizedItems = new Map();
-		final __ax4_iter_14 = CATEGORY_ARRAY;
-		if (checkNullIteratee(__ax4_iter_14))
-			for (_tmp_ in __ax4_iter_14) {
+		final __ax4_iter_15 = CATEGORY_ARRAY;
+		if (checkNullIteratee(__ax4_iter_15))
+			for (_tmp_ in __ax4_iter_15) {
 				_loc7_ = _tmp_;
 				mCategorizedItems.add(_loc7_, new Vector<InventoryBaseInfo>());
 			}
@@ -627,9 +627,9 @@ class UIInventory {
 		var _loc3_ = mDBFacade.dbAccountInfo.inventoryInfo.stackables;
 		var _loc1_ = mDBFacade.dbAccountInfo.inventoryInfo.pets;
 		var _loc4_:Map;
-		final __ax4_iter_15:Array<ASAny> = [_loc8_, _loc3_, _loc1_];
-		if (checkNullIteratee(__ax4_iter_15))
-			for (_tmp_ in __ax4_iter_15) {
+		final __ax4_iter_16:Array<ASAny> = [_loc8_, _loc3_, _loc1_];
+		if (checkNullIteratee(__ax4_iter_16))
+			for (_tmp_ in __ax4_iter_16) {
 				_loc4_ = ASCompat.dynamicAs(_tmp_, org.as3commons.collections.Map);
 				_loc5_ = ASCompat.reinterpretAs(_loc4_.iterator(), IMapIterator);
 				while (_loc5_.hasNext()) {
@@ -817,11 +817,11 @@ class UIInventory {
 	}
 
 	function checkIfRevealedWeaponExists():InventoryBaseInfo {
-		var __ax4_iter_16:Vector<InventoryBaseInfo>;
+		var __ax4_iter_17:Vector<InventoryBaseInfo>;
 		var _loc10_:Int;
 		var _loc9_:Vector<GMOfferDetail>;
 		var _loc2_:GMOfferDetail;
-		var __ax4_iter_17:Vector<InventoryBaseInfo>;
+		var __ax4_iter_18:Vector<InventoryBaseInfo>;
 		var _loc6_:InventoryBaseInfo = null;
 		var _loc1_:GMWeaponItem = null;
 		var _loc4_ = 0;
@@ -834,9 +834,9 @@ class UIInventory {
 			mCurrentTab = "WEAPON";
 			mRevealedItemOfferId %= (100000 : UInt);
 			_loc1_ = ASCompat.dynamicAs(mDBFacade.gameMaster.weaponItemById.itemFor(mRevealedItemOfferId), gameMasterDictionary.GMWeaponItem);
-			__ax4_iter_16 = mCategorizedItems.itemFor(mCurrentTab);
-			if (checkNullIteratee(__ax4_iter_16))
-				for (_tmp_ in __ax4_iter_16) {
+			__ax4_iter_17 = mCategorizedItems.itemFor(mCurrentTab);
+			if (checkNullIteratee(__ax4_iter_17))
+				for (_tmp_ in __ax4_iter_17) {
 					_loc6_ = _tmp_;
 					if (Std.isOfType(_loc6_, ItemInfo)) {
 						_loc4_ = (ASCompat.reinterpretAs(_loc6_, ItemInfo).gmWeaponItem.Id : Int);
@@ -857,9 +857,9 @@ class UIInventory {
 				}
 			if (_loc3_ != null) {
 				mCurrentTab = "POWERUP";
-				__ax4_iter_17 = mCategorizedItems.itemFor(mCurrentTab);
-				if (checkNullIteratee(__ax4_iter_17))
-					for (_tmp_ in __ax4_iter_17) {
+				__ax4_iter_18 = mCategorizedItems.itemFor(mCurrentTab);
+				if (checkNullIteratee(__ax4_iter_18))
+					for (_tmp_ in __ax4_iter_18) {
 						_loc6_ = _tmp_;
 						if (ASCompat.toNumberField(_loc6_, "gmId") == _loc3_.Id) {
 							mRevealedItemType = mRevealedItemOfferId = (0 : UInt);

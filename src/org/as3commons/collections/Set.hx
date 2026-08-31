@@ -78,15 +78,15 @@ class Set implements ISet {
 	public function toArray():Array<ASAny> {
 		var _loc2_:ASAny = /*undefined*/ null;
 		var _loc1_ = new Array<ASAny>();
-		final __ax4_iter_174:ASObject = this._stringItems;
-		if (checkNullIteratee(__ax4_iter_174))
-			for (_tmp_ in iterateDynamicValues(__ax4_iter_174)) {
+		final __ax4_iter_175:ASObject = this._stringItems;
+		if (checkNullIteratee(__ax4_iter_175))
+			for (_tmp_ in iterateDynamicValues(__ax4_iter_175)) {
 				_loc2_ = _tmp_;
 				_loc1_.push(_loc2_);
 			}
-		final __ax4_iter_175 = this._items;
-		if (checkNullIteratee(__ax4_iter_175))
-			for (_tmp_ in __ax4_iter_175) {
+		final __ax4_iter_176 = this._items;
+		if (checkNullIteratee(__ax4_iter_176))
+			for (_tmp_ in __ax4_iter_176) {
 				_loc2_ = _tmp_;
 				_loc1_.push(_loc2_);
 			}

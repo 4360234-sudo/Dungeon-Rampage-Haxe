@@ -233,7 +233,7 @@ class ItemInfo extends InventoryBaseInfo {
 
 	override public function get_sellCoins():Int {
 		var _loc5_:GMModifier;
-		var __ax4_iter_7:Vector<GMModifier>;
+		var __ax4_iter_8:Vector<GMModifier>;
 		var _loc1_ = Math.NaN;
 		var _loc7_ = mGMWeapon;
 		var _loc3_ = mGMRarity;
@@ -247,9 +247,9 @@ class ItemInfo extends InventoryBaseInfo {
 		var _loc4_:Float = 1;
 		if (_loc3_.NumberOfModifiers > 0) {
 			_loc4_ = _loc3_.NumberOfModifiers * 3;
-			__ax4_iter_7 = mModifiers;
-			if (checkNullIteratee(__ax4_iter_7))
-				for (_tmp_ in __ax4_iter_7) {
+			__ax4_iter_8 = mModifiers;
+			if (checkNullIteratee(__ax4_iter_8))
+				for (_tmp_ in __ax4_iter_8) {
 					_loc5_ = _tmp_;
 					_loc2_ += _loc5_.MODIFIER_LEVEL;
 				}
@@ -263,9 +263,9 @@ class ItemInfo extends InventoryBaseInfo {
 
 	public function hasModifier(constant:String):Bool {
 		var _loc2_:GMModifier;
-		final __ax4_iter_8 = mModifiers;
-		if (checkNullIteratee(__ax4_iter_8))
-			for (_tmp_ in __ax4_iter_8) {
+		final __ax4_iter_9 = mModifiers;
+		if (checkNullIteratee(__ax4_iter_9))
+			for (_tmp_ in __ax4_iter_9) {
 				_loc2_ = _tmp_;
 				if (_loc2_.Constant == constant) {
 					return true;

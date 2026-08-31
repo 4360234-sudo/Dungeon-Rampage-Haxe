@@ -34,7 +34,7 @@ class JSONEncoder {
 	}
 
 	function objectToStringPretty(o:ASObject):String {
-		var __ax4_iter_36:compat.XMLList;
+		var __ax4_iter_37:compat.XMLList;
 		var s:String;
 		var classInfo:compat.XML;
 		var value:ASObject = null;
@@ -60,11 +60,11 @@ class JSONEncoder {
 					}
 				}
 		} else {
-			__ax4_iter_36 = ASCompat.filterXmlList(classInfo.descendants("*"), function(__xml:compat.XML):Bool {
+			__ax4_iter_37 = ASCompat.filterXmlList(classInfo.descendants("*"), function(__xml:compat.XML):Bool {
 				return __xml.name() == "variable" || __xml.name() == "accessor";
 			});
-			if (checkNullIteratee(__ax4_iter_36))
-				for (_tmp_ in __ax4_iter_36) {
+			if (checkNullIteratee(__ax4_iter_37))
+				for (_tmp_ in __ax4_iter_37) {
 					v = _tmp_;
 					if (s.length > 0) {
 						s += ",\n";
@@ -101,7 +101,7 @@ class JSONEncoder {
 	}
 
 	function objectToString(o:ASObject):String {
-		var __ax4_iter_37:compat.XMLList;
+		var __ax4_iter_38:compat.XMLList;
 		var value:ASObject = null;
 		var key:String = null;
 		var v:compat.XML = null;
@@ -127,11 +127,11 @@ class JSONEncoder {
 					}
 				}
 		} else {
-			__ax4_iter_37 = ASCompat.filterXmlList(classInfo.descendants("*"), function(__xml:compat.XML):Bool {
+			__ax4_iter_38 = ASCompat.filterXmlList(classInfo.descendants("*"), function(__xml:compat.XML):Bool {
 				return __xml.name() == "variable" || __xml.name() == "accessor";
 			});
-			if (checkNullIteratee(__ax4_iter_37))
-				for (_tmp_ in __ax4_iter_37) {
+			if (checkNullIteratee(__ax4_iter_38))
+				for (_tmp_ in __ax4_iter_38) {
 					v = _tmp_;
 					if (s.length > 0) {
 						s += ",";

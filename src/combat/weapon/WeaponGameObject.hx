@@ -101,9 +101,9 @@ class WeaponGameObject extends GameObject {
 
 	public function updateStatsForModifiers() {
 		var _loc1_:GMModifier;
-		final __ax4_iter_1 = mModifiers;
-		if (checkNullIteratee(__ax4_iter_1))
-			for (_tmp_ in __ax4_iter_1) {
+		final __ax4_iter_2 = mModifiers;
+		if (checkNullIteratee(__ax4_iter_2))
+			for (_tmp_ in __ax4_iter_2) {
 				_loc1_ = _tmp_;
 				mAttackSpeedModifier[0] *= _loc1_.MELEE_SPD;
 				mAttackSpeedModifier[1] *= _loc1_.SHOOT_SPD;

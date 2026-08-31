@@ -49,9 +49,9 @@ class WorkComponent extends Component {
 
 	public function clear() {
 		var _loc1_:ASObject;
-		final __ax4_iter_228 = mTasks;
-		if (checkNullIteratee(__ax4_iter_228))
-			for (_tmp_ in __ax4_iter_228.keys()) {
+		final __ax4_iter_229 = mTasks;
+		if (checkNullIteratee(__ax4_iter_229))
+			for (_tmp_ in __ax4_iter_229.keys()) {
 				_loc1_ = _tmp_;
 				cast(_loc1_, Task).destroy();
 			}
@@ -61,9 +61,9 @@ class WorkComponent extends Component {
 
 	override public function destroy() {
 		var _loc1_:ASObject;
-		final __ax4_iter_229 = mTasks;
-		if (checkNullIteratee(__ax4_iter_229))
-			for (_tmp_ in __ax4_iter_229.keys()) {
+		final __ax4_iter_230 = mTasks;
+		if (checkNullIteratee(__ax4_iter_230))
+			for (_tmp_ in __ax4_iter_230.keys()) {
 				_loc1_ = _tmp_;
 				cast(_loc1_, Task).destroy();
 			}

@@ -424,6 +424,30 @@ class ExportSwfFonts
             || StringTools.endsWith(name,"-aarch64.app");
     }
 
+    static function getMacAppResources(projectRoot:String) : String
+    {
+        var binRoot = Path.join([projectRoot,"bin","macos","bin"]);
+        if(!FileSystem.exists(binRoot) || !FileSystem.isDirectory(binRoot))
+        {
+            return null;
+        }
+        // Lime writes the unsuffixed .app; arch builds rename it afterwards.
+        // Do not sync into *-x86_64.app / *-arm64.app or the second arch misses fonts.
+        for(name in FileSystem.readDirectory(binRoot))
+        {
+            if(!StringTools.endsWith(name,".app") || isSuffixedMacApp(name))
+            {
+                continue;
+            }
+            var resources = Path.join([binRoot,name,"Contents","Resources"]);
+            if(FileSystem.exists(resources))
+            {
+                return resources;
+            }
+        }
+        return null;
+    }
+
     static function getRuntimeFontRoot(projectRoot:String) : String
     {
         var host = Sys.systemName();
@@ -440,21 +464,13 @@ class ExportSwfFonts
         }
         if(host == "Mac")
         {
-            // Lime writes the unsuffixed .app; arch builds rename it afterwards.
-            // Do not sync into *-x86_64.app / *-arm64.app or the second arch misses fonts.
-            for(name in FileSystem.readDirectory(binRoot))
+            var resources = getMacAppResources(projectRoot);
+            if(resources == null)
             {
-                if(!StringTools.endsWith(name,".app") || isSuffixedMacApp(name))
-                {
-                    continue;
-                }
-                var resources = Path.join([binRoot,name,"Contents","Resources"]);
-                if(FileSystem.exists(resources))
-                {
-                    return Path.join([resources,"ffdec_fonts"]);
-                }
+                return null;
             }
-            return null;
+            // SwfAsset reads Contents/Resources/Resources (app Resources, then game Resources).
+            return Path.join([resources,"Resources","ffdec_fonts"]);
         }
         return Path.join([binRoot,"Resources","ffdec_fonts"]);
     }

@@ -114,15 +114,18 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
+          $sourceDir = "bin/windows/bin"
           $packageDir = "bin/windows/Dungeon Rampage Haxe"
-          $exePath = Join-Path $packageDir "Dungeon Rampage Haxe.exe"
+          $exePath = Join-Path $sourceDir "Dungeon Rampage Haxe.exe"
 
           if (!(Test-Path $exePath)) {
             throw "Build failed: EXE not found at $exePath"
           }
 
+          Remove-Item -Recurse -Force $packageDir -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Force -Path "dist" | Out-Null
-          Copy-Item -Path "bin/windows/bin/*" -Destination "dist/" -Recurse -Force
+          Rename-Item -Path $sourceDir -NewName "Dungeon Rampage Haxe"
+          Copy-Item -Path $packageDir -Destination "dist/Dungeon Rampage Haxe" -Recurse -Force
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

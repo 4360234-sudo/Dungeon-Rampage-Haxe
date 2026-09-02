@@ -364,8 +364,8 @@ class UIHud {
 		mOptionsButton.releaseCallback = mOptionsPanel.toggleVisible;
 		var _loc4_ = mDBFacade.dbConfigManager.getConfigNumber("in_game_options_button_x", 1895);
 		var _loc3_ = mDBFacade.dbConfigManager.getConfigNumber("in_game_options_button_y", 65);
-		var _loc5_ = mDBFacade.dbConfigManager.getConfigNumber("in_game_options_button_scale_x", 2);
-		var _loc6_ = mDBFacade.dbConfigManager.getConfigNumber("in_game_options_button_scale_y", 2);
+		var _loc5_ = mDBFacade.dbConfigManager.getConfigNumber("in_game_options_button_scale_x", 1);
+		var _loc6_ = mDBFacade.dbConfigManager.getConfigNumber("in_game_options_button_scale_y", 1);
 		_loc7_.x = _loc4_;
 		_loc7_.y = _loc3_;
 		_loc7_.scaleX = _loc5_;
@@ -440,19 +440,11 @@ class UIHud {
 		if (mUIChatLog != null) {
 			mUIChatLog.destroy();
 		}
-		var chatBar = ASCompat.dynamicAs((mUIRoot : ASAny).UI_chat, flash.display.MovieClip);
-		// Doubled in place (log_btn/chat_btn are children of chatBar, so they scale with it):
-		// too small to hit reliably on a phone screen.
-		chatBar.scaleX *= 2;
-		chatBar.scaleY *= 2;
 		mUIChatLog = new UIChatLog(mDBFacade, ASCompat.dynamicAs((mUIRoot : ASAny).chatLogContainer, flash.display.MovieClip),
-			chatBar,
+			ASCompat.dynamicAs((mUIRoot : ASAny).UI_chat, flash.display.MovieClip),
 			ASCompat.dynamicAs((mUIRoot : ASAny).UI_chat.log_btn, flash.display.MovieClip),
 			ASCompat.dynamicAs((mUIRoot : ASAny).UI_chat.chat_btn, flash.display.MovieClip));
-		var closeClip = ASCompat.dynamicAs((mUIRoot : ASAny).close, flash.display.MovieClip);
-		closeClip.scaleX *= 2;
-		closeClip.scaleY *= 2;
-		mCloseButton = new UIButton(mDBFacade, closeClip);
+		mCloseButton = new UIButton(mDBFacade, ASCompat.dynamicAs((mUIRoot : ASAny).close, flash.display.MovieClip));
 		mCloseButton.releaseCallback = function() {
 			var exitPopup:II_UIExitDungeonPopUp;
 			var xpLoss:UInt;

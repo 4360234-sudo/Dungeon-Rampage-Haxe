@@ -2,8 +2,8 @@
   "gameMasterPath":"Resources/Levels/DB_GameMaster.json",
   "EnvironmentPrefix": "bl",
   "ServiceDiscoveryUrl":"https://dungeon-rampage-drserver-7ap7qlbkqq-uc.a.run.app",
-  "AccountId":1000000005,
-  "API_ValidationToken":"2045627941:FakeTokenThisShouldUseSteamAndPopulateFromTheServerInstead",
+  "AccountId":1000000003,
+  "API_ValidationToken":"1819843692:54809898458f7aa00bc17bf230b13b3d0f176804243adde9927fb46e0fe33964",
   "Currency":"USD",
   "NetworkId":3
 }

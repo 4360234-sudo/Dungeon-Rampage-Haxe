@@ -537,6 +537,24 @@ class UIHud {
 		mWeaponXButton = new UIButton(mDBFacade, ASCompat.dynamicAs((mUIRoot : ASAny).UI_weapons.weapon_x, flash.display.MovieClip));
 		mWeaponCButton = new UIButton(mDBFacade, ASCompat.dynamicAs((mUIRoot : ASAny).UI_weapons.weapon_c, flash.display.MovieClip));
 		mWeaponButtons = Vector.ofArray([mWeaponZButton, mWeaponXButton, mWeaponCButton]);
+		// Mobile-style layout: same three ability slots (Z/X/C, also bound to J/K/L
+		// per KeyboardController.hx), stacked in a column against the right edge
+		// instead of the SWF's default row, for easier thumb reach on a touch screen.
+		if (mDBFacade.dbConfigManager.getConfigBoolean("mobile_weapon_column", false)) {
+			var weaponColumnX = mDBFacade.dbConfigManager.getConfigNumber("mobile_weapon_column_x", 1820);
+			var weaponColumnTopY = mDBFacade.dbConfigManager.getConfigNumber("mobile_weapon_column_y", 620);
+			var weaponColumnSpacing = mDBFacade.dbConfigManager.getConfigNumber("mobile_weapon_column_spacing", 110);
+			var weaponColumnScale = mDBFacade.dbConfigManager.getConfigNumber("mobile_weapon_column_scale", 1);
+			i = (0 : UInt);
+			while (i < (mWeaponButtons.length : UInt)) {
+				var weaponRoot = mWeaponButtons[(i : Int)].root;
+				weaponRoot.x = weaponColumnX;
+				weaponRoot.y = weaponColumnTopY + weaponColumnSpacing * i;
+				weaponRoot.scaleX = weaponColumnScale;
+				weaponRoot.scaleY = weaponColumnScale;
+				i = i + 1;
+			}
+		}
 		if (!mDBFacade.featureFlags.getFlagValue("want-dynamic-rarity-backgrounds")) {
 			mWeaponZButton.setRootMovieClipAsBitMap();
 			mWeaponXButton.setRootMovieClipAsBitMap();

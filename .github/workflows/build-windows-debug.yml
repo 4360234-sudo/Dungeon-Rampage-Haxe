@@ -1,0 +1,133 @@
+name: Compile Windows EXE (Debug)
+
+on:
+  workflow_dispatch:  # Manual only -- this is for crash diagnosis, not releases
+
+permissions:
+  contents: read
+
+jobs:
+  build-windows-debug:
+    name: Build Windows EXE (Debug)
+    runs-on: windows-2022
+    env:
+      HXCPP_CONFIG: ${{ github.workspace }}/tools/release/hxcpp-x86-64-v2.xml
+      LIME_CONFIG: ${{ github.workspace }}/tools/release/lime-ci-config.xml
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: krdlab/setup-haxe@v2.1.0
+        with:
+          haxe-version: 4.3.7
+
+      - name: Install haxelib dependencies
+        shell: bash
+        run: |
+          haxelib --quiet --always install format 3.8.0
+          haxelib --quiet --always install hxp 1.3.1
+          haxelib dev hxcpp "$PWD/submodules/hxcpp"
+          haxelib dev lime "$PWD/submodules/lime"
+          haxelib dev openfl "$PWD/submodules/openfl"
+          haxelib dev swf "$PWD/submodules/swf"
+          haxelib dev steamwrap "$PWD/submodules/SteamWrap"
+
+      - name: Bootstrap hxcpp
+        shell: bash
+        run: |
+          cd submodules/hxcpp/tools/hxcpp
+          haxe compile.hxml
+
+      - name: Clone Steamworks SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sdk_dir="$PWD/.ci-temp/SteamworksSDK"
+          sdk_ref="be6107f4b75bf996531415c53a6488a33a2a1be3"
+
+          rm -rf "$sdk_dir"
+          mkdir -p "$sdk_dir"
+          git -C "$sdk_dir" init
+          git -C "$sdk_dir" remote add origin https://github.com/rlabrecque/SteamworksSDK.git
+          git -C "$sdk_dir" fetch --depth 1 origin "$sdk_ref"
+          git -C "$sdk_dir" checkout --detach FETCH_HEAD
+
+          if [[ ! -d "$sdk_dir/redistributable_bin" || ! -d "$sdk_dir/public/steam" ]]; then
+            echo "Steamworks SDK mirror has an unexpected layout." >&2
+            exit 1
+          fi
+
+          echo "STEAMWORKS_SDK_DIR=$sdk_dir" >> "$GITHUB_ENV"
+
+      - name: Configure SteamWrap
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          steamwrap="submodules/SteamWrap"
+          sdk="$STEAMWORKS_SDK_DIR"
+
+          mkdir -p \
+            "$steamwrap/native/include/steam" \
+            "$steamwrap/native/include/hx" \
+            "$steamwrap/native/lib/win32" \
+            "$steamwrap/native/lib/win64"
+
+          cp "$sdk"/public/steam/*.h "$steamwrap/native/include/steam/"
+          cp submodules/hxcpp/include/hx/*.h "$steamwrap/native/include/hx/"
+          cp "$sdk/redistributable_bin/steam_api.dll" "$steamwrap/native/lib/win32/"
+          cp "$sdk/redistributable_bin/steam_api.lib" "$steamwrap/native/lib/win32/"
+          cp "$sdk/redistributable_bin/win64/steam_api64.dll" "$steamwrap/native/lib/win64/"
+          cp "$sdk/redistributable_bin/win64/steam_api64.lib" "$steamwrap/native/lib/win64/"
+
+      - name: Rebuild Lime tools
+        shell: bash
+        run: |
+          haxelib run lime rebuild cpp -debug
+          haxelib run lime rebuild tools
+          haxelib run lime rebuild hxcpp
+          haxelib run lime rebuild swf
+
+      - name: Rebuild Lime native libraries
+        shell: bash
+        run: |
+          haxelib run lime rebuild windows -64 -debug
+
+      - name: Build SteamWrap
+        shell: bash
+        run: |
+          cd submodules/SteamWrap/native
+          rm -rf ../obj
+          haxelib run hxcpp Build.xml -DHXCPP_M64
+
+      - name: Build Windows (debug)
+        shell: pwsh
+        run: haxelib run openfl build project.xml cpp -debug
+
+      - name: Package Windows
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $sourceDir = "bin/windows/bin"
+          $packageDir = "bin/windows/Dungeon Rampage Haxe"
+          $exePath = Join-Path $sourceDir "Dungeon Rampage Haxe.exe"
+
+          if (!(Test-Path $exePath)) {
+            throw "Build failed: EXE not found at $exePath"
+          }
+
+          Remove-Item -Recurse -Force $packageDir -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path "dist" | Out-Null
+          Rename-Item -Path $sourceDir -NewName "Dungeon Rampage Haxe"
+          Copy-Item -Path $packageDir -Destination "dist/Dungeon Rampage Haxe" -Recurse -Force
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Dungeon-Rampage-Windows-Debug
+          path: dist/
+          retention-days: 7
